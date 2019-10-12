@@ -25,9 +25,9 @@ public:
 
     int run();
 
-    void genRatableGraph();
-
 private:
+    void genRatableGraph(int64_t start, int64_t end);
+
     bool init();
 
     bool getGraphClients();
@@ -56,12 +56,20 @@ private:
     std::unordered_map<std::string, StringSchema>               tagSchema_;
     std::unordered_map<std::string, StringSchema>               edgeSchema_;
 
-    int64_t                                                     minBatchSize_{0};
+    int64_t                                                     minBatchSize_{0L};
     std::vector<std::pair<std::string, int64_t>>                descVertex_;
     std::discrete_distribution<int64_t>                         distributionTag_;
     std::vector<std::pair<Arc, int64_t>>                        descEdge_;
     std::discrete_distribution<int64_t>                         distributionArc_;
     std::unordered_map<std::string, std::vector<VertexID>>      tagMapVertex_;
+
+    std::mutex                                                  statisticsLock_;
+    int64_t                                                     totalSucceedVertices_{0L};
+    int64_t                                                     totalFailureVertices_{0L};
+    int64_t                                                     totalSucceedEdges_{0L};
+    int64_t                                                     totalFailureEdges_{0L};
+    uint64_t                                                    totalInsertVertexLatency_{0L};
+    uint64_t                                                    totalInsertEdgeLatency_{0L};
 };
 
 }  // namespace graph

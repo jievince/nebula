@@ -7,14 +7,14 @@
 #include "GraphGenerateTool.h"
 #include "base/Base.h"
 #include "network/NetworkUtils.h"
-#include "thread/GenericWorker.h"
+#include "thread/GenericThreadPool.h"
 #include "time/Duration.h"
 #include "graph/GraphFlags.h"
 
 #include <algorithm>
-#include <limits>
 #include <folly/gen/Base.h>
 
+DEFINE_int32(threads, 8, "Total threads for generate data");
 DEFINE_string(graph_server_addrs, "127.0.0.1:3699", "The graph server address");
 DEFINE_string(space_name, "graph_pref_test", "Specify the space name");
 DEFINE_int32(max_string_prop_size, 32, "The max size of string property");
@@ -35,55 +35,89 @@ int GraphGenerateTool::run() {
     if (!init() || !getGraphClients() || !getTags() || !getEdgeTypes()) {
         return EXIT_FAILURE;
     }
+    if (minBatchSize_ > FLAGS_batch_size) {
+        LOG(ERROR) << "The batch size should greater than " << minBatchSize_;
+        return EXIT_FAILURE;
+    }
 
     time::Duration duration;
-    this->genRatableGraph();
-    LOG(INFO) << "Generate the ratable graph cost " << duration.elapsedInMSec() << " ms.";
+    // TODO(zhangguoqing) waiting `Enhanced` graph client that thread safed
+    /*
+    int64_t interval = (FLAGS_vertices + FLAGS_threads - 1) / FLAGS_threads * FLAGS_threads;
+    nebula::thread::GenericThreadPool pool;
+    pool.start(FLAGS_threads);
+    for (int32_t i = 0; i < FLAGS_threads; i++) {
+        int64_t start = i * interval;
+        int64_t end = (i + 1) * interval;
+        if (end > FLAGS_vertices) {
+            end = FLAGS_vertices;
+        }
+        pool.addTask(&GraphGenerateTool::genRatableGraph, this, start, end);
+    }
+    pool.stop();
+    pool.wait();
+    */
+
+    this->genRatableGraph(0, FLAGS_vertices);
+    LOG(INFO) << "The total succeed vertices are " << totalSucceedVertices_
+              << ", the total failure vertices are " << totalFailureVertices_
+              << ", the total succeed edges are " << totalSucceedEdges_
+              << ", the total failure edges are " << totalFailureEdges_;
+    LOG(INFO) << "Generate the ratable graph cost " << duration.elapsedInMSec() << " ms. "
+              << "The average insert vertex latency is "
+              << totalInsertVertexLatency_ / totalSucceedVertices_ << " us, "
+              << "the average insert edge latency is "
+              << totalInsertEdgeLatency_ / totalSucceedEdges_ << " us.";
     return 0;
 }
 
 
-void GraphGenerateTool::genRatableGraph() {
-    if (minBatchSize_ > FLAGS_batch_size) {
-        LOG(ERROR) << "The batch size should greater than " << minBatchSize_;
-        return;
-    }
-    VertexID vid = 0;
-    VertexID srcVid = 0;
-    VertexID dstVid = 0;
-    int64_t totalVertices = 0L;
-    int64_t totalEdges = 0L;
-    std::default_random_engine generator;
+void GraphGenerateTool::genRatableGraph(int64_t start, int64_t end) {
+    int64_t localSucceedVertices = 0L;
+    int64_t localFailureVertices = 0L;
+    int64_t localSucceedEdges = 0L;
+    int64_t localFailureEdges = 0L;
+    uint64_t localInsertVertexLatency = 0L;
+    uint64_t localInsertEdgeLatency = 0L;
+    int64_t batchEdges = FLAGS_batch_size * (FLAGS_edges / FLAGS_vertices);
     for (auto& tag : tags_) {
         std::vector<VertexID> vIds;
         vIds.reserve(FLAGS_batch_size);
         tagMapVertex_[tag] = std::move(vIds);
     }
-    for (int64_t i = 0; i < FLAGS_vertices / FLAGS_batch_size + 1; i++) {
+
+    VertexID vid = 0;
+    VertexID srcVid = 0;
+    VertexID dstVid = 0;
+    std::default_random_engine generator;
+    int64_t localInterval = end - start;
+    for (int64_t i = 0; i < localInterval / FLAGS_batch_size + 1; i++) {
         // default: rand 2/3 clearing the batch vertex pools
         for (auto& tmv : tagMapVertex_) {
             if (folly::Random::rand32(FLAGS_batch_cross)) {
                 tmv.second.clear();
             }
         }
-        for (int64_t j = 0; (j < FLAGS_batch_size) && (totalVertices < FLAGS_vertices); j++) {
+        for (int64_t j = 0; j < FLAGS_batch_size && j < localInterval; j++) {
             auto number = distributionTag_(generator);
             auto tag = descVertex_[number].first;
-            vid = folly::Random::rand64(i * FLAGS_batch_size, (i + 1) * FLAGS_batch_size);
+            vid = folly::Random::rand64(i * FLAGS_batch_size, (i + 1) * FLAGS_batch_size) + start;
             tagMapVertex_[tag].emplace_back(vid);
             auto query = genInsertVertexSentence(tag, vid);
             LOG(INFO) << query;
             auto c = folly::Random::rand64(gClients_.size());
             cpp2::ExecutionResponse resp;
             auto code = gClients_[c]->execute(query, resp);
-            if (cpp2::ErrorCode::SUCCEEDED != code) {
+            if (cpp2::ErrorCode::SUCCEEDED == code) {
+                localInsertVertexLatency += resp.get_latency_in_us();
+                localSucceedVertices++;
+            } else {
                 LOG(ERROR) << "Do insert vertex: " << query << " failed";
+                localFailureVertices++;
             }
-            totalVertices++;
         }
-        for (int64_t j = 0;
-             j < FLAGS_batch_size * (FLAGS_edges / FLAGS_vertices) && totalEdges < FLAGS_edges;
-             j++) {
+
+        for (int64_t j = 0; j < batchEdges; j++) {
             auto number = distributionArc_(generator);
             auto srcTag = std::get<0>(descEdge_[number].first);
             auto srcIt = tagMapVertex_.find(srcTag);
@@ -119,14 +153,27 @@ void GraphGenerateTool::genRatableGraph() {
             cpp2::ExecutionResponse resp;
             auto c = folly::Random::rand64(gClients_.size());
             auto code = gClients_[c]->execute(query, resp);
-            if (cpp2::ErrorCode::SUCCEEDED != code) {
+            if (cpp2::ErrorCode::SUCCEEDED == code) {
+                localInsertEdgeLatency += resp.get_latency_in_us();
+                localSucceedEdges++;
+            } else {
                 LOG(ERROR) << "Do insert edge: " << query << " failed";
+                localFailureEdges++;
             }
-            totalEdges++;
         }
     }
     for (auto& tmv : tagMapVertex_) {
         tmv.second.clear();
+    }
+
+    {
+        std::lock_guard<std::mutex> g(statisticsLock_);
+        totalSucceedVertices_ += localSucceedVertices;
+        totalFailureVertices_ += localFailureVertices;
+        totalSucceedEdges_ += localSucceedEdges;
+        totalFailureEdges_ += localFailureEdges;
+        totalInsertVertexLatency_ += localInsertVertexLatency;
+        totalInsertEdgeLatency_ += localInsertEdgeLatency;
     }
 }
 
@@ -232,6 +279,7 @@ bool GraphGenerateTool::getGraphClients() {
         return false;
     }
     auto hosts = graphAddrsRet.value();
+
     for (auto& host : hosts) {
         auto ipv4 = network::NetworkUtils::intToIPv4(host.first);
         auto client = std::make_unique<graph::GraphClient>(ipv4, host.second);
@@ -241,6 +289,7 @@ bool GraphGenerateTool::getGraphClients() {
         }
         gClients_.emplace_back(std::move(client));
     }
+
     for (auto& client : gClients_) {
         cpp2::ExecutionResponse resp;
         std::string cmd = "USE " + FLAGS_space_name;
