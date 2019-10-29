@@ -33,6 +33,7 @@ nebula_add_executable(
         $<TARGET_OBJECTS:ws_common_obj>
         $<TARGET_OBJECTS:meta_gflags_man_obj>
         $<TARGET_OBJECTS:gflags_man_obj>
+        $<TARGET_OBJECTS:stats_obj>
     LIBRARIES
         ${ROCKSDB_LIBRARIES}
         ${THRIFT_LIBRARIES}
