@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   if (FLAGS_enable_ssl || FLAGS_enable_graph_ssl || FLAGS_enable_meta_ssl) {
     folly::ssl::init();
   }
-  nebula::initCounters();
+  nebula::metric::initMetrics();
 
   if (FLAGS_flagfile.empty()) {
     printHelp(argv[0]);

@@ -7,19 +7,22 @@
 #define GRAPH_STATS_STATSDEF_H_
 
 #include "common/base/Base.h"
+#include "common/metrics/Metric.h"
 #include "common/stats/StatsManager.h"
 
 DECLARE_int32(slow_query_threshold_us);
 
 namespace nebula {
+namespace metric {
 
-extern stats::CounterId kNumQueries;
-extern stats::CounterId kNumSlowQueries;
-extern stats::CounterId kNumQueryErrors;
-extern stats::CounterId kQueryLatencyUs;
-extern stats::CounterId kSlowQueryLatencyUs;
+extern CounterVec kNumQueries;
+extern CounterVec kNumSlowQueries;
+extern CounterVec kNumQueryErrors;
+extern HistogramVec kQueryLatencyUs;
+extern HistogramVec kSlowQueryLatencyUs;
 
-void initCounters();
+void initMetrics();
 
+}  // namespace metric
 }  // namespace nebula
 #endif  // GRAPH_STATS_STATSDEF_H_

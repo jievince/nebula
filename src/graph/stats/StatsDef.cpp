@@ -5,7 +5,10 @@
 
 #include "graph/stats/StatsDef.h"
 
+#include <thrift/lib/thrift/gen-cpp2/RpcMetadata_types.h>
+
 #include "common/base/Base.h"
+#include "common/metrics/Metric.h"
 #include "common/stats/StatsManager.h"
 
 DEFINE_int32(slow_query_threshold_us,
@@ -14,21 +17,23 @@ DEFINE_int32(slow_query_threshold_us,
              " as a slow query");
 
 namespace nebula {
+namespace metric {
 
-stats::CounterId kNumQueries;
-stats::CounterId kNumSlowQueries;
-stats::CounterId kNumQueryErrors;
-stats::CounterId kQueryLatencyUs;
-stats::CounterId kSlowQueryLatencyUs;
+CounterVec kNumQueries(CounterOpts("num_queries", "rate, sum"), {"space"});
+CounterVec kNumSlowQueries(CounterOpts("num_slow_queries", "rate, sum"), {"space"});
+CounterVec kNumQueryErrors(CounterOpts("num_query_errors", "rate, sum"), {"space"});
+HistogramVec kQueryLatencyUs(
+    HistogramOpts("query_latency_us", 1000, 0, 2000, "avg, p75, p95, p99, p999"), {"space"});
+HistogramVec kSlowQueryLatencyUs(
+    HistogramOpts("slow_query_latency_us", 1000, 0, 2000, "avg, p75, p95, p99, p999"), {"space"});
 
-void initCounters() {
-  kNumQueries = stats::StatsManager::registerStats("num_queries", "rate, sum");
-  kNumSlowQueries = stats::StatsManager::registerStats("num_slow_queries", "rate, sum");
-  kNumQueryErrors = stats::StatsManager::registerStats("num_query_errors", "rate, sum");
-  kQueryLatencyUs = stats::StatsManager::registerHisto(
-      "query_latency_us", 1000, 0, 2000, "avg, p75, p95, p99, p999");
-  kSlowQueryLatencyUs = stats::StatsManager::registerHisto(
-      "slow_query_latency_us", 1000, 0, 2000, "avg, p75, p95, p99, p999");
+void initMetrics() {
+  MetricRegistry::registerMetric(&kNumQueries);
+  MetricRegistry::registerMetric(&kNumSlowQueries);
+  MetricRegistry::registerMetric(&kNumQueryErrors);
+  MetricRegistry::registerMetric(&kQueryLatencyUs);
+  MetricRegistry::registerMetric(&kSlowQueryLatencyUs);
 }
 
+}  // namespace metric
 }  // namespace nebula

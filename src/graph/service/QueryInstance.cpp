@@ -150,7 +150,7 @@ void QueryInstance::onError(Status status) {
   rctx->resp().errorMsg = std::make_unique<std::string>(status.toString());
   auto latency = rctx->duration().elapsedInUSec();
   rctx->resp().latencyInUs = latency;
-  stats::StatsManager::addValue(kNumQueryErrors);
+  metric::kNumQueryErrors.withLabelValues({""}).addValue();
   addSlowQueryStats(latency);
   rctx->session()->deleteQuery(qctx_.get());
   rctx->finish();
@@ -158,10 +158,10 @@ void QueryInstance::onError(Status status) {
 }
 
 void QueryInstance::addSlowQueryStats(uint64_t latency) const {
-  stats::StatsManager::addValue(kQueryLatencyUs, latency);
+  metric::kQueryLatencyUs.withLabelValues({""}).addValue(latency);
   if (latency > static_cast<uint64_t>(FLAGS_slow_query_threshold_us)) {
-    stats::StatsManager::addValue(kNumSlowQueries);
-    stats::StatsManager::addValue(kSlowQueryLatencyUs, latency);
+    metric::kNumSlowQueries.withLabelValues({""}).addValue();
+    metric::kNumSlowQueries.withLabelValues({""}).addValue(latency);
   }
 }
 
