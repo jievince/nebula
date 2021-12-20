@@ -8,6 +8,7 @@
 #include "clients/storage/StorageClient.h"
 #include "common/base/Base.h"
 #include "common/encryption/MD5Utils.h"
+#include "common/stats/StatsManager.h"
 #include "common/time/Duration.h"
 #include "common/time/TimezoneInfo.h"
 #include "graph/service/CloudAuthenticator.h"
@@ -121,7 +122,6 @@ folly::Future<ExecutionResponse> GraphService::future_execute(int64_t sessionId,
   ctx->setRunner(getThreadManager());
   ctx->setSessionMgr(sessionManager_.get());
   auto future = ctx->future();
-  stats::StatsManager::addValue(kNumQueries);
   // When the sessionId is 0, it means the clients to ping the connection is ok
   if (sessionId == 0) {
     ctx->resp().errorCode = ErrorCode::E_SESSION_INVALID;
@@ -146,6 +146,9 @@ folly::Future<ExecutionResponse> GraphService::future_execute(int64_t sessionId,
           new std::string(folly::stringPrintf("SessionId[%ld] does not exist", sessionId)));
       return ctx->finish();
     }
+    stats::StatsManager::addValue(kNumQueries);
+    stats::StatsManager::addValue(
+        stats::StatsManager::counterWithLabels(kNumQueries, {{"space", sessionPtr->space().name}}));
     ctx->setSession(std::move(sessionPtr));
     queryEngine_->execute(std::move(ctx));
   };
