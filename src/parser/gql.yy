@@ -1,581 +1,1083 @@
+%start sentences
+
+%%
+
 // Section 6.1 <GQL-request>
-<GQL-request>
-    : [ <request parameter set> ] <GQL-program>
+GQL_request
+    : GQL_program {
+
+    }
+    | request_parameter_set GQL_program {
+
+    }
     ;
 
 
 // Section 6.2 <request parameter set>
-<request parameter set> 
-    : <request parameter> [ { <comma> <request parameter> }... ]
+request_parameter_set 
+    : request_parameter {
+
+    }
+    | request_parameter_set COMMA request_parameter {
+
+    }
     ;
 
-<request parameter>
-    : <parameter definition>
+request_parameter
+    : parameter_definition {
+
+    }
     ;
 
 
 // Section 6.3 <GQL-program>
-<GQL-program>
-    : [ <preamble> ] <main activity>
+GQL_program
+    : main_activity {
+    }
+    | preamble main_activity {
+
+    }
     ;
 
-<main activity>
-    : <session activity>
-    | [ <session activity> ] { <transaction activity> [ <session activity> ] }... [ <session close command> ]
-    | <session close command>
+main_activity
+    : session_activity {
+
+    }
+    | opt_session_activity transaction_session_activities opt_session_close_command {
+
+    }
+    | session_close_command {
+
+    }
     ;
 
-<session activity>
-    : <session clear command> [ <session parameter command>... ]
-    | <session parameter command>...
+opt_session_activity
+    : %empty {
+
+    }
+    | session_activity {
+
+    }
     ;
 
-<session parameter command>
-    : <session set command>
-    | <session remove command>
+transaction_session_activities
+    : transaction_session_activity {
+
+    }
+    | transaction_session_activities transaction_session_activity {
+
+    }
     ;
 
-<transaction activity>
-    : <start transaction command> [ <procedure specification> [ <end transaction command> ] ]
-    | <procedure specification> [ <end transaction command> ]
-    | <end transaction command>
+transaction_session_activity
+    : transaction_activity {
+
+    }
+    | transaction_activity session_activity {
+
+    }
+    ;
+
+
+session_activity
+    : session_clear_command session_parameter_commands {
+
+    }
+    | session_parameter_commands {
+
+    }
+    ;
+
+session_parameter_commands
+    : session_parameter_command {
+
+    }
+    | session_parameter_commands session_parameter_command {
+
+    }
+    ;
+
+session_parameter_command
+    : session_set_command {
+
+    }
+    | session_remove_command {
+
+    }
+    ;
+
+transaction_activity
+    : start_transaction_command {
+    
+    }
+    | start_transaction_command procedure_specification {
+      
+    }
+    | start_transaction_command procedure_specification end_transaction_command {
+
+    }
+    | procedure_specification {
+
+    }
+    | procedure_specification end_transaction_command {
+
+    }
+    | end_transaction_command {
+
+    }
     ;
 
 
 // Section 6.4 <preamble>
-<preamble>
-    : <preamble option> [ { <comma> <preamble option> }... ]
+preamble
+    : preamble_option {
+    }
+    | preamble COMMA preamble_option {
+
+    }
     ;
 
-<preamble option>
-    : PROFILE
-    | EXPLAIN
-    | <preamble option identifier> [ <equals operator> <literal> ]
+preamble_option
+    : PROFILE {
+
+    }
+    | EXPLAIN {
+
+    }
+    | preamble_option_identifier {
+      
+    }
+    | preamble_option_identifier EQUALS_OPERATOR literal {
+
+    }
     ;
 
-<preamble option identifier>
-    : <identifier>
+preamble_option_identifier
+    : identifier {
+
+    }
     ;
 
 
 // Section 7.1 <session set command>
-<session set command>
-    : SESSION SET {
-      <session set schema clause>
-    | <session set graph clause>
-    | <session set time zone clause>
-    | <session set parameter clause>
+session_set_command
+    : SESSION SET session_set_schema_clause {
+
+    }
+    | SESSION SET session_set_graph_clause {
+
+    }
+    | SESSION SET session_set_time_zone_clause {
+
+    }
+    | SESSION SET session_set_parameter_clause {
+
     }
     ;
 
-<session set schema clause>
-    : SCHEMA <schema reference>
+session_set_schema_clause
+    : SCHEMA schema_reference {
+
+    }
     ;
 
-<session set graph clause>
-    : <graph resolution expression>
+session_set_graph_clause
+    : graph_resolution_expression {
+
+    }
     ;
 
-<session set time zone clause>
-    : TIME ZONE <set time zone value>
+session_set_time_zone_clause
+    : TIME ZONE set_time_zone_value {
+
+    }
     ;
 
-<set time zone value>
-    : <string value expression>
+set_time_zone_value
+    : string_value_expression {
+
+    }
     ;
 
-<session set parameter clause>
-    : [ <session parameter flag> ] <session parameter> [ IF NOT EXISTS ]
+session_set_parameter_clause
+    : session_parameter {
+
+    }
+    | session_parameter_flag session_parameter {
+
+    }
+    | session_parameter_flag session_parameter IF NOT EXISTS {
+
+    }
     ;
 
-<session parameter>
-    : [ PARAMETER ] <parameter definition>
+session_parameter
+    : parameter_definition {
+
+    }
+    | PARAMETER parameter_definition {
+
+    }
     ;
 
-<session parameter flag>
-    : MUTABLE | FINAL
+session_parameter_flag
+    : MUTABLE {
+
+    }
+    | FINAL {
+
+    }
     ;
 
 
 // Section 7.2 <session remove command>
-<session remove command
-    : [ SESSION ] REMOVE <parameter> [ IF EXISTS ]
+session_remove_command
+    : REMOVE parameter {
+
+    }
+    | SESSION REMOVE parameter {
+
+    }
+    | SESSION REMOVE parameter IF EXISTS {
+
+    }
     ;
 
 
 // Section 7.3 <session clear command>
-<session clear command>
-    : [ SESSION ] CLEAR
+session_clear_command
+    : CLEAR
+    | SESSION CLEAR {
+
+    }
     ;
 
 
 // Section 7.4 <session close command>
-<session close command>
-    : [ SESSION ] CLOSE
+session_close_command
+    : CLOSE
+    | SESSION CLOSE {
+
+    }
     ;
 
 
 // Section 8.1 <start transaction command>
-<start transaction command>
-    : START TRANSACTION [ <transaction characteristics> ]
+start_transaction_command
+    : START TRANSACTION {
+
+    }
+    | START TRANSACTION transaction_characteristics {
+
+    }
     ;
 
 
 // Section 8.2 <end transaction command>
-<end transaction command>
-    : <commit command>
-    | <rollback command>
+end_transaction_command
+    : commit_command {
+
+    }
+    | rollback_command {
+
+    }
     ;
 
 
 // Section 8.3 <transaction characteristics>
-<transaction characteristics>
-    : <transaction mode> [ { <comma> <transaction mode> }... ]
+transaction_characteristics
+    : transaction_mode {
+
+    }
+    | transaction_characteristics COMMA transaction_mode {
+
+    }
     ;
 
-<transaction mode>
-    : <transaction access mode>
-    | <implementation-defined access mode>
+transaction_mode
+    : transaction_access_mode {
+
+    }
+    | implementation_defined_access_mode {
+
+    }
     ;
 
-<transaction access mode>
-    : READ ONLY
-    | READ WRITE
+transaction_access_mode
+    : READ ONLY {
+
+    }
+    | READ WRITE {
+
+    }
     ;
 
-<implementation-defined access mode>
+implementation_defined_access_mode
     : !! See the Syntax Rules.
     ;
 
 
 // Section 8.4 <rollback command>
-<rollback command>
-    : ROLLBACK
+rollback_command
+    : ROLLBACK {
+
+    }
     ;
 
 
 // Section 8.5 <commit command>
-<commit command>
-    : COMMIT
+commit_command
+    : COMMIT {
+
+    }
     ;
 
 
 // Section 9.1 <procedure specification>
-<nested procedure specification>
-    : <left brace> <procedure specification> <right brace>
+nested_procedure_specification
+    : LEFT_BRACE procedure_specification RIGHT_BRACE {
+
+    }
     ;
 
-<procedure specification>
-    : <catalog-modifying procedure specification>
-    | <data-modifying procedure specification>
-    | <query specification>
-    | <function specification>
+procedure_specification
+    : catalog_modifying_procedure_specification {
+
+    }
+    | data_modifying_procedure_specification {
+
+    }
+    | query_specification {
+
+    }
+    | function_specification {
+
+    }
     ;
 
-** Editor’s Note (number 80) **
-Rules for the derivation of the procedure signature of a <procedure specification>, a
-<catalog-modifying procedure specification>, a <data-modifying procedure specification>,
-a <query specification>, and a <function specification> from their <procedure body> need
-to be specified. See Possible Problem GQL-021 .
+nested_catalog_modifying_procedure_specification
+    : LEFT_BRACE catalog_modifying_procedure_specification RIGHT_BRACE {
 
-
-<nested catalog-modifying procedure specification>
-    : <left brace> <catalog-modifying procedure specification> <right brace>
+    }
     ;
 
-<catalog-modifying procedure specification>
+nested_catalog_modifying_procedure_specification
     : 
     !! Predicative production rule.
-    <procedure body>
+    procedure_body {
+
+    }
     ;
 
-<nested data-modifying procedure specification>
-    : <left brace> <data-modifying procedure specification> <right brace>
+nested_data_modifying_procedure_specification
+    : LEFT_BRACE data_modifying_procedure_specification RIGHT_BRACE {
+
+    }
     ;
 
-<data-modifying procedure specification>
+data_modifying_procedure_specification
     :
     !! Predicative production rule.
-    <procedure body>
+    procedure_body {
+
+    }
     ;
 
 
 // Section 9.2 <query specification>
-<nested query specification>
-    : <left brace> <query specification> <right brace>
+nested_query_specification
+    : LEFT_BRACE query_specification RIGHT_BRACE {
+
+    }
     ;
 
-<query specification>
+query_specification
     :
     !! Predicative production rule.
-    <procedure body>
+    procedure_body {
+
+    }
     ;
 
 
 // Section 9.3 <function specification>
-<nested function specification>
-    : <left brace> <function specification> <right brace>
+nested_function_specification
+    : LEFT_BRACE function_specification RIGHT_BRACE {
+
+    }
     ;
 
-<function specification>
+function_specification
     :
     !! Predicative production rule.
-    <procedure body>
+    procedure_body {
+
+    }
     ;
 
 
 // Section 9.4 <procedure body>
-<procedure body>
-    : [ <static variable definition block> ] [ <binding variable definition block> ] <statement block>
+procedure_body
+    : opt_static_variable_definition_block opt_binding_variable_definition_block statement_block {
+
+    }
     ;
 
-<static variable definition block>
-    : <static variable definition>...
+opt_static_variable_definition_block
+    : %empty {
+
+    }
+    | static_variable_definition_block {
+
+    }
     ;
 
-<binding variable definition block>
-    : <binding variable definition>...
+opt_binding_variable_definition_block
+    : %empty {
+
+    }
+    | binding_variable_definition_block {
+
+    }
     ;
 
-  WG3:W17-027  
-<statement block>
-    : <statement> [ <then statement>... ]
+static_variable_definition_block
+    : static_variable_definition {
+
+    }
+    | static_variable_definition_block static_variable_definition {
+
+    }
     ;
 
-<then statement>
-    : THEN [ <yield clause> ] <statement>
+binding_variable_definition_block
+    : binding_variable_definition {
+
+    }
+    | binding_variable_definition_block binding_variable_definition {
+
+    }
+    ;
+
+statement_block
+    : statement {
+
+    }
+    | statement_block then_statement {
+
+    }
+    ;
+
+then_statement
+    : THEN statement {
+
+    }
+    | THEN yield_clause statement {
+
+    }
     ;
 
 
 // Section 10.1 Static variable definitions
-<static variable definition>
-    : <procedure variable definition>
-    | <query variable definition>
-    | <function variable definition>
+static_variable_definition
+    : procedure_variable_definition {
+
+    }
+    | query_variable_definition {
+
+    }
+    | function_variable_definition {
+
+    }
     ;
 
-<as or equals>
-    : AS | <equals operator>
+as_or_equals
+    : AS | EQUALS_OPERATOR {
+
+    }
     ;
 
 
 // Section 10.2 Procedure variable definition
-<procedure variable definition>
-    : [ CATALOG ] PROCEDURE <procedure variable> <of type signature> <procedure initializer>
+procedure_variable_definition
+    : PROCEDURE procedure_variable of_type_signature procedure_initializer {
+
+    }
+    | CATALOG PROCEDURE procedure_variable of_type_signature procedure_initializer {
+
+    }
     ;
 
-<procedure variable>
-    : <static variable name>
+procedure_variable
+    : static_variable_name {
+
+    }
     ;
 
-<procedure initializer>
-    : <as or equals> <procedure reference>
-    | [ AS ] <nested procedure specification>
-    | <colon> <catalog procedure reference>
+procedure_initializer
+    : as_or_equals procedure_reference {
+
+    }
+    | nested_procedure_specification {
+
+    }
+    | AS nested_procedure_specification {
+
+    }
+    | COLON catalog_procedure_reference {
+
+    }
     ;
 
 
 // Section 10.3 Query variable definition
-<query variable definition>
-    : QUERY <query variable> <of type signature> <query initializer>
+query_variable_definition
+    : QUERY query_variable of_type_signature query_initializer {
+
+    }
     ;
 
-<query variable>
-    : <static variable name>
+query_variable
+    : static_variable_name {
+
+    }
     ;
 
-<query initializer>
-    : <as or equals> <query reference>
-    | [ AS ] <nested query specification>
-    | <colon> <catalog query reference>
+query_initializer
+    : as_or_equals query_reference {
+
+    }
+    | nested_query_specification {
+
+    } AS nested_query_specification {
+
+    }
+    | COLON catalog_query_reference {
+
+    }
     ;
 
 
 // Section 10.4 Function variable definition
-<function variable definition>
-    : FUNCTION <function variable> <of type signature> <function initializer>
+function_variable_definition
+    : FUNCTION function_variable of_type_signature function_initializer {
+
+    }
     ;
 
-<function variable>
-    : <static variable name>
+function_variable
+    : static_variable_name {
+
+    }
     ;
 
-<function initializer>
-    : <as or equals> <function reference>
-    | [ AS ] <nested function specification>
-    | <colon> <catalog function reference>
+function_initializer
+    : as_or_equals function_reference {
+
+    }
+    | nested_function_specification {
+
+    } AS nested_function_specification {
+
+    }
+    | COLON catalog_function_reference {
+
+    }
     ;
 
 
 // Section 10.5 Binding variable and parameter declarations and definitions
-<compact variable declaration list>
-    : <compact variable declaration> [ { <comma> <compact variable declaration> }... ]
+compact_variable_declaration_list
+    : compact_variable_declaration {
+
+    }
+    | compact_variable_declaration_list COMMA compact_variable_declaration {
+
+    }
     ;
 
-<compact variable declaration>
-    : <binding variable declaration> | <value variable>
+compact_variable_declaration
+    : binding_variable_declaration {
+    }
+    | value_variable {
+
+    }
     ;
 
-<binding variable declaration>
-    : <graph variable declaration>
-    | <binding table variable declaration>
-    | <value variable declaration>
+binding_variable_declaration
+    : graph_variable_declaration {
+
+    }
+    | binding_table_variable_declaration {
+
+    }
+    | value_variable_declaration {
+
+    }
     ;
 
-<compact variable definition list>
-    : <compact variable definition> [ { <comma> <compact variable definition> }... ]
+compact_variable_definition_list
+    : compact_variable_definition {
+
+    }
+    | compact_variable_definition_list COMMA compact_variable_definition {
+
+    }
     ;
 
-<compact variable definition>
-    : <compact value variable definition>
-    | <binding variable definition>
+compact_variable_definition
+    : compact_value_variable_definition {
+
+    }
+    | binding_variable_definition {
+
+    }
     ;
 
-<compact value variable definition list>
-    : <compact value variable definition> [ { <comma> <compact value variable definition> } ]
+compact_value_variable_definition_list
+    : compact_value_variable_definition {
+    }
+    | compact_value_variable_definition_list COMMA compact_value_variable_definition {
+
+    }
     ;
 
-<compact value variable definition>
-    : <value variable> <equals operator> <value expression>
+compact_value_variable_definition
+    : value_variable EQUALS_OPERATOR value_expression {
+
+    }
     ;
 
-<binding variable definition list>
-    : <binding variable definition> [ { <comma> <binding variable definition> }... ]
+binding_variable_definition_list
+    : binding_variable_definition {
+
+    }
+    | binding_variable_definition_list COMMA binding_variable_definition {
+
+    }
     ;
 
-<binding variable definition>
-    : <graph variable definition>
-    | <binding table variable definition>
-    | <value variable definition>
+binding_variable_definition
+    : graph_variable_definition {
+
+    }
+    | binding_table_variable_definition {
+
+    }
+    | value_variable_definition {
+
+    }
     ;
 
-<optional binding variable definition list>
-    : <optional binding variable definition> [ { <comma> <optional binding variable definition>}... ]
+optional_binding_variable_definition_list
+    : optional_binding_variable_definition {
+
+    }
+    | optional_binding_variable_definition_list COMMA optional_binding_variable_definition {
+
+    }
     ;
 
-<optional binding variable definition>
-    : <optional graph variable definition>
-    | <optional binding table variable definition>
-    | <optional value variable definition>
+optional_binding_variable_definition
+    : optional_graph_variable_definition {
+
+    }
+    | optional_binding_table_variable_definition {
+
+    }
+    | optional_value_variable_definition {
+
+    }
     ;
 
-<parameter definition>
-    : <graph parameter definition>
-    | <binding table parameter definition>
-    | <value parameter definition>
+parameter_definition
+    : graph_parameter_definition {
+
+    }
+    | binding_table_parameter_definition {
+
+    }
+    | value_parameter_definition {
+
+    }
     ;
 
 
 
 // Section 10.6 Graph variable and parameter declaration and definition
-<graph variable declaration>
-    : [ PROPERTY ] GRAPH <graph variable> <of graph type>
+graph_variable_declaration
+    : PROPERTY_GRAPH graph_variable of_graph_type {
+
+    }
     ;
 
-<optional graph variable definition>
-    : <graph variable definition>
+optional_graph_variable_definition
+    : graph_variable_definition {
+
+    }
     ;
 
-<graph variable definition>
-    : [ PROPERTY ] GRAPH <graph variable> <of graph type> <graph initializer>
+graph_variable_definition
+    : PROPERTY_GRAPH graph_variable of_graph_type graph_initializer {
+      
+    }
     ;
 
-<graph parameter definition>
-    : [ PROPERTY ] GRAPH <parameter name> [ IF NOT EXISTS ] <of graph type> <graph initializer>
+graph_parameter_definition
+    : PROPERTY_GRAPH PARAMETER_NAME of_graph_type graph_initializer {
+
+    }
+    | PROPERTY_GRAPH PARAMETER_NAME IF NOT EXISTS of_graph_type graph_initializer {
+
+    }
     ;
 
-<graph variable>
-    : <binding variable name>
+graph_variable
+    : binding_variable_name {
+
+    }
     ;
 
-<graph initializer>
-    : <as or equals> <graph expression>
-    | [ AS ] <nested graph query specification>
-    | <colon> <catalog graph reference>
+graph_initializer
+    : as_or_equals graph_expression {
+
+    }
+    | nested_graph_query_specification {
+
+    }
+    | AS nested_graph_query_specification {
+
+    }
+    | COLON catalog_graph_reference {
+
+    }
     ;
 
 
 
 // Section 10.7 Binding table variable and parameter declaration and definition
-<binding table variable declaration>
-    : [ BINDING ] TABLE <binding table variable> <of binding table type>
+binding_table_variable_declaration
+    : BINDING_TABLE binding_table_variable of_binding_table_type
     ;
 
-<optional binding table variable definition>
-    : <binding table variable definition>
+optional_binding_table_variable_definition
+    : binding_table_variable_definition {
+
+    }
     ;
 
-<binding table variable definition>
-    : [ BINDING ] TABLE <binding table variable> <of binding table type> <binding table initializer>
+binding_table_variable_definition
+    : BINDING_TABLE binding_table_variable of_binding_table_type binding_table_initializer {
+
+    }
     ;
 
-<binding table parameter definition>
-    : [ BINDING ] TABLE <parameter> [ IF NOT EXISTS ] <of binding table type> <binding table initializer>
+binding_table_parameter_definition
+    : BINDING_TABLE parameter of_binding_table_type binding_table_initializer {
+
+    }
+    | BINDING_TABLE parameter IF NOT EXISTS of_binding_table_type binding_table_initializer {
+      
+    }
     ;
 
-<binding table variable>
-    : <binding variable name>
+binding_table_variable
+    : binding_variable_name {
+
+    }
     ;
 
-<binding table initializer>
-    : <as or equals> <binding table reference>
-    | [ AS ] <nested query specification>
-    | <colon> <catalog binding table reference>
+binding_table_initializer
+    : as_or_equals binding_table_reference {
+
+    }
+    | nested_query_specification {
+
+    }
+    | AS nested_query_specification {
+      
+    }
+    | COLON catalog_binding_table_reference {
+
+    }
     ;
 
 
 // Section 10.8 Value variable and parameter declaration and definition
-<value variable declaration>
-    : VALUE <value variable> [ <of value type> ]
-    ;
+value_variable_declaration
+    : VALUE value_variable {
 
-<optional value variable definition>
-    : <value variable definition>
-    ;
-
-<value variable definition>
-    : VALUE <value variable> [ <of value type> ] <value initializer>
-    ;
-
-<value parameter definition>
-    : VALUE <parameter> [ IF NOT EXISTS ] [ <of value type> ] <value initializer>
-    ;
-
-<value variable>
-    : <binding variable name>
-    ;
-
-<value initializer>
-    : <as or equals> <value expression>
-    | [ AS ] <nested query specification>
-    | <colon> <catalog object reference>
-    ;
-
-
-// Section 11.2 <primary result object expression>
-<primary result object expression>
-    : <graph expression>
-    | <binding table reference>
-    ;
-
-
-
-// Section 11.3 <graph expression>
-<graph expression>
-    : <copy graph expression>
-    | <graph specification>
-    | <graph reference>
-    ;
-
-<copy graph expression>
-    : COPY OF <graph expression>
-    ;
-
-
-
-// Section 11.4 <graph type expression>
-<graph type expression>
-    : <copy graph type expression>
-    | <like graph expression>
-    | <graph type specification>
-    | <graph type reference>
-    ;
-
-<as graph type>
-    : <as or equals> <graph type expression>
-    | <like graph expression shorthand>
-    | [ AS ] <nested graph type specification>
-    ;
-
-<copy graph type expression>
-    : COPY OF <graph type reference>
-    ;
-
-<like graph expression>
-    : [ PROPERTY ] GRAPH TYPE <like graph expression shorthand>
-    ;
-
-<of graph type>
-    : [ <of type prefix> ] <graph type expression>
-    | <like graph expression shorthand>
-    | [ <of type prefix> ] <nested graph type specification>
-    ;
-
-<like graph expression shorthand>
-    : LIKE <graph expression>
-    ;
-
-
-
-// Section 11.5 <binding table type expression>
-<of binding table type>
-    : [ <of type prefix> ] <binding table type expression>
-    | <like binding table shorthand>
-    ;
-
-<binding table type expression>
-    : <binding table type>
-    | <like binding table type>
-    ;
-
-<binding table type>
-    : [ BINDING ] TABLE <record value type>;
-
-<like binding table type>
-    : [ BINDING ] TABLE <like binding table shorthand>
-    ;
-
-<like binding table shorthand>
-    : LIKE <binding table reference>
-    ;
-
-
-// Section 12.1 <statement>
-<statement>
-    : [ <at schema clause> ] {
-      <catalog-modifying statement>
-    | <data-modifying statement>
-    | <query statement>
+    }
+    | VALUE value_variable of_value_type {
+      
     }
     ;
 
-<catalog-modifying statement>
-    : <linear catalog-modifying statement>
+optional_value_variable_definition
+    : value_variable_definition {
+
+    }
     ;
 
-<data-modifying statement>
-    : <conditional data-modifying statement>
-    | <linear data-modifying statement>
+value_variable_definition
+    : VALUE value_variable value_initializer {
+
+    }
+    | VALUE value_variable of_value_type value_initializer {
+
+    }
     ;
 
-<query statement>
-    : <composite query statement>
-    | <conditional query statement>
+value_parameter_definition
+    : VALUE parameter [ IF NOT EXISTS ] [ of_value_type ] value_initializer
+    ;
+
+value_variable
+    : binding_variable_name {
+
+    }
+    ;
+
+value_initializer
+    : as_or_equals value_expression {
+
+    }
+    | nested_query_specification {
+
+    }
+    | AS nested_query_specification {
+
+    }
+    | COLON catalog_object_reference {
+
+    }
+    ;
+
+
+// Section 11.2 primary_result_object_expression
+primary_result_object_expression
+    : graph_expression {
+
+    }
+    | binding_table_reference {
+
+    }
     ;
 
 
 
-// Section 12.2 <call procedure statement>
-<call procedure statement>
-    : [ <statement mode> ] CALL <procedure call>
+// Section 11.3 graph_expression
+graph_expression
+    : copy_graph_expression {
+
+    }
+    | graph_specification {
+
+    }
+    | graph_reference {
+
+    }
     ;
 
-<statement mode>
-    : OPTIONAL
-    | MANDATORY
+copy_graph_expression
+    : COPY OF graph_expression {
+
+    }
+    ;
+
+
+
+// Section 11.4 graph_type_expression
+graph_type_expression
+    : copy_graph_type_expression {
+
+    }
+    | like_graph_expression {
+
+    }
+    | graph_type_specification {
+
+    }
+    | graph_type_reference {
+
+    }
+    ;
+
+as_graph_type
+    : as_or_equals graph_type_expression {
+
+    }
+    | like_graph_expression_shorthand {
+
+    }
+    | ested_graph_type_specification {
+
+    }
+    | AS nested_graph_type_specification {
+      
+    }
+    ;
+
+copy_graph_type_expression
+    : COPY OF graph_type_reference {
+
+    }
+    ;
+
+like_graph_expression
+    : PROPERTY_GRAPH TYPE like_graph_expression_shorthand {
+
+    }
+    ;
+
+of_graph_type
+    : graph_type_expression {
+
+    }
+    | of_type_prefix graph_type_expression {
+
+    }
+    | like_graph_expression_shorthand {
+
+    }
+    | nested_graph_type_specification {
+
+    }
+    | of_type_prefix nested_graph_type_specification {
+      
+    }
+    ;
+
+like_graph_expression_shorthand
+    : LIKE graph_expression {
+
+    }
+    ;
+
+
+
+// Section 11.5 binding_table_type_expression
+of_binding_table_type
+    : binding_table_type_expression {
+
+    }
+    | of_type_prefix binding_table_type_expression {
+
+    }
+    | like_binding_table_shorthand {
+
+    }
+    ;
+
+binding_table_type_expression
+    : binding_table_type {
+
+    }
+    | like_binding_table_type {
+
+    }
+    ;
+
+binding_table_type
+    : BINDING_TABLE record_value_type {
+
+    }
+    ;
+
+like_binding_table_type
+    : BINDING_TABLE like_binding_table_shorthand {
+
+    }
+    ;
+
+like_binding_table_shorthand
+    : LIKE binding_table_reference
+    ;
+
+
+// Section 12.1 statement
+statement
+    : opt_at_schema_clause catalog_modifying_statement {
+
+    }
+    | opt_at_schema_clause data_modifying_statement {
+
+    }
+    | opt_at_schema_clause query_statement {
+
+    }
+    }
+    ;
+
+opt_at_schema_clause
+    : %empty {
+
+    }
+    | at_schema_clause {
+
+    }
+    ;
+
+catalog_modifying_statement
+    : linear_catalog_modifying_statement {
+
+    }
+    ;
+
+data_modifying_statement
+    : conditional_data_modifying_statement {
+
+    }
+    | linear_data_modifying_statement {
+
+    }
+    ;
+
+query_statement
+    : composite_query_statement {
+
+    }
+    | conditional_query_statement {
+
+    }
+    ;
+
+
+
+// Section 12.2 call_procedure_statement
+call_procedure_statement
+    : CALL procedure_call {
+
+    }
+    | statement_mode CALL procedure_call {
+
+    }
+    ;
+
+statement_mode
+    : OPTIONAL {
+
+    }
+    | MANDATORY {
+
+    }
     ;
 
 
 // Section 12.3 Statement classes
-<simple catalog-modifying statement>
-    : <primitive catalog-modifying statement>
-    | <call catalog-modifying procedure statement>
+simple_catalog_modifying_statement
+    : primitive_catalog_modifying_statement {
+
+    }
+    | call_catalog_modifying_procedure_statement {
+
+    }
     ;
 
-<primitive catalog-modifying statement>
-    : <create graph statement>
-    | <create graph type statement>
-    | <create procedure statement>
+primitive_catalog_modifying_statement
+    : create_graph_statement
+    | create_graph_type_statement
+    | create_procedure_statement
     | <create query statement>
     | <create function statement>
     | <drop graph statement>
@@ -631,9 +1133,9 @@ to be specified. See Possible Problem GQL-021 .
 
 
 
-// Section 13.1 <linear catalog-modifying statement>
-<linear catalog-modifying statement>
-    : <simple catalog-modifying statement>...
+// Section 13.1 linear_catalog_modifying_statement
+linear_catalog_modifying_statement
+    : simple_catalog_modifying_statement...
     ;
 
 
@@ -650,28 +1152,28 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 
-// Section 13.4 <create graph statement>
-<create graph statement>
+// Section 13.4 create_graph_statement
+create_graph_statement
     : CREATE {
-      [ PROPERTY ] GRAPH <catalog graph parent and name> [ IF NOT EXISTS ]
-      | OR REPLACE [ PROPERTY ] GRAPH <catalog graph parent and name>
-    } [ <of graph type> ] [ <graph source> ]
+      PROPERTY_GRAPH <catalog graph parent and name> [ IF NOT EXISTS ]
+      | OR REPLACE PROPERTY_GRAPH <catalog graph parent and name>
+    } [ of_graph_type ] [ <graph source> ]
     ;
 
 <graph source>
-    : AS <copy graph expression>
+    : AS copy_graph_expression>
     ;
 
 
-// Section 13.5 <graph specification>
-<graph specification>
-    : [ PROPERTY ] GRAPH { <nested graph query specification>
+// Section 13.5 graph_specification
+graph_specification
+    : PROPERTY_GRAPH { nested_graph_query_specification
                            | <nested ambient data-modifying procedure specification
                           }
     ;
 
-<nested graph query specification>
-    : <nested query specification>
+nested_graph_query_specification
+    : nested_query_specification
     ;
 
 <nested ambient data-modifying procedure specification>
@@ -685,28 +1187,28 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 
-// Section 13.7 <create graph type statement>
-<create graph type statement>
+// Section 13.7 create_graph_type_statement
+create_graph_type_statement
     : CREATE {
-      [ PROPERTY ] GRAPH TYPE <catalog graph type parent and name> [ IF NOT EXISTS ]
-      | OR REPLACE [ PROPERTY ] GRAPH TYPE <catalog graph type parent and name>
+      PROPERTY_GRAPH TYPE <catalog graph type parent and name> [ IF NOT EXISTS ]
+      | OR REPLACE PROPERTY_GRAPH TYPE <catalog graph type parent and name>
     } <graph type initializer>
     ;
 
 <graph type initializer>
-    : <as graph type>
-    | <colon> <catalog graph type reference>
+    : as_graph_type
+    | COLON <catalog graph type reference>
     ;
 
 
 
-// Section 13.8 <graph type specification>
-<graph type specification>
-    : [ PROPERTY ] GRAPH TYPE <nested graph type specification>
+// Section 13.8 graph_type_specification
+graph_type_specification
+    : PROPERTY_GRAPH TYPE nested_graph_type_specification
     ;
 
-<nested graph type specification>
-    : <left brace> <graph type specification body> <right brace>
+nested_graph_type_specification
+    : LEFT_BRACE <graph type specification body> RIGHT_BRACE
     ;
 
 <graph type specification body>
@@ -714,7 +1216,7 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <element type definition list>
-    : <element type definition> [ { <comma> <element type definition> }... ]
+    : <element type definition> [ { COMMA <element type definition> }... ]
     ;
 
 <element type definition>
@@ -726,7 +1228,7 @@ to be specified. See Possible Problem GQL-021 .
 // Section 13.9 <node type definition>
 <node type definition>
     : <left paren> [ <node type name> ] [ <node type filler> ] <right paren>
-    | <node synonym> [ TYPE ] <node type name> <node type filler>
+    | node_synonym [ TYPE ] <node type name> <node type filler>
     ;
 
 <node type name>
@@ -754,7 +1256,7 @@ to be specified. See Possible Problem GQL-021 .
 <edge type definition>
     : <full edge type pattern>
     | <abbreviated edge type pattern>
-    | <edge kind> <edge synonym> [ TYPE ] <edge type name> <edge type filler> <endpoint definition>
+    | <edge kind> edge_synonym [ TYPE ] <edge type name> <edge type filler> <endpoint definition>
     ;
 
 <edge type name>
@@ -899,11 +1401,11 @@ to be specified. See Possible Problem GQL-021 .
 
 // Section 13.12 <property type set definition>
 <property type set definition>
-    : <left brace> [ <property type definition list> ] <right brace>
+    : LEFT_BRACE [ <property type definition list> ] RIGHT_BRACE
     ;
 
 <property type definition list>
-    : <property type definition> [ { <comma> <property type definition> }... ]
+    : <property type definition> [ { COMMA <property type definition> }... ]
     ;
 
 <property type definition>
@@ -913,15 +1415,15 @@ to be specified. See Possible Problem GQL-021 .
 
 // Section 13.13 <drop graph type statement>
 <drop graph type statement>
-    : DROP [ PROPERTY ] GRAPH TYPE <catalog graph type parent and name> [ IF EXISTS ]
+    : DROP PROPERTY_GRAPH TYPE <catalog graph type parent and name> [ IF EXISTS ]
     ;
 
 
-// Section 13.14 <create procedure statement>
-<create procedure statement>
+// Section 13.14 create_procedure_statement
+create_procedure_statement
     : CREATE {
-      PROCEDURE <catalog procedure parent and name> <of type signature> [ IF NOT EXISTS ]
-      | OR REPLACE PROCEDURE <catalog procedure parent and name> <of type signature>
+      PROCEDURE <catalog procedure parent and name> of_type_signature [ IF NOT EXISTS ]
+      | OR REPLACE PROCEDURE <catalog procedure parent and name> of_type_signature
     } <procedure initializer>
     ;
 
@@ -935,8 +1437,8 @@ to be specified. See Possible Problem GQL-021 .
 // Section 13.16 <create query statement>
 <create query statement>
     : CREATE {
-      QUERY <catalog query parent and name> <of type signature> [ IF NOT EXISTS ]
-      | OR REPLACE QUERY <catalog query parent and name> <of type signature>
+      QUERY <catalog query parent and name> of_type_signature [ IF NOT EXISTS ]
+      | OR REPLACE QUERY <catalog query parent and name> of_type_signature
     } <query initializer>
     ;
 
@@ -950,9 +1452,9 @@ to be specified. See Possible Problem GQL-021 .
 // Section 13.18 <create function statement>
 <create function statement>
     : CREATE {
-      FUNCTION <catalog function parent and name> <of type signature> [ IF NOT EXISTS ]
-      | OR REPLACE FUNCTION <catalog function parent and name> <of type signature>
-    } <function initializer>
+      FUNCTION <catalog function parent and name> of_type_signature [ IF NOT EXISTS ]
+      | OR REPLACE FUNCTION <catalog function parent and name> of_type_signature
+    } function_initializer
     ;
 
 
@@ -962,14 +1464,14 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 
-// Section 13.20 <call catalog-modifying procedure statement>
-<call catalog-modifying procedure statement>
-    : <call procedure statement>
+// Section 13.20 call_catalog_modifying_procedure_statement
+call_catalog_modifying_procedure_statement
+    : call_procedure_statement
     ;
 
 
-// Section 14.1 <linear data-modifying statement>
-<linear data-modifying statement>
+// Section 14.1 linear_data_modifying_statement
+linear_data_modifying_statement
     : <focused linear data-modifying statement>
     | <ambient linear data-modifying statement>
     ;
@@ -996,19 +1498,19 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 
-// Section 14.2 <conditional data-modifying statement>
-<conditional data-modifying statement>
+// Section 14.2 conditional_data_modifying_statement
+conditional_data_modifying_statement
     : <when then linear data-modifying statement branch>...
     [ <else linear data-modifying statement branch> ]
     ;
 
 <when then linear data-modifying statement branch>
-    : <when clause> THEN <linear data-modifying statement>
+    : <when clause> THEN linear_data_modifying_statement
     | <when clause> <nested data-modifying procedure specification>
     ;
 
 <else linear data-modifying statement branch>
-    : ELSE <linear data-modifying statement>
+    : ELSE linear_data_modifying_statement
     ;
 
 <when clause>
@@ -1042,7 +1544,7 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <set item list>
-    : <set item> [ { <comma> <set item> }... ]
+    : <set item> [ { COMMA <set item> }... ]
     ;
 
 <set item>
@@ -1050,11 +1552,11 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <set property item>
-    : <binding variable> <period> <property name> <equals operator> <value expression>
+    : <binding variable> <period> <property name> EQUALS_OPERATOR value_expression
     ;
 
 <set all properties item>
-    : <binding variable> <equals operator> <value expression>
+    : <binding variable> EQUALS_OPERATOR value_expression
     ;
 
 <set label item>
@@ -1072,7 +1574,7 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <remove item list>
-    : <remove item> [ { <comma> <remove item> }... ]
+    : <remove item> [ { COMMA <remove item> }... ]
     ;
 
 <remove item>
@@ -1084,7 +1586,7 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <remove label item>
-    : <binding variable> <colon> <label set expression>
+    : <binding variable> COLON <label set expression>
     ;
 
 
@@ -1094,34 +1596,34 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <delete item list>
-    : <delete item> [ { <comma> <delete item> }... ]
+    : <delete item> [ { COMMA <delete item> }... ]
     ;
 
 <delete item>
-    : <value expression>
+    : value_expression
     ;
 
 
 // Section 14.9 <call data-modifying procedure statement>
 <call data-modifying procedure statement>
-    : <call procedure statement>
+    : call_procedure_statement
     ;
 
 
-// Section 15.1 <composite query statement>
-<composite query statement>
+// Section 15.1 composite_query_statement
+composite_query_statement
     : <composite query expression>
     ;
 
 
-// Section 15.2 <conditional query statement>
-<conditional query statement>
+// Section 15.2 conditional_query_statement
+conditional_query_statement
     : <when then linear query branch>... [ <else linear query branch> ]
     ;
 
 <when then linear query branch>
     : <when clause> THEN <linear query expression>
-    | <when clause> <nested query specification>
+    | <when clause> nested_query_specification
     ;
 
 <else linear query branch>
@@ -1167,12 +1669,12 @@ to be specified. See Possible Problem GQL-021 .
 
 <focused linear query statement body>
     : [ <simple linear query statement> [ { <from graph clause> <simple linear query statement> }... ] ] <primitive result statement>
-    | <nested query specification>
+    | nested_query_specification
     ;
 
 <ambient linear query statement>
     : [ <simple linear query statement> ] <primitive result statement>
-    | <nested query specification>
+    | nested_query_specification
     ;
 
 <simple linear query statement>
@@ -1183,27 +1685,27 @@ to be specified. See Possible Problem GQL-021 .
 /* Section 15.6 Data-reading statements */
 // Section 15.6.1 <match statement>
 <match statement>
-    : [ <statement mode> ] MATCH <graph pattern>
+    : [ statement_mode ] MATCH <graph pattern>
     ;
 
 
 // Section 15.6.2 <call query statement>
 <call query statement>
-    : <call procedure statement>
+    : call_procedure_statement
     ;
 
 
 /* Section 15.7 Data-transforming statements */
 // Section 15.7.1 <mandatory statement>
 <mandatory statement>
-    : MANDATORY <procedure call>
+    : MANDATORY procedure_call
     ;
 
 
 
 // Section 15.7.2 <optional statement>
 <optional statement>
-    : OPTIONAL <procedure call>
+    : OPTIONAL procedure_call
     ;
 
 // Section 15.7.3 <filter statement>
@@ -1214,20 +1716,20 @@ to be specified. See Possible Problem GQL-021 .
 
 // Section 15.7.4 <let statement>
 <let statement>
-    : LET <compact variable definition list>
-    | <statement mode> LET <compact variable definition list> <where clause>
+    : LET compact_variable_definition_list
+    | statement_mode LET compact_variable_definition_list <where clause>
     ;
 
 
 // Section 15.7.5 <aggregate statement>
 <aggregate statement>
-    : AGGREGATE <compact value variable definition list> <where clause>
+    : AGGREGATE compact_value_variable_definition list <where clause>
     ;
 
 
 // Section 15.7.6 <for statement>
 <for statement>
-    : [ <statement mode> ] FOR <for item list> [ <for ordinality or index> ] [ <where clause> ]
+    : [ statement_mode ] FOR <for item list> [ <for ordinality or index> ] [ <where clause> ]
     ;
 
 <for item list>
@@ -1257,7 +1759,7 @@ to be specified. See Possible Problem GQL-021 .
 
 // Section 15.7.8 <call function statement>
 <call function statement>
-    : <call procedure statement>
+    : call_procedure_statement
     ;
 
 
@@ -1280,11 +1782,11 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <return item list>
-    : <return item> [ { <comma> <return item> }... ]
+    : <return item> [ { COMMA <return item> }... ]
     ;
 
 <return item>
-    : <value expression> [ <return item alias> ]
+    : value_expression [ <return item alias> ]
     ;
 
 <return item alias>
@@ -1304,11 +1806,11 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <select item list>
-    : <select item> [ { <comma> <select item> }... ]
+    : <select item> [ { COMMA <select item> }... ]
     ;
 
 <select item>
-    : <value expression> [ <select item alias> ]
+    : value_expression [ <select item alias> ]
     ;
 
 <select item alias>
@@ -1325,62 +1827,62 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <select graph match list>
-    : <select graph match> [ { <comma> <select graph match> }... ]
+    : <select graph match> [ { COMMA <select graph match> }... ]
     ;
 
 <select graph match>
-    : <graph expression> <match statement>
+    : graph_expression <match statement>
     ;
 
 <select query specification>
-    : FROM <nested query specification>
-    | <from graph clause> <nested query specification>
+    : FROM nested_query_specification
+    | <from graph clause> nested_query_specification
     ;
 
 
 // Section 16.1 <from graph clause>
 <from graph clause>
-    : FROM <graph expression>
+    : FROM graph_expression
     ;
 
 
 // Section 16.2 <use graph clause>
 <use graph clause>
-    : USE <graph expression>
+    : USE graph_expression
     ;
 
 
-// Section 16.3 <at schema clause>
-<at schema clause>
+// Section 16.3 at_schema_clause
+at_schema_clause
     : AT <schema reference>
     ;
 
 
 // Section 16.4 Named elements
 <static variable>
-    : <static variable name>
+    : static_variable_name
     ;
 
 <binding variable>
-    : <binding variable name>
+    : binding_variable_name
     ;
 
 <label>
     : <label name>
     ;
 
-<parameter>
-    : <parameter name>
+parameter
+    : PARAMETER_NAME
     ;
 
 
 // Section 16.5 <type signature>
-<of type signature>
-    : [ <of type prefix> ] <type signature>
+of_type_signature
+    : [ of_type_prefix ] <type signature>
     ;
 
 <type signature>
-    : <parenthesized formal parameter list> [ <of type prefix> ] <procedure result type>
+    : <parenthesized formal parameter list> [ of_type_prefix ] <procedure result type>
     ;
 
 <parenthesized formal parameter list>
@@ -1388,7 +1890,7 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <formal parameter list>
-    : <mandatory formal parameter list> [ <comma> <optional formal parameter list> ]
+    : <mandatory formal parameter list> [ COMMA <optional formal parameter list> ]
     | <optional formal parameter list>
     ;
 
@@ -1401,11 +1903,11 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <formal parameter declaration list>
-    : <formal parameter declaration> [ { <comma> <formal parameter declaration> }... ]
+    : <formal parameter declaration> [ { COMMA <formal parameter declaration> }... ]
     ;
 
 <formal parameter definition list>
-    : <formal parameter definition> [ { <comma> <formal parameter definition> }... ]
+    : <formal parameter definition> [ { COMMA <formal parameter definition> }... ]
     ;
 
 <formal parameter declaration>
@@ -1413,7 +1915,7 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <formal parameter definition>
-    : <parameter cardinality> <compact variable definition>
+    : <parameter cardinality> compact_variable_definition
     ;
 
 <optional parameter cardinality>
@@ -1438,11 +1940,11 @@ to be specified. See Possible Problem GQL-021 .
     ;
 
 <path pattern list>
-    : <path pattern> [ { <comma> <path pattern> }... ]
+    : <path pattern> [ { COMMA <path pattern> }... ]
     ;
 
 <path pattern>
-    : [ <path variable> <equals operator> ] [ <path pattern prefix> ] <path pattern expression>
+    : [ <path variable> EQUALS_OPERATOR ] [ <path pattern prefix> ] <path pattern expression>
     ;
 
 <keep clause>
@@ -1528,7 +2030,7 @@ to group. However, <question mark> does expose any singleton variables as condit
 
 <is or colon>
     : IS
-    | <colon>
+    | COLON
     ;
 
 <element pattern predicate>
@@ -1541,15 +2043,15 @@ to group. However, <question mark> does expose any singleton variables as condit
     ;
 
 <element property specification>
-    : <left brace> <property key value pair list> <right brace>
+    : LEFT_BRACE <property key value pair list> RIGHT_BRACE
     ;
 
 <property key value pair list>
-    : <property key value pair> [ { <comma> <property key value pair> }... ]
+    : <property key value pair> [ { COMMA <property key value pair> }... ]
     ;
 
 <property key value pair>
-    : <property name> <colon> <value expression>
+    : <property name> COLON value_expression
     ;
 
 <element pattern cost clause>
@@ -1557,7 +2059,7 @@ to group. However, <question mark> does expose any singleton variables as condit
     ;
 
 <cost clause>
-    : COST <value expression> [ DEFAULT <value expression> ]
+    : COST value_expression [ DEFAULT value_expression ]
     ;
 
 ** Editor’s Note (number 260) **
@@ -1636,11 +2138,11 @@ Opportunity GQL-212 .
     ;
 
 <fixed quantifier>
-    : <left brace> <unsigned integer> <right brace>
+    : LEFT_BRACE <unsigned integer> RIGHT_BRACE
     ;
 
 <general quantifier>
-    : <left brace> [ <lower bound> ] <comma> [ <upper bound> ] <right brace>
+    : LEFT_BRACE [ <lower bound> ] COMMA [ <upper bound> ] RIGHT_BRACE
     ;
 
 <lower bound>
@@ -1679,7 +2181,7 @@ difference being only whitespace. See Possible Problem GQL-046
 
 
 <subpath variable declaration>
-    : <subpath variable> <equals operator>
+    : <subpath variable> EQUALS_OPERATOR
     ;
 
 <parenthesized path pattern where clause>
@@ -1773,7 +2275,7 @@ This differs from the SQL/PGQ definition of <number of paths>.
     ;
 
 <simple path pattern list>
-    : <simple path pattern> [ { <comma> <simple path pattern> }... ]
+    : <simple path pattern> [ { COMMA <simple path pattern> }... ]
     ;
 
 <simple path pattern>
@@ -1980,8 +2482,8 @@ Various options for <wildcard label> were discussed. See Possible Problem GQL-03
     ;
 
 
-// Section 16.13 <procedure call>
-<procedure call>
+// Section 16.13 procedure_call
+procedure_call
     : <inline procedure call>
     | <named procedure call>
     ;
@@ -1999,11 +2501,11 @@ Various options for <wildcard label> were discussed. See Possible Problem GQL-03
     ;
 
 <procedure argument list>
-    : <procedure argument> [ { <comma> <procedure argument> }... ]
+    : <procedure argument> [ { COMMA <procedure argument> }... ]
     ;
 
 <procedure argument>
-    : <value expression>
+    : value_expression
     ;
 
 
@@ -2013,7 +2515,7 @@ Various options for <wildcard label> were discussed. See Possible Problem GQL-03
     ;
 
 <yield item list>
-    : <yield item> [ { <comma> <yield item> }... ]
+    : <yield item> [ { COMMA <yield item> }... ]
     ;
 
 <yield item>
@@ -2035,7 +2537,7 @@ Various options for <wildcard label> were discussed. See Possible Problem GQL-03
     ;
 
 <grouping element list>
-    : <grouping element> [ { <comma> <grouping element> } ]
+    : <grouping element> [ { COMMA <grouping element> } ]
     | <empty grouping set>
     ;
 
@@ -2067,11 +2569,11 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 
 <general set function>
-    : <general set function type> <left paren> <set quantifier> <value expression> <right paren>
+    : <general set function type> <left paren> <set quantifier> value_expression <right paren>
     ;
 
 <binary set function>
-    : <binary set function type> <left paren> <dependent value expression> <comma> <independent value expression> <right paren>
+    : <binary set function type> <left paren> <dependent value expression> COMMA <independent value expression> <right paren>
     ;
 
 <general set function type>
@@ -2106,7 +2608,7 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 // Section 16.20 <sort specification list>
 <sort specification list>
-    : <sort specification> [ { <comma> <sort specification> }... ]
+    : <sort specification> [ { COMMA <sort specification> }... ]
     ;
 
 <sort specification>
@@ -2114,7 +2616,7 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
     ;
 
 <sort key>
-    : <value expression>
+    : value_expression
     ;
 
 <ordering specification>
@@ -2157,16 +2659,16 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 
 // Section 17.2 Graph references
-<graph reference>
+graph_reference
     : <graph resolution expression>
     | <local graph reference>
     ;
 
 <graph resolution expression>
-    : [ PROPERTY ] GRAPH <catalog graph reference>
+    : PROPERTY_GRAPH catalog_graph_reference
     ;
 
-<catalog graph reference>
+catalog_graph_reference
     : <catalog graph parent and name>
     | <predefined graph parameter>
     | <external object reference>
@@ -2192,13 +2694,13 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 
 // Section 17.3 Graph type references
-<graph type reference>
+graph_type_reference
     : <graph type resolution expression>
     | <local graph type reference>
     ;
 
 <graph type resolution expression>
-    : [ PROPERTY ] GRAPH TYPE <catalog graph type reference>
+    : PROPERTY_GRAPH TYPE <catalog graph type reference>
     ;
 
 <catalog graph type reference>
@@ -2225,16 +2727,16 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 
 // Section 17.4 Binding table references
-<binding table reference>
+binding_table_reference
     : <binding table resolution expression>
     | <local binding table reference>
     ;
 
 <binding table resolution expression>
-    : [ BINDING ] TABLE <catalog binding table reference>
+    : BINDING_TABLE catalog_binding_table_reference
     ;
 
-<catalog binding table reference>
+catalog_binding_table_reference
     : <catalog binding table parent and name>
     | <predefined table parameter>
     | <external object reference>
@@ -2326,16 +2828,16 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 
 // Section 17.7 Function references
-<function reference>
+function_reference
     : <function resolution expression>
     | <local function reference>
     ;
 
 <function resolution expression>
-    : FUNCTION <catalog function reference>
+    : FUNCTION catalog_function_reference
     ;
 
-<catalog function reference>
+catalog_function_reference
     : <catalog function parent and name>
     | <external object reference>
     ;
@@ -2359,13 +2861,13 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 
 
-// Section 17.8 <catalog object reference>
-<catalog object reference>
+// Section 17.8 catalog_object_reference
+catalog_object_reference
     : <catalog url path>
     ;
 
 <parent catalog object reference>
-    : <catalog object reference> [ <solidus> ]
+    : catalog_object_reference [ <solidus> ]
     ;
 
 <catalog url path>
@@ -2419,7 +2921,7 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 // Section 17.10 <url path parameter>
 <url path parameter>
-    : <parameter>
+    : parameter
     ;
 
 
@@ -2470,7 +2972,7 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
     ;
 
 <comp op>
-    : <equals operator>
+    : EQUALS_OPERATOR
     | <not equals operator>
     | <less than operator>
     | <greater than operator>
@@ -2483,7 +2985,7 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 <exists predicate>
     : EXISTS {
       <left paren> <graph pattern> <right paren>
-      | <nested query specification>
+      | nested_query_specification
     }
     ;
 
@@ -2556,13 +3058,13 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 // Section 19.10 <all_different predicate>
 <all_different predicate>
-    : ALL_DIFFERENT <left paren> <element reference> <comma> <element reference> [ { <comma> <element reference> }... ] <right paren>
+    : ALL_DIFFERENT <left paren> <element reference> COMMA <element reference> [ { COMMA <element reference> }... ] <right paren>
     ;
 
 
 // Section 19.11 <same predicate>
 <same predicate>
-    : SAME <left paren> <element reference> <comma> <element reference> [ { <comma> <element reference> }... ] <right paren>
+    : SAME <left paren> <element reference> COMMA <element reference> [ { COMMA <element reference> }... ] <right paren>
     ;
 
 
@@ -2579,11 +3081,11 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
 
 <unsigned integer specification>
     : <unsigned integer>
-    | <parameter>
+    | parameter
     ;
 
 <parameter value specification>
-    : <parameter>
+    : parameter
     | <predefined parameter>
     ;
 
@@ -2620,9 +3122,9 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
     ;
 
 
-// Section 20.2 <value expression>
-<value expression>
-    : <untyped value expression> [ <of value type> ]
+// Section 20.2 value_expression
+value_expression
+    : <untyped value expression> [ of_value_type ]
     ;
 
 <untyped value expression>
@@ -2642,7 +3144,7 @@ multiple parameter cardinality. See Language Opportunity GQL-186 .
     ;
 
 <reference value expression>
-    : <primary result object expression>
+    : primary_result_object_expression
     | <graph element value expression>
     ;
 
@@ -2699,7 +3201,7 @@ GQL-083 .
 <boolean test>
     : <boolean primary> [ {
       IS [ NOT ]
-      | <equals operator>
+      | EQUALS_OPERATOR
       | <not equals operator>
     } <truth value> ]
     ;
@@ -2756,7 +3258,7 @@ GQL-083 .
     ;
 
 <parenthesized value expression>
-    : <left paren> <value expression> <right paren>
+    : <left paren> value_expression <right paren>
     ;
 
 <non-parenthesized value expression primary>
@@ -2817,7 +3319,7 @@ GQL-083 .
     ;
 
 <modulus expression>
-    : MOD <left paren> <numeric value expression dividend> <comma> <numeric value expression divisor> <right paren>
+    : MOD <left paren> <numeric value expression dividend> COMMA <numeric value expression divisor> <right paren>
     ;
 
 <numeric value expression dividend>
@@ -2837,7 +3339,7 @@ GQL-083 .
     ;
 
 <general logarithm function>
-    : LOG <left paren> <general logarithm base> <comma> <general logarithm argument> <right paren>
+    : LOG <left paren> <general logarithm base> COMMA <general logarithm argument> <right paren>
     ;
 
 <general logarithm base>
@@ -2861,7 +3363,7 @@ GQL-083 .
     ;
 
 <power function>
-    : POWER <left paren> <numeric value expression base> <comma> <numeric value expression exponent> <right paren>
+    : POWER <left paren> <numeric value expression base> COMMA <numeric value expression exponent> <right paren>
     ;
 
 <numeric value expression base>
@@ -2951,9 +3453,9 @@ GQL-083 .
     ;
 
 <substring function>
-    : SUBSTRING <left paren> <character string value expression> <comma> <start position> [ <comma> <string length> ] <right paren>
-    | LEFT <left paren> <character string value expression> <comma> <string length> <right paren>
-    | RIGHT <left paren> <character string value expression> <comma> <string length> <right paren>
+    : SUBSTRING <left paren> <character string value expression> COMMA <start position> [ COMMA <string length> ] <right paren>
+    | LEFT <left paren> <character string value expression> COMMA <string length> <right paren>
+    | RIGHT <left paren> <character string value expression> COMMA <string length> <right paren>
     ;
 
 <fold>
@@ -2961,7 +3463,7 @@ GQL-083 .
     ;
 
 <trim function>
-    : TRIM <left paren> <trim source> [ <comma> <trim specification> [ <trim character string> ] ] <right paren>
+    : TRIM <left paren> <trim source> [ COMMA <trim specification> [ <trim character string> ] ] <right paren>
     | lTrim <left paren> <trim source> <right paren>
     | rTrim <left paren> <trim source> <right paren>
     ;
@@ -2981,7 +3483,7 @@ GQL-083 .
     ;
 
 <normalize function>
-    : NORMALIZE <left paren> <character string value expression> [ <comma> <normal form> ] <right paren>
+    : NORMALIZE <left paren> <character string value expression> [ COMMA <normal form> ] <right paren>
     ;
 
 <normal form>
@@ -2997,13 +3499,13 @@ GQL-083 .
     ;
 
 <byte substring function>
-    : SUBSTRING <left paren> <byte string value expression> <comma> <start position> [ <comma> <string length> ] <right paren>
-    | LEFT <left paren> <byte string value expression> <comma> <string length> <right paren>
-    | RIGHT <left paren> <byte string value expression> <comma> <string length> <right paren>
+    : SUBSTRING <left paren> <byte string value expression> COMMA <start position> [ COMMA <string length> ] <right paren>
+    | LEFT <left paren> <byte string value expression> COMMA <string length> <right paren>
+    | RIGHT <left paren> <byte string value expression> COMMA <string length> <right paren>
     ;
 
 <byte string trim function>
-    : TRIM <left paren> <byte string trim source> [ <comma> <trim specification> [ <trim byte string> ] ] <right paren>
+    : TRIM <left paren> <byte string trim source> [ COMMA <trim specification> [ <trim byte string> ] ] <right paren>
     | lTrim <left paren> <byte string trim source> <right paren>
     | rTrim <left paren> <byte string trim source> <right paren>
     ;
@@ -3223,7 +3725,7 @@ GQL-083 .
     ;
 
 <trim list function>
-    : TRIM <left paren> <list value expression> <comma> <numeric value expression> <right paren>
+    : TRIM <left paren> <list value expression> COMMA <numeric value expression> <right paren>
     ;
 
 
@@ -3238,11 +3740,11 @@ GQL-083 .
     ;
 
 <list element list>
-    : <list element> [ { <comma> <list element> }... ]
+    : <list element> [ { COMMA <list element> }... ]
     ;
 
 <list element>
-    : <value expression>
+    : value_expression
     ;
 
 
@@ -3282,15 +3784,15 @@ GQL-083 .
     ;
 
 <multiset value constructor by enumeration>
-    : MULTISET <left brace> <multiset element list> <right brace>
+    : MULTISET LEFT_BRACE <multiset element list> RIGHT_BRACE
     ;
 
 <multiset element list>
-    : <multiset element> [ { <comma> <multiset element> }... ]
+    : <multiset element> [ { COMMA <multiset element> }... ]
     ;
 
 <multiset element>
-    : <value expression>
+    : value_expression
     ;
 
 
@@ -3301,15 +3803,15 @@ GQL-083 .
     ;
 
 <set value constructor by enumeration>
-    : SET <left brace> <set element list> <right brace>
+    : SET LEFT_BRACE <set element list> RIGHT_BRACE
     ;
 
 <set element list>
-    : <set element> [ { <comma> <set element> }... ]
+    : <set element> [ { COMMA <set element> }... ]
     ;
 
 <set element>
-    : <value expression>
+    : value_expression
     ;
 
 
@@ -3320,17 +3822,17 @@ GQL-083 .
 
 <ordered set value constructor by enumeration>
     : ORDERED SET {
-      <left brace> <ordered set element list> <right brace>
+      LEFT_BRACE <ordered set element list> RIGHT_BRACE
       | <left bracket> <ordered set element list> <right bracket>
     }
     ;
 
 <ordered set element list>
-    : <ordered set element> [ { <comma> <ordered set element> }... ]
+    : <ordered set element> [ { COMMA <ordered set element> }... ]
     ;
 
 <ordered set element>
-    : <value expression>
+    : value_expression
     ;
 
 
@@ -3341,11 +3843,11 @@ GQL-083 .
     ;
 
 <map value constructor by enumeration>
-    : MAP <left brace> <map element list> <right brace>
+    : MAP LEFT_BRACE <map element list> RIGHT_BRACE
     ;
 
 <map element list>
-    : <map element> [ { <comma> <map element> }... ]
+    : <map element> [ { COMMA <map element> }... ]
     ;
 
 <map element>
@@ -3353,11 +3855,11 @@ GQL-083 .
     ;
 
 <map key>
-    : <value expression> <colon>
+    : value_expression COLON
     ;
 
 <map value>
-    : <value expression>
+    : value_expression
     ;
 
 
@@ -3369,11 +3871,11 @@ GQL-083 .
     ;
 
 <record value constructor by enumeration>
-    : [ RECORD ] <left brace> <field list> <right brace>
+    : [ RECORD ] LEFT_BRACE <field list> RIGHT_BRACE
     ;
 
 <field list>
-    : <field> [ { <comma> <field> }... ]
+    : <field> [ { COMMA <field> }... ]
     ;
 
 <field>
@@ -3381,7 +3883,7 @@ GQL-083 .
     ;
 
 <field value>
-    : <value expression>
+    : value_expression
     ;
 
 
@@ -3395,7 +3897,7 @@ GQL-083 .
 
 // Section 20.27 <value query expression>
 <value query expression>
-    : VALUE <nested query specification>
+    : VALUE nested_query_specification
     ;
 
 
@@ -3406,8 +3908,8 @@ GQL-083 .
     ;
 
 <case abbreviation>
-    : NULLIF <left paren> <value expression> <comma> <value expression> <right paren>
-    | COALESCE <left paren> <value expression> { <comma> <value expression> }... <right paren>
+    : NULLIF <left paren> value_expression COMMA value_expression <right paren>
+    | COALESCE <left paren> value_expression { COMMA value_expression }... <right paren>
     ;
 
 <case specification>
@@ -3441,7 +3943,7 @@ GQL-083 .
     ;
 
 <when operand list>
-    : <when operand> [ { <comma> <when operand> }... ]
+    : <when operand> [ { COMMA <when operand> }... ]
     ;
 
 <when operand>
@@ -3460,7 +3962,7 @@ GQL-083 .
     ;
 
 <result expression>
-    : <value expression>
+    : value_expression
     ;
 
 
@@ -3471,7 +3973,7 @@ GQL-083 .
     ;
 
 <cast operand>
-    : <value expression>
+    : value_expression
     | <null literal>
     ;
 
@@ -3504,8 +4006,19 @@ GQL-083 .
     | <record literal>
     ;
 
+// The following rule is modified to
+/* <predefined type literal>
+    : <boolean literal>
+    | <character string literal>
+    | <byte string literal>
+    | <temporal literal>
+    | <duration literal>
+    | <null literal>
+    ; */
+
 <predefined type literal>
     : <boolean literal>
+    | <unbroken character string literal>
     | <character string literal>
     | <byte string literal>
     | <temporal literal>
@@ -3522,31 +4035,31 @@ GQL-083 .
     : TRUE | FALSE | UNKNOWN
     ;
 
-<character string literal>
+/* <character string literal>
     : <single quoted character sequence>
     | <double quoted character sequence>
-    ;
+    ; */
 
-<unbroken character string literal>
+/* <unbroken character string literal>
     : <unbroken single quoted character sequence>
     | <unbroken double quoted character sequence>
-    ;
+    ; */
 
-<single quoted character sequence>
+/* <single quoted character sequence>
     : <unbroken single quoted character sequence> [ { <separator> <unbroken single quoted character sequence> }... ]
     ;
 
 <double quoted character sequence>
     : <unbroken double quoted character sequence> [ { <separator> <unbroken double quoted character sequence> }... ]
-    ;
+    ; */
 
-<unbroken single quoted character sequence>
+/* <unbroken single quoted character sequence>
     : <quote> [ <single quoted character representation>... ] <quote>
     ;
 
 <unbroken double quoted character sequence>
     : <double quote> [ <double quoted character representation>... ] <double quote>
-    ;
+    ; */
 
 <unbroken accent quoted character sequence>
     : <grave accent> [ <accent quoted character representation>... ] <grave accent>
@@ -3776,17 +4289,17 @@ GQL-083 .
     | <graph element type>
     | <collection type>
     | <map value type>
-    | <record value type>
-    | <graph type expression>
-    | <binding table type expression>
+    | record_value_type
+    | graph_type_expression
+    | binding_table_type_expression
     | NOTHING
     ;
 
-<of value type>
-    : [ <of type prefix> ] <value type>
+of_value_type
+    : [ of_type_prefix ] <value type>
     ;
 
-<of type prefix>
+of_type_prefix
     : <double colon> | OF
     ;
 
@@ -3807,7 +4320,7 @@ GQL-083 .
     ;
 
 <byte string type>
-    : BYTES [ <left paren> [ <min length> <comma> ] <max length> <right paren> ]
+    : BYTES [ <left paren> [ <min length> COMMA ] <max length> <right paren> ]
     | BINARY [ <fixed length> ]
     | VARBINARY [ <max length> ]
     ;
@@ -3875,7 +4388,7 @@ GQL-083 .
     ;
 
 <decimal exact numeric type>
-    : { DECIMAL | DEC } <left paren> <precision> [ <comma> <scale> ] <right paren>
+    : { DECIMAL | DEC } <left paren> <precision> [ COMMA <scale> ] <right paren>
     ;
 
 <precision>
@@ -3892,7 +4405,7 @@ GQL-083 .
     | FLOAT64
     | FLOAT128
     | FLOAT128
-    | FLOAT [ <left paren> <precision> [ <comma> <scale> ] <right paren> ]
+    | FLOAT [ <left paren> <precision> [ COMMA <scale> ] <right paren> ]
     | REAL
     | DOUBLE [ PRECISION ]
     ;
@@ -3942,23 +4455,23 @@ GQL-083 .
     ;
 
 <map value type>
-    : MAP <left angle bracket> <map key type> <comma> <value type> <right angle bracket>
+    : MAP <left angle bracket> <map key type> COMMA <value type> <right angle bracket>
     ;
 
 <map key type>
     : <predefined type>
     ;
 
-<record value type>
-    : [ RECORD ] <left brace> [ <field type list> ] <right brace>
+record_value_type
+    : [ RECORD ] LEFT_BRACE [ <field type list> ] RIGHT_BRACE
     ;
 
 <field type list>
-    : <field type> [ { <comma> <field type> }... ]
+    : <field type> [ { COMMA <field type> }... ]
     ;
 
 <field type>
-    : <field name> [ <of type prefix> ] <value type>
+    : <field name> [ of_type_prefix ] <value type>
     ;
 
 
@@ -4024,9 +4537,9 @@ GQL-083 .
     : <identifier>
     ;
 
-<parameter name>
+/* <PARAMETER_NAME>
     : <dollar sign> <separated identifier>
-    ;
+    ; */
 
 <element variable>
     : <variable name>
@@ -4040,11 +4553,11 @@ GQL-083 .
     : <variable name>
     ;
 
-<static variable name>
+static_variable_name
     : <variable name>
     ;
 
-<binding variable name>
+binding_variable_name
     : <variable name>
     ;
 
@@ -4052,7 +4565,7 @@ GQL-083 .
     : <regular identifier>
     ;
 
-<identifier>
+/* <identifier>
     : <regular identifier>
     | <delimited identifier>
     ;
@@ -4060,13 +4573,56 @@ GQL-083 .
 <separated identifier>
     : <extended identifier>
     | <delimited identifier>
-    ;
+    ; */
 
-<edge synonym>
+edge_synonym
     : EDGE
     | RELATIONSHIP
+    ;
 
-
-<node synonym>
+node_synonym
     : NODE
     | VERTEX
+    ;
+
+BINDING_TABLE
+    : TABLE {
+
+    }
+    | BINDING TABLE {
+
+    }
+    ;
+
+PROPERTY_GRAPH
+    : GRAPH {
+
+    }
+    | PROPERTY GRAPH {
+
+    }
+    ;
+
+// moved from gql.ll
+<greater than operator>
+    : RIGHT_ANGLE_BRACKET
+    ;
+
+<less than operator>
+    : LEFT_ANGLE_BRACKET
+    ;
+
+
+//unbroken_character_string_literal {unbroken_single_quoted_character_sequence|unbroken_double_quoted_character_sequence}
+
+date_string {unbroken_character_string_literal}
+time_string {unbroken_character_string_literal}
+datetime_string {unbroken_character_string_literal}
+duration_string {unbroken_character_string_literal}
+
+single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
+double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
+
+// character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
+
+%%

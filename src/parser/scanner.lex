@@ -24,7 +24,7 @@ static constexpr size_t MAX_STRING = 4096;
 %x LB_STR
 %x COMMENT
 
-blanks                      ([ \t\n]+)
+
 
 NOT_IN                      (NOT{blanks}IN)
 NOT_CONTAINS                (NOT{blanks}CONTAINS)
@@ -36,6 +36,8 @@ IS_NULL                     (IS{blanks}NULL)
 IS_NOT_NULL                 (IS{blanks}NOT{blanks}NULL)
 IS_EMPTY                    (IS{blanks}EMPTY)
 IS_NOT_EMPTY                (IS{blanks}NOT{blanks}EMPTY)
+
+blanks                      ([ \t\n]+)
 
 DEC                         ([0-9])
 EXP                         ([eE][-+]?[0-9]+)
