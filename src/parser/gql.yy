@@ -1,8 +1,8 @@
-%start sentences
+%start GQL_request
 
 %%
 
-// Section 6.1 <GQL-request>
+// Section_6.1_GQL_request
 GQL_request
     : GQL_program {
 
@@ -13,7 +13,7 @@ GQL_request
     ;
 
 
-// Section 6.2 <request parameter set>
+// Section_6.2_request_parameter_set
 request_parameter_set 
     : request_parameter {
 
@@ -30,7 +30,7 @@ request_parameter
     ;
 
 
-// Section 6.3 <GQL-program>
+// Section_6.3_GQL_program
 GQL_program
     : main_activity {
     }
@@ -56,6 +56,15 @@ opt_session_activity
 
     }
     | session_activity {
+
+    }
+    ;
+
+opt_session_close_command
+    : %empty {
+
+    }
+    | session_close_command {
 
     }
     ;
@@ -128,7 +137,7 @@ transaction_activity
     ;
 
 
-// Section 6.4 <preamble>
+// Section_6.4_preamble
 preamble
     : preamble_option {
     }
@@ -153,13 +162,13 @@ preamble_option
     ;
 
 preamble_option_identifier
-    : identifier {
+    : IDENTIFIER {
 
     }
     ;
 
 
-// Section 7.1 <session set command>
+// Section_7.1_session_set_command
 session_set_command
     : SESSION SET session_set_schema_clause {
 
@@ -206,7 +215,7 @@ session_set_parameter_clause
     | session_parameter_flag session_parameter {
 
     }
-    | session_parameter_flag session_parameter IF NOT EXISTS {
+    | session_parameter_flag session_parameter IF_NOT_EXISTS {
 
     }
     ;
@@ -230,7 +239,7 @@ session_parameter_flag
     ;
 
 
-// Section 7.2 <session remove command>
+// Section_7.2_session_remove_command
 session_remove_command
     : REMOVE parameter {
 
@@ -238,13 +247,13 @@ session_remove_command
     | SESSION REMOVE parameter {
 
     }
-    | SESSION REMOVE parameter IF EXISTS {
+    | SESSION REMOVE parameter IF_EXISTS {
 
     }
     ;
 
 
-// Section 7.3 <session clear command>
+// Section_7.3_session_clear_command
 session_clear_command
     : CLEAR
     | SESSION CLEAR {
@@ -253,7 +262,7 @@ session_clear_command
     ;
 
 
-// Section 7.4 <session close command>
+// Section_7.4_session_close_command
 session_close_command
     : CLOSE
     | SESSION CLOSE {
@@ -262,7 +271,7 @@ session_close_command
     ;
 
 
-// Section 8.1 <start transaction command>
+// Section_8.1_start_transaction_command
 start_transaction_command
     : START TRANSACTION {
 
@@ -273,7 +282,7 @@ start_transaction_command
     ;
 
 
-// Section 8.2 <end transaction command>
+// Section_8.2_end_transaction_command
 end_transaction_command
     : commit_command {
 
@@ -284,7 +293,7 @@ end_transaction_command
     ;
 
 
-// Section 8.3 <transaction characteristics>
+// Section_8.3_transaction_characteristics
 transaction_characteristics
     : transaction_mode {
 
@@ -313,11 +322,11 @@ transaction_access_mode
     ;
 
 implementation_defined_access_mode
-    : !! See the Syntax Rules.
+    : !! See_the_Syntax_Rules.
     ;
 
 
-// Section 8.4 <rollback command>
+// Section_8.4_rollback_command
 rollback_command
     : ROLLBACK {
 
@@ -325,7 +334,7 @@ rollback_command
     ;
 
 
-// Section 8.5 <commit command>
+// Section_8.5_commit_command
 commit_command
     : COMMIT {
 
@@ -333,7 +342,7 @@ commit_command
     ;
 
 
-// Section 9.1 <procedure specification>
+// Section_9.1_procedure_specification
 nested_procedure_specification
     : LEFT_BRACE procedure_specification RIGHT_BRACE {
 
@@ -363,7 +372,7 @@ nested_catalog_modifying_procedure_specification
 
 nested_catalog_modifying_procedure_specification
     : 
-    !! Predicative production rule.
+    !! Predicative_production_rule.
     procedure_body {
 
     }
@@ -377,14 +386,14 @@ nested_data_modifying_procedure_specification
 
 data_modifying_procedure_specification
     :
-    !! Predicative production rule.
+    !! Predicative_production_rule.
     procedure_body {
 
     }
     ;
 
 
-// Section 9.2 <query specification>
+// Section_9.2_query_specification
 nested_query_specification
     : LEFT_BRACE query_specification RIGHT_BRACE {
 
@@ -393,14 +402,14 @@ nested_query_specification
 
 query_specification
     :
-    !! Predicative production rule.
+    !! Predicative_production_rule.
     procedure_body {
 
     }
     ;
 
 
-// Section 9.3 <function specification>
+// Section_9.3_function_specification
 nested_function_specification
     : LEFT_BRACE function_specification RIGHT_BRACE {
 
@@ -409,14 +418,14 @@ nested_function_specification
 
 function_specification
     :
-    !! Predicative production rule.
+    !! Predicative_production_rule.
     procedure_body {
 
     }
     ;
 
 
-// Section 9.4 <procedure body>
+// Section_9.4_procedure_body
 procedure_body
     : opt_static_variable_definition_block opt_binding_variable_definition_block statement_block {
 
@@ -478,7 +487,7 @@ then_statement
     ;
 
 
-// Section 10.1 Static variable definitions
+// Section_10.1_Static_variable_definitions
 static_variable_definition
     : procedure_variable_definition {
 
@@ -492,13 +501,14 @@ static_variable_definition
     ;
 
 as_or_equals
-    : AS | EQUALS_OPERATOR {
+    : AS
+    | EQUALS_OPERATOR {
 
     }
     ;
 
 
-// Section 10.2 Procedure variable definition
+// Section_10.2_Procedure_variable_definition
 procedure_variable_definition
     : PROCEDURE procedure_variable of_type_signature procedure_initializer {
 
@@ -530,7 +540,7 @@ procedure_initializer
     ;
 
 
-// Section 10.3 Query variable definition
+// Section_10.3_Query_variable_definition
 query_variable_definition
     : QUERY query_variable of_type_signature query_initializer {
 
@@ -558,7 +568,7 @@ query_initializer
     ;
 
 
-// Section 10.4 Function variable definition
+// Section_10.4_Function_variable_definition
 function_variable_definition
     : FUNCTION function_variable of_type_signature function_initializer {
 
@@ -586,7 +596,7 @@ function_initializer
     ;
 
 
-// Section 10.5 Binding variable and parameter declarations and definitions
+// Section_10.5_Binding_variable_and parameter_declarations_and_definitions
 compact_variable_declaration_list
     : compact_variable_declaration {
 
@@ -704,7 +714,7 @@ parameter_definition
 
 
 
-// Section 10.6 Graph variable and parameter declaration and definition
+// Section_10.6_Graph_variable_and parameter_declaration_and_definition
 graph_variable_declaration
     : PROPERTY_GRAPH graph_variable of_graph_type {
 
@@ -718,7 +728,7 @@ optional_graph_variable_definition
     ;
 
 graph_variable_definition
-    : PROPERTY_GRAPH graph_variable of_graph_type graph_initializer {
+    : PROPERTY_GRAP _graph_variable of_graph_type graph_initializer {
       
     }
     ;
@@ -727,7 +737,7 @@ graph_parameter_definition
     : PROPERTY_GRAPH PARAMETER_NAME of_graph_type graph_initializer {
 
     }
-    | PROPERTY_GRAPH PARAMETER_NAME IF NOT EXISTS of_graph_type graph_initializer {
+    | PROPERTY_GRAPH PARAMETER_NAME IF_NOT_EXISTS of_graph_type graph_initializer {
 
     }
     ;
@@ -755,7 +765,7 @@ graph_initializer
 
 
 
-// Section 10.7 Binding table variable and parameter declaration and definition
+// Section_10.7_Binding_table_variable and_parameter_declaration_and definition
 binding_table_variable_declaration
     : BINDING_TABLE binding_table_variable of_binding_table_type
     ;
@@ -776,7 +786,7 @@ binding_table_parameter_definition
     : BINDING_TABLE parameter of_binding_table_type binding_table_initializer {
 
     }
-    | BINDING_TABLE parameter IF NOT EXISTS of_binding_table_type binding_table_initializer {
+    | BINDING_TABLE parameter IF_NOT_EXISTS of_binding_table_type binding_table_initializer {
       
     }
     ;
@@ -803,7 +813,7 @@ binding_table_initializer
     ;
 
 
-// Section 10.8 Value variable and parameter declaration and definition
+// Section_10.8_Value_variable_and parameter_declaration_and_definition
 value_variable_declaration
     : VALUE value_variable {
 
@@ -829,7 +839,27 @@ value_variable_definition
     ;
 
 value_parameter_definition
-    : VALUE parameter [ IF NOT EXISTS ] [ of_value_type ] value_initializer
+    : VALUE parameter opt_IF_NOT_EXISTS opt_of_value_type value_initializer {
+
+    }
+    ;
+
+opt_IF_NOT_EXISTS
+    : %empty {
+
+    }
+    | IF_NOT_EXISTS {
+
+    }
+    ;
+
+opt_of_value_type
+    : %empty {
+
+    }
+    | of_value_type {
+
+    }
     ;
 
 value_variable
@@ -854,7 +884,7 @@ value_initializer
     ;
 
 
-// Section 11.2 primary_result_object_expression
+// Section_11.2_primary_result_object_expression
 primary_result_object_expression
     : graph_expression {
 
@@ -866,7 +896,7 @@ primary_result_object_expression
 
 
 
-// Section 11.3 graph_expression
+// Section_11.3_graph_expression
 graph_expression
     : copy_graph_expression {
 
@@ -887,7 +917,7 @@ copy_graph_expression
 
 
 
-// Section 11.4 graph_type_expression
+// Section_11.4_graph_type_expression
 graph_type_expression
     : copy_graph_type_expression {
 
@@ -910,7 +940,7 @@ as_graph_type
     | like_graph_expression_shorthand {
 
     }
-    | ested_graph_type_specification {
+    | nested_graph_type_specification {
 
     }
     | AS nested_graph_type_specification {
@@ -956,7 +986,7 @@ like_graph_expression_shorthand
 
 
 
-// Section 11.5 binding_table_type_expression
+// Section_11.5_binding_table_type_expression
 of_binding_table_type
     : binding_table_type_expression {
 
@@ -991,11 +1021,13 @@ like_binding_table_type
     ;
 
 like_binding_table_shorthand
-    : LIKE binding_table_reference
+    : LIKE binding_table_reference {
+
+    }
     ;
 
 
-// Section 12.1 statement
+// Section_12.1_statement
 statement
     : opt_at_schema_clause catalog_modifying_statement {
 
@@ -1044,7 +1076,7 @@ query_statement
 
 
 
-// Section 12.2 call_procedure_statement
+// Section_12.2_call_procedure_statement
 call_procedure_statement
     : CALL procedure_call {
 
@@ -1064,7 +1096,7 @@ statement_mode
     ;
 
 
-// Section 12.3 Statement classes
+// Section_12.3_Statement_classes
 simple_catalog_modifying_statement
     : primitive_catalog_modifying_statement {
 
@@ -1075,3220 +1107,5873 @@ simple_catalog_modifying_statement
     ;
 
 primitive_catalog_modifying_statement
-    : create_graph_statement
-    | create_graph_type_statement
-    | create_procedure_statement
-    | <create query statement>
-    | <create function statement>
-    | <drop graph statement>
-    | <drop graph type statement>
-    | <drop procedure statement>
-    | <drop query statement>
-    | <drop function statement>
+    : create_graph_statement {
+
+    }
+    | create_graph_type_statement {
+
+    }
+    | create_procedure_statement {
+      
+    }
+    | create_query_statement {
+      
+    }
+    | create_function_statement {
+      
+    }
+    | drop_graph_statement {
+      
+    }
+    | drop_graph_type_statement {
+      
+    }
+    | drop_procedure_statement {
+      
+    }
+    | drop_query_statement {
+      
+    }
+    | drop_function_statement {
+      
+    }
     ;
 
-<simple data-accessing statement>
-    : <simple query statement>
-    | <simple data-modifying statement>
+simple_data_accessing_statement
+    : simple_query_statement {
+
+    }
+    | simple_data_modifying_statement {
+      
+    }
     ;
 
-<simple data-modifying statement>
-    : <primitive data-modifying statement>
-    | <do statement>
-    | <call data-modifying procedure statement>
+simple_data_modifying_statement
+    : primitive_data_modifying_statement {
+
+    }
+    | do_statement {
+      
+    }
+    | call_data_modifying_procedure_statement {
+      
+    }
     ;
 
-<primitive data-modifying statement>
-    : <insert statement>
-    | <merge statement>
-    | <set statement>
-    | <remove statement>
-    | <delete statement>
+primitive_data_modifying_statement
+    : insert_statement {
+      
+    }
+    | merge_statement {
+      
+    }
+    | set_statement {
+      
+    }
+    | remove_statement {
+      
+    }
+    | delete_statement {
+      
+    }
     ;
 
-<simple query statement>
-    : <simple data-transforming statement>
-    | <simple data-reading statement>
+simple_query_statement
+    : simple_data_transforming_statement {
+      
+    }
+    | simple_data_reading_statement {
+      
+    }
     ;
 
-<simple data-reading statement>
-    : <match statement>
-    | <call query statement>
+simple_data_reading_statement
+    : match_statement {
+      
+    }
+    | call_query_statement {
+      
+    }
     ;
 
-<simple data-transforming statement>
-    : <primitive data-transforming statement>
-    | <call function statement>
+simple_data_transforming_statement
+    : primitive_data_transforming_statement {
+      
+    }
+    | call_function_statement {
+      
+    }
     ;
 
-<primitive data-transforming statement>
-    : <optional statement>
-    | <mandatory statement>
-    | <let statement>
-    | <for statement>
-    | <aggregate statement>
-    | <filter statement>
-    | <order by and page statement>
+primitive_data_transforming_statement
+    : optional_statement {
+      
+    }
+    | mandatory_statement {
+      
+    }
+    | let_statement {
+      
+    }
+    | for_statement {
+      
+    }
+    | aggregate_statement {
+      
+    }
+    | filter_statement {
+      
+    }
+    | order_by_and_page statement {
+      
+    }
     ;
 
 
 
-// Section 13.1 linear_catalog_modifying_statement
+// Section_13.1_linear_catalog_modifying_statement
 linear_catalog_modifying_statement
-    : simple_catalog_modifying_statement...
+    : simple_catalog_modifying_statement {
+
+    }
+    | linear_catalog_modifying_statement simple_catalog_modifying_statement {
+
+    }
     ;
 
 
 
-// Section 13.2 <create schema statement>
-<create schema statement>
-    : CREATE SCHEMA <catalog schema parent and name> [ IF NOT EXISTS ]
+// Section_13.2_create_schema_statement
+create_schema_statement
+    : CREATE SCHEMA catalog_schema_parent_and_name opt_IF_NOT_EXISTS {
+
+    }
     ;
 
 
-// Section 13.3 <drop schema statement>
-<drop schema statement>
-    : DROP SCHEMA <catalog schema parent and name> [ IF EXISTS ]
+// Section_13.3_drop_schema_statement
+drop_schema_statement
+    : DROP SCHEMA catalog_schema_parent_and_name opt_IF_EXISTS {
+      
+    }
     ;
 
 
-// Section 13.4 create_graph_statement
+// Section_13.4_create_graph_statement
 create_graph_statement
-    : CREATE {
-      PROPERTY_GRAPH <catalog graph parent and name> [ IF NOT EXISTS ]
-      | OR REPLACE PROPERTY_GRAPH <catalog graph parent and name>
-    } [ of_graph_type ] [ <graph source> ]
+    : CREATE PROPERTY_GRAPH catalog_graph_parent_and_name opt_IF_NOT_EXISTS opt_of_graph_type opt_graph_source {
+
+    }
+    | CREATE OR REPLACE PROPERTY_GRAPH catalog_graph_parent_and_name opt_of_graph_type opt_graph_source {
+
+    }
     ;
 
-<graph source>
-    : AS copy_graph_expression>
+opt_of_graph_type
+    : %empty {
+
+    }
+    | of_graph_type {
+
+    }
+    ;
+
+opt_graph_source
+    : %emtpy {
+
+    }
+    | graph_source {
+
+    }
+    ;
+
+graph_source
+    : AS copy_graph_expression {
+
+    }
     ;
 
 
-// Section 13.5 graph_specification
+// Section_13.5_graph_specification
 graph_specification
-    : PROPERTY_GRAPH { nested_graph_query_specification
-                           | <nested ambient data-modifying procedure specification
-                          }
+    : PROPERTY_GRAPH nested_graph_query_specification {
+
+    }
+    | PROPERTY_GRAPH nested_ambient_data_modifying_procedure_specification {
+
+    }
     ;
 
 nested_graph_query_specification
-    : nested_query_specification
+    : nested_query_specification {
+
+    }
     ;
 
-<nested ambient data-modifying procedure specification>
-    : <nested data-modifying procedure specification>
+nested_ambient_data_modifying_procedure_specification
+    : nested_data_modifying_procedure_specification {
+
+    }
     ;
 
 
-// Section 13.6 <drop graph statement>
-<drop graph statement>
-    : DROP GRAPH <catalog graph parent and name> [ IF EXISTS ]
+// Section_13.6_drop_graph_statement
+drop_graph_statement
+    : DROP GRAPH catalog_graph_parent_and_name opt_IF_EXISTS {
+
+    }
     ;
 
 
-// Section 13.7 create_graph_type_statement
+// Section_13.7_create_graph_type_statement
 create_graph_type_statement
-    : CREATE {
-      PROPERTY_GRAPH TYPE <catalog graph type parent and name> [ IF NOT EXISTS ]
-      | OR REPLACE PROPERTY_GRAPH TYPE <catalog graph type parent and name>
-    } <graph type initializer>
+    : CREATE PROPERTY_GRAPH TYPE opt_IF_NOT_EXISTS graph_type_initializer {
+
+    }
+    | CREATE OR REPLACE PROPERTY_GRAPH TYPE graph_type_initializer {
+
+    }
     ;
 
-<graph type initializer>
-    : as_graph_type
-    | COLON <catalog graph type reference>
+graph_type_initializer
+    : as_graph_type {
+
+    }
+    | COLON catalog_graph_type_reference {
+
+    }
     ;
 
 
 
-// Section 13.8 graph_type_specification
+// Section_13.8_graph_type_specification
 graph_type_specification
-    : PROPERTY_GRAPH TYPE nested_graph_type_specification
+    : PROPERTY_GRAPH TYPE nested_graph_type_specification {
+
+    }
     ;
 
 nested_graph_type_specification
-    : LEFT_BRACE <graph type specification body> RIGHT_BRACE
+    : LEFT_BRACE graph_type_specification_body RIGHT_BRACE {
+
+    }
     ;
 
-<graph type specification body>
-    : <element type definition list>
+graph_type_specification_body
+    : element_type_definition_list {
+
+    }
     ;
 
-<element type definition list>
-    : <element type definition> [ { COMMA <element type definition> }... ]
+element_type_definition_list
+    : element_type_definition {
+
+    }
+    | element_type_definition_list COMMA element_type_definition {
+
+    }
     ;
 
-<element type definition>
-    : <node type definition>
-    | <edge type definition>
-    ;
+element_type_definition
+    : node_type_definition {
 
+    }
+    | edge_type_definition {
 
-// Section 13.9 <node type definition>
-<node type definition>
-    : <left paren> [ <node type name> ] [ <node type filler> ] <right paren>
-    | node_synonym [ TYPE ] <node type name> <node type filler>
-    ;
-
-<node type name>
-    : !! Predicative production rule.
-    <element type name>
-    ;
-<node type filler>
-    : <node type label set definition>
-    | <node type property type set definition>
-    | <node type label set definition> <node type property type set definition>
-
-<node type label set definition>
-    : !! Predicative production rule.
-    <label set definition>
-    ;
-
-<node type property type set definition>
-    : !! Predicative production rule.
-    <property type set definition>
+    }
     ;
 
 
+// Section_13.9_node_type_definition
+node_type_definition
+    : LEFT_PAREN opt_node_type_name opt_node_type_filler RIGHT_PAREN {
 
-// Section 13.10 <edge type definition>
-<edge type definition>
-    : <full edge type pattern>
-    | <abbreviated edge type pattern>
-    | <edge kind> edge_synonym [ TYPE ] <edge type name> <edge type filler> <endpoint definition>
+    }
+    | node_synonym node_type_name node_type_filler {
+
+    }
+    | node_synonym TYPE node_type_name node_type_filler {
+      
+    }
     ;
 
-<edge type name>
-    : !! Predicative production rule.
-    <element type name>
+opt_node_type_name
+    : %emtpy {
+
+    }
+    | node_type_name {
+
+    }
     ;
 
-<edge type filler>
-    : <edge type label set definition>
-    | <edge type property type set definition>
-    | <edge type label set definition> <edge type property type set definition>
+opt_node_type_filler
+    : %empty {
+
+    }
+    | node_type_filler {
+
+    }
     ;
 
-<edge type label set definition>
-    : !! Predicative production rule.
-    <label set definition>
+node_type_name
+    : !! Predicative_production_rule.
+    element_type_name {
+
+    }
     ;
 
-<edge type property type set definition>
-    : !! Predicative production rule.
-    <property type set definition>
+node_type_filler
+    : node_type_label_set_definition {
+
+    }
+    | node_type_property_type_set_definition {
+
+    }
+    | node_type_label_set_definition node_type_property_type_set_definition {
+
+    }
     ;
 
-<full edge type pattern>
-    : <full edge type pattern pointing right>
-    | <full edge type pattern pointing left>
-    | <full edge type pattern any direction>
+node_type_label_set_definition
+    : !! Predicative_production_rule.
+    label_set_definition {
+
+    }
     ;
 
-<full edge type pattern pointing right>
-    : <source node type reference> <arc type pointing right> <destination node type reference>
+node_type_property_type_set_definition
+    : !! Predicative_production_rule.
+    property_type_set_definition {
+
+    }
     ;
 
-<full edge type pattern pointing left>
-    : <destination node type reference> <arc type pointing left> <source node type reference>
+
+
+// Section_13.10_edge_type_definition
+edge_type_definition
+    : full_edge_type_pattern {
+
+    }
+    | abbreviated_edge_type_pattern {
+
+    }
+    | edge_kind edge_synonym edge_type_name edge_type_filler endpoint_definition {
+
+    }
+    | edge_kind edge_synonym TYPE edge_type_name edge_type_filler endpoint_definition {
+
+    }
     ;
 
-<full edge type pattern any direction>
-    : <source node type reference> <arc type any direction> <destination node type reference>
+edge_type_name
+    : !! Predicative_production_rule.
+    element_type_name {
+
+    }
     ;
 
-<arc type pointing right>
-    : <minus left bracket> <arc type filler> <bracket right arrow>
+edge_type_filler
+    : edge_type_label_set_definition {
+      
+    }
+    | edge_type_property_type_set_definition {
+      
+    }
+    | edge_type_label_set_definition edge_type_property_type_set_definition {
+      
+    }
     ;
 
-<arc type pointing left>
-    : <left arrow bracket> <arc type filler> <right bracket minus>
+edge_type_label_set_definition
+    : !! Predicative_production_rule.
+    label_set_definition {
+
+    }
     ;
 
-<arc type any direction>
-    : <tilde left bracket> <arc type filler> <right bracket tilde>
+edge_type_property_type_set_definition
+    : !! Predicative_production_rule.
+    property_type_set_definition {
+      
+    }
     ;
 
-<arc type filler>
-    : [ <edge type name> ] [ <edge type filler> ]
+full_edge_type_pattern
+    : full_edge_type_pattern_pointing_right {
+      
+    }
+    | full_edge_type_pattern_pointing_left {
+      
+    }
+    | full_edge_type_pattern_any_direction {
+      
+    }
     ;
 
-<abbreviated edge type pattern>
-    : <abbreviated edge type pattern pointing right>
-    | <abbreviated edge type pattern pointing left>
-    | <abbreviated edge type pattern any direction>
+full_edge_type_pattern_pointing_right
+    : source_node_type_reference arc_type_pointing_right destination_node_type_reference {
+
+    }
     ;
 
-<abbreviated edge type pattern pointing right>
-    : <source node type reference> <right arrow> <destination node type reference>
+full_edge_type_pattern_pointing_left
+    : destination_node_type_reference arc_type_pointing_left source_node_type_reference {
+
+    }
     ;
 
-<abbreviated edge type pattern pointing left>
-    : <destination node type reference> <left arrow> <source node type reference>
+full_edge_type_pattern_any_direction
+    : source_node_type_reference arc_type_any_direction destination_node_type_reference {
+      
+    }
     ;
 
-<abbreviated edge type pattern any direction>
-    : <source node type reference> <tilde> <destination node type reference>
+arc_type_pointing_right
+    : MINUS_LEFT_BRACKET arc_type_filler BRACKET_RIGHT_ARROW {
+
+    }
     ;
 
-<source node type reference>
-    : <left paren> <source node type name> <right paren>
-    | <left paren> [ <node type filler> ] <right paren>
+arc_type_pointing_left
+    : LEFT_ARROW_BRACKET arc_type_filler RIGHT_BRACKET_MINUS {
+
+    }
     ;
 
-<destination node type reference>
-    : <left paren> <destination node type name> <right paren>
-    | <left paren> [ <node type filler> ] <right paren>
+arc_type_any_direction
+    : TILDE_LEFT_BRACKET arc_type_filler RIGHT_BRACKET_TILDE {
+
+    }
     ;
 
-<edge kind>
-    : DIRECTED
-    | UNDIRECTED
+arc_type_filler
+    : opt_edge_type_name opt_edge_type_filler {
+
+    }
     ;
 
-<endpoint definition>
-    : CONNECTING <endpoint pair definition>
+opt_edge_type_name
+    : %epmty {
+
+    }
+    | edge_type_name {
+
+    }
     ;
 
-<endpoint pair definition>
-    : <endpoint pair definition pointing right>
-    | <endpoint pair definition pointing left>
-    | <endpoint pair definition any direction>
-    | <abbreviated edge type pattern>
+abbreviated_edge_type_pattern
+    : abbreviated_edge_type_pattern pointing_right
+    | abbreviated_edge_type_pattern pointing_left
+    | abbreviated_edge_type_pattern any_direction
     ;
 
-<endpoint pair definition pointing right>
-    : <left paren> <source node type name> <connector pointing right> <destination node type name> <right paren>
+abbreviated_edge_type_pattern pointing_right
+    : source_node_type_reference RIGHT_ARROW__destination_node type_reference
     ;
 
-<endpoint pair definition pointing left>
-    : <left paren> <destination node type name> <left arrow> <source node type name> <right paren>
+abbreviated_edge_type_pattern pointing_left
+    : destination_node_type_reference LEFT_ARROW__source_node type_reference
     ;
 
-<endpoint pair definition any direction>
-    : <left paren> <source node type name> <connector any direction> <destination node type name> <right paren>
+abbreviated_edge_type_pattern any_direction
+    : source_node_type_reference TILDE__destination_node_type reference
     ;
 
-<connector pointing right>
+source_node_type_reference
+    : LEFT_PAREN source_node_type_name RIGHT_PAREN {
+
+    }
+    | LEFT_PAREN opt_node_type_filler RIGHT_PAREN {
+
+    }
+    ;
+
+destination_node_type_reference
+    : LEFT_PAREN destination_node_type_name RIGHT_PAREN {
+
+    }
+    | LEFT_PAREN opt_node_type_filler RIGHT_PAREN {
+
+    }
+    ;
+
+edge_kind
+    : DIRECTED {
+
+    }
+    | UNDIRECTED {
+
+    }
+    ;
+
+endpoint_definition
+    : CONNECTING endpoint_pair_definition {
+
+    }
+    ;
+
+endpoint_pair_definition
+    : endpoint_pair_definition_pointing_right {
+
+    }
+    | endpoint_pair_definition_pointing_left {
+
+    }
+    | endpoint_pair_definition_any_direction {
+
+    }
+    | abbreviated_edge_type_pattern {
+
+    }
+    ;
+
+endpoint_pair_definition_pointing_right
+    : LEFT_PAREN source_node_type_name connector_pointing_right destination_node_type_name RIGHT_PAREN {
+
+    }
+    ;
+
+endpoint_pair_definition_pointing left
+    : LEFT_PAREN destination_node_type_name LEFT_ARROW source_node_type_name RIGHT_PAREN {
+
+    }
+    ;
+
+endpoint_pair_definition_any direction
+    : LEFT_PAREN source_node_type_name connector_any_direction destination_node_type_name RIGHT_PAREN {
+
+    }
+    ;
+
+connector_pointing_right
     : TO
-    | <right arrow>
+    | RIGHT_ARROW
     ;
 
-<connector any direction>
+connector_any_direction
     : TO
-    | <tilde>
+    | TILDE
     ;
 
-<source node type name>
-    : !! Predicative production rule.
-    <element type name>
+source_node_type_name
+    : !! Predicative_production_rule.
+    element_type_name {
+
+    }
     ;
 
-<destination node type name>
-    : !! Predicative production rule.
-    <element type name>
-    ;
+destination_node_type_name
+    : !! Predicative_production_rule.
+    element_type_name {
 
-
-// Section 13.11 <label set definition>
-<label set definition>
-    : LABEL <label>
-    | LABELS <label expression>
-    | <is label expression>
+    }
     ;
 
 
-// Section 13.12 <property type set definition>
-<property type set definition>
-    : LEFT_BRACE [ <property type definition list> ] RIGHT_BRACE
-    ;
+// Section_13.11_label_set_definition
+label_set_definition
+    : LABEL label {
 
-<property type definition list>
-    : <property type definition> [ { COMMA <property type definition> }... ]
-    ;
+    }
+    | LABELS label_expression {
 
-<property type definition>
-    : <property name> <type name>
-    ;
+    }
+    | is_label_expression {
 
-
-// Section 13.13 <drop graph type statement>
-<drop graph type statement>
-    : DROP PROPERTY_GRAPH TYPE <catalog graph type parent and name> [ IF EXISTS ]
+    }
     ;
 
 
-// Section 13.14 create_procedure_statement
+// Section_13.12_property_type_set definition
+property_type_set_definition
+    : LEFT_BRACE opt_property_type_definition_list RIGHT_BRACE {
+
+    }
+    ;
+
+opt_property_type_definition_list
+    : %emtpy {
+
+    }
+    | property_type_definition_list {
+
+    }
+    ;
+
+property_type_definition_list
+    : property_type_definition {
+    }
+    | property_type_definition_list COMMA property_type_definition {
+
+    }
+    ;
+
+property_type_definition
+    : property_name type_name {
+
+    }
+    ;
+
+
+// Section_13.13_drop_graph_type statement
+drop_graph_type_statement
+    : DROP PROPERTY_GRAPH TYPE ; opt_IF_EXISTS {
+
+    }
+    ;
+
+
+// Section_13.14_create_procedure_statement
 create_procedure_statement
-    : CREATE {
-      PROCEDURE <catalog procedure parent and name> of_type_signature [ IF NOT EXISTS ]
-      | OR REPLACE PROCEDURE <catalog procedure parent and name> of_type_signature
-    } <procedure initializer>
+    : CREATE PROCEDURE_catalog_procedure_parent_and_name of_type_signature opt_IF_NOT_EXISTS procedure_initializer {
+
+    }
+    | CREATE OR REPLACE PROCEDURE catalog_procedure_parent_and_name of_type_signature procedure_initializer {
+
+    }
     ;
 
 
-// Section 13.15 <drop procedure statement>
-<drop procedure statement>
-    : DROP PROCEDURE <catalog procedure parent and name> [ IF EXISTS ]
+// Section_13.15_drop_procedure_statement
+drop_procedure_statement
+    : DROP PROCEDURE catalog_procedure_parent_and_name opt_IF_EXISTS {
+
+    }
     ;
 
 
-// Section 13.16 <create query statement>
-<create query statement>
-    : CREATE {
-      QUERY <catalog query parent and name> of_type_signature [ IF NOT EXISTS ]
-      | OR REPLACE QUERY <catalog query parent and name> of_type_signature
-    } <query initializer>
+// Section_13.16_create_query_statement
+create_query_statement
+    : CREATE QUERY catalog_query_parent_and_name of_type_signature opt_IF_NOT_EXISTS query_initializer {
+
+    }
+    | CREATE OR REPLACE QUERY catalog_query_parent_and_name of_type_signature query_initializer {
+
+    }
     ;
 
 
-// Section 13.17 <drop query statement>
-<drop query statement>
-    : DROP QUERY <catalog query parent and name> [ IF EXISTS ]
+// Section_13.17_drop_query_statement
+drop_query_statement
+    : DROP QUERY catalog_query_parent_and_name opt_IF_EXISTS {
+
+    }
     ;
 
 
-// Section 13.18 <create function statement>
-<create function statement>
-    : CREATE {
-      FUNCTION <catalog function parent and name> of_type_signature [ IF NOT EXISTS ]
-      | OR REPLACE FUNCTION <catalog function parent and name> of_type_signature
-    } function_initializer
+// Section_13.18_create_function_statement
+create_function_statement
+    : CREATE FUNCTION catalog_function_parent_and_name of_type_signature opt_IF_NOT_EXISTS function_initializer {
+
+    }
+    | CREATE OR REPLACE FUNCTION catalog_function_parent_and_name of_type_signature function_initializer {
+
+    }
     ;
 
 
-// Section 13.19 <drop function statement>
-<drop function statement>
-    : DROP FUNCTION <catalog function parent and name> [ IF EXISTS ]
+// Section_13.19_drop_function_statement
+drop_function_statement
+    : DROP FUNCTION catalog_function_parent_and_name opt_IF_EXISTS {
+
+    }
     ;
 
 
-// Section 13.20 call_catalog_modifying_procedure_statement
+// Section_13.20_call_catalog_modifying_procedure_statement
 call_catalog_modifying_procedure_statement
-    : call_procedure_statement
+    : call_procedure_statement {
+
+    }
     ;
 
 
-// Section 14.1 linear_data_modifying_statement
+// Section_14.1_linear_data_modifying_statement
 linear_data_modifying_statement
-    : <focused linear data-modifying statement>
-    | <ambient linear data-modifying statement>
+    : focused_linear_data_modifying_statement {
+
+    }
+    | ambient_linear_data_modifying_statement {
+
+    }
     ;
 
-<focused linear data-modifying statement>
-    : <use graph clause> <focused linear data-modifying statement body>...
+focused_linear_data_modifying_statement
+    : use_graph_clause focused_linear_data_modifying_statement_bodies {
+
+    }
     ;
 
-<focused linear data-modifying statement body>
-    : [ <simple linear query statement> ]
-    [ { <use graph clause> <simple linear query statement> }... ]
-    <simple data-modifying statement>
-    [ <simple data-accessing statement>... ]
-    [ { <use graph clause> <simple data-accessing statement> }... ]
-    [ <primitive result statement> ]
-    | <nested data-modifying procedure specification>
+focused_linear_data_modifying_statement_bodies
+    : focused_linear_data_modifying_statement_body {
 
-<ambient linear data-modifying statement>
-    : [ <simple linear query statement> ]
-    <simple data-modifying statement>
-    [ <simple data-accessing statement>... ]
-    [ <primitive result statement> ]
-    | <nested data-modifying procedure specification>
+    }
+    | focused_linear_data_modifying_statement_bodies focused_linear_data_modifying_statement_body {
+
+    }
+    ;
+
+// TODO?
+focused_linear_data_modifying_statement_body
+    : opt_simple_linear_query_statement opt_use_graph_clause_and_simple_linear_query_statements simple_data_modifying_statement opt_simple_data_accessing_statements opt_use_graph_clause_and_simple_data_accessing_statements opt_primitive_result_statement {
+
+    }
+    | nested_data_modifying_procedure_specification {
+
+    }
+    ;
+
+opt_simple_linear_query_statement
+    : %empty {
+
+    }
+    | simple_linear_query_statement {
+
+    }
+    ;
+
+opt_use_graph_clause_and_simple_linear_query_statements
+    : %empty {
+
+    }
+    | use_graph_clause_and_simple_linear_query_statements {
+
+    }
+    ;
+
+use_graph_clause_and_simple_linear_query_statements
+    : use_graph_clause_and_simple_linear_query_statement {
+
+    }
+    | use_graph_clause_and_simple_linear_query_statements use_graph_clause_and_simple_linear_query_statement {
+
+    }
+    ;
+
+use_graph_clause_and_simple_linear_query_statement
+    : use_graph_clause simple_linear_query_statement {
+
+    }
+    ;
+
+opt_simple_data_accessing_statements
+    : %empty {
+
+    }
+    | simple_data_accessing_statements {
+
+    }
+    ;
+  
+simple_data_accessing_statements
+    : %empty {
+
+    }
+    | simple_data_accessing_statements simple_data_accessing_statement {
+
+    }
+    ;
+
+opt_use_graph_clause_and_simple_data_accessing_statements
+    : %empty {
+
+    }
+    | use_graph_clause_and_simple_data_accessing_statements {
+
+    }
+    ;
+
+use_graph_clause_and_simple_data_accessing_statements
+    : use_graph_clause_and_simple_data_accessing_statement {
+
+    }
+    | use_graph_clause_and_simple_data_accessing_statements use_graph_clause_and_simple_data_accessing_statement {
+
+    }
+    ;
+
+use_graph_clause_and_simple_data_accessing_statement
+    : use_graph_clause simple_data_accessing_statement {
+
+    }
+    ;
+
+opt_primitive_result_statement
+    : %empty {
+
+    }
+    | primitive_result_statement {
+
+    }
+    ;
+
+ambient_linear_data_modifying_statement
+    : opt_simple_linear_query_statement simple_data_modifying_statement opt_simple_data_accessing_statements opt_primitive_result_statement {
+
+    }
+    | nested_data_modifying_procedure_specification {
+
+    }
     ;
 
 
-// Section 14.2 conditional_data_modifying_statement
+// Section_14.2_conditional_data_modifying_statement
 conditional_data_modifying_statement
-    : <when then linear data-modifying statement branch>...
-    [ <else linear data-modifying statement branch> ]
+    : when_then_linear_data_modifying_statement_branch_list opt_else_linear_data_modifying_statement_branch {
+
+    }
     ;
 
-<when then linear data-modifying statement branch>
-    : <when clause> THEN linear_data_modifying_statement
-    | <when clause> <nested data-modifying procedure specification>
+when_then_linear_data_modifying_statement_branch_list
+    : when_then_linear_data_modifying_statement_branch {
+
+    }
+    | when_then_linear_data_modifying_statement_branch_list when_then_linear_data_modifying_statement_branch {
+
+    }
     ;
 
-<else linear data-modifying statement branch>
-    : ELSE linear_data_modifying_statement
+opt_else_linear_data_modifying_statement_branch
+    : %empty {
+
+    }
+    | else_linear_data_modifying_statement_branch {
+
+    }
     ;
 
-<when clause>
-    : WHEN <search condition>
+when_then_linear_data_modifying_statement_branch
+    : when_clause THEN linear_data_modifying_statement {
+
+    }
+    | when_clause nested_data_modifying_procedure_specification {
+
+    }
     ;
 
+else_linear_data_modifying_statement_branch
+    : ELSE linear_data_modifying_statement {
 
-// Section 14.3 <do statement>
-<do statement>
-    : DO <nested data-modifying procedure specification>
+    }
     ;
 
+when_clause
+    : WHEN search_condition {
 
-// Section 14.4 <insert statement>
-<insert statement>
-    : INSERT <simple graph pattern>
-    | OPTIONAL INSERT <simple graph pattern> [ <when clause> ]
-    ;
-
-
-// Section 14.5 <merge statement>
-<merge statement>
-    : MERGE <simple graph pattern>
-    ;
-
-
-
-// Section 14.6 <set statement>
-<set statement>
-    : SET <set item list> [ <when clause> ]
-    ;
-
-<set item list>
-    : <set item> [ { COMMA <set item> }... ]
-    ;
-
-<set item>
-    : <set property item> | <set all properties item> | <set label item>
-    ;
-
-<set property item>
-    : <binding variable> <period> <property name> EQUALS_OPERATOR value_expression
-    ;
-
-<set all properties item>
-    : <binding variable> EQUALS_OPERATOR value_expression
-    ;
-
-<set label item>
-    : <label set expression>
-    ;
-
-<label set expression>
-    : <ampersand> <label>... { <ampersand> <label>... }
+    }
     ;
 
 
-// Section 14.7 <remove statement>
-<remove statement>
-    : REMOVE <remove item list> [ <when clause> ]
-    ;
+// Section_14.3_do_statement
+do_statement
+    : DO nested_data_modifying_procedure_specification {
 
-<remove item list>
-    : <remove item> [ { COMMA <remove item> }... ]
-    ;
-
-<remove item>
-    : <remove property item> | <remove label item>
-    ;
-
-<remove property item>
-    : <binding variable> <period> <property name>
-    ;
-
-<remove label item>
-    : <binding variable> COLON <label set expression>
+    }
     ;
 
 
-// Section 14.8 <delete statement>
-<delete statement>
-    : [ DETACH ] DELETE <delete item list> [ <when clause> ]
-    ;
+// Section_14.4_insert_statement
+insert_statement
+    : INSERT simple_graph_pattern {
 
-<delete item list>
-    : <delete item> [ { COMMA <delete item> }... ]
-    ;
+    }
+    | OPTIONAL INSERT simple_graph_pattern opt_when_clause {
 
-<delete item>
-    : value_expression
+    }
     ;
 
 
-// Section 14.9 <call data-modifying procedure statement>
-<call data-modifying procedure statement>
-    : call_procedure_statement
+// Section_14.5_merge_statement
+merge_statement
+    : MERGE simple_graph_pattern {
+
+    }
     ;
 
 
-// Section 15.1 composite_query_statement
+
+// Section_14.6_set_statement
+set_statement
+    : SET set_item_list opt_when_clause {
+
+    }
+    ;
+
+set_item_list
+    : set_item {
+    }
+    | set_item_list COMMA set_item {
+
+    }
+    ;
+
+set_item
+    : set_property_item {
+
+    }
+    | set_all_properties_item {
+
+    }
+    | set_label_item {
+
+    }
+    ;
+
+set_property_item
+    : binding_variable PERIOD property_name EQUALS_OPERATOR value_expression {
+      
+    }
+    ;
+
+set_all_properties_item
+    : binding_variable EQUALS_OPERATOR value_expression {
+
+    }
+    ;
+
+set_label_item
+    : label_set_expression {
+
+    }
+    ;
+
+/* TODO
+<label set expression> ::=
+<AMPERSAND> <label>... { <AMPERSAND> <label>... }
+*/
+label_set_expression
+    : AMPERSAND label_list {
+
+    }
+    | AMPERSAND label_list AMPERSAND label_list {
+
+    }
+    ;
+
+label_list
+    : label {
+
+    }
+    | label_list label {
+
+    }
+    ;
+
+// Section_14.7_remove_statement
+remove_statement
+    : REMOVE remove_item_list opt_when_clause {
+
+    }
+    ;
+
+remove_item_list
+    : remove_item {
+    }
+    | remove_item_list COMMA remove_item {
+
+    }
+    ;
+
+remove_item
+    : remove_property_item {
+
+    }
+    | remove_label_item {
+
+    }
+    ;
+
+remove_property_item
+    : binding_variable PERIOD property_name {
+
+    }
+    ;
+
+remove_label_item
+    : binding_variable COLON label_set_expression {
+
+    }
+    ;
+
+
+// Section_14.8_delete_statement
+delete_statement
+    : DELETE delete_item_list opt_when_clause {
+
+    }
+    | DETACH DELETE delete_item_list opt_when_clause {
+      
+    }
+    ;
+
+delete_item_list
+    : delete_item {
+    }
+    | delete_item_list COMMA delete_item {
+
+    }
+    ;
+
+delete_item
+    : value_expression {
+
+    }
+    ;
+
+
+// Section_14.9_call_data_modifying_procedure statement
+call_data_modifying_procedure_statement
+    : call_procedure_statement {
+
+    }
+    ;
+
+
+// Section_15.1_composite_query_statement
 composite_query_statement
-    : <composite query expression>
+    : composite_query_expression {
+
+    }
     ;
 
 
-// Section 15.2 conditional_query_statement
+// Section_15.2_conditional_query_statement
 conditional_query_statement
-    : <when then linear query branch>... [ <else linear query branch> ]
+    : when_then_linear_query_branch_list opt_else_linear_query_branch {
+
+    }
     ;
 
-<when then linear query branch>
-    : <when clause> THEN <linear query expression>
-    | <when clause> nested_query_specification
+when_then_linear_query_branch_list
+    : when_then_linear_query_branch {
+
+    }
+    | when_then_linear_query_branch_list when_then_linear_query_branch {
+
+    }
     ;
 
-<else linear query branch>
-    : ELSE <linear query expression>
+opt_else_linear_query_branch
+    : %emtpy {
+
+    }
+    | else_linear_query_branch {
+
+    }
     ;
 
+when_then_linear_query_branch
+    : when_clause THEN linear_query_expression {
 
-// Section 15.3 <composite query expression>
-<composite query expression>
-    : <composite query expression> <query conjunction> <linear query expression>
-    | <linear query expression>
+    }
+    | when_clause nested_query_specification {
+
+    }
     ;
 
-<query conjunction>
-    : <set operator>
-    | OTHERWISE
-    ;
+else_linear_query_branch
+    : ELSE linear_query_expression {
 
-<set operator>
-    : UNION [ <set quantifier> ]
-    | EXCEPT [ <set quantifier> ]
-    | INTERSECT [ <set quantifier> ]
-    ;
-
-
-// Section 15.4 <linear query expression>
-<linear query expression>
-    : <linear query statement>
-    ;
-
-
-
-// Section 15.5 <linear query statement>
-<linear query statement>
-    : <focused linear query statement>
-    | <ambient linear query statement>
-    ;
-
-<focused linear query statement>
-    : <from graph clause> <focused linear query statement body>
-    | <select statement>
-    ;
-
-<focused linear query statement body>
-    : [ <simple linear query statement> [ { <from graph clause> <simple linear query statement> }... ] ] <primitive result statement>
-    | nested_query_specification
-    ;
-
-<ambient linear query statement>
-    : [ <simple linear query statement> ] <primitive result statement>
-    | nested_query_specification
-    ;
-
-<simple linear query statement>
-    : <simple query statement>...
+    }
     ;
 
 
-/* Section 15.6 Data-reading statements */
-// Section 15.6.1 <match statement>
-<match statement>
-    : [ statement_mode ] MATCH <graph pattern>
+// Section_15.3_composite_query_expression
+composite_query_expression
+    : composite_query_expression query_conjunction linear_query_expression {
+
+    }
+    | linear_query_expression {
+
+    }
+    ;
+
+query_conjunction
+    : set_operator {
+
+    }
+    | OTHERWISE {
+
+    }
+    ;
+
+set_operator
+    : UNION opt_set_quantifier {
+
+    }
+    | EXCEPT opt_set_quantifier {
+
+    }
+    | INTERSECT opt_set_quantifier {
+
+    }
     ;
 
 
-// Section 15.6.2 <call query statement>
-<call query statement>
-    : call_procedure_statement
-    ;
+// Section_15.4_linear_query_expression
+linear_query_expression
+    : linear_query_statement {
 
-
-/* Section 15.7 Data-transforming statements */
-// Section 15.7.1 <mandatory statement>
-<mandatory statement>
-    : MANDATORY procedure_call
+    }
     ;
 
 
 
-// Section 15.7.2 <optional statement>
-<optional statement>
-    : OPTIONAL procedure_call
+// Section_15.5_linear_query_statement
+linear_query_statement
+    : focused_linear_query_statement {
+      
+    }
+    | ambient_linear_query_statement {
+      
+    }
     ;
 
-// Section 15.7.3 <filter statement>
-<filter statement>
-    : FILTER { <where clause> | <search condition> }
+focused_linear_query_statement
+    : from_graph_clause focused_linear_query_statement_body {
+
+    }
+    | select_statement {
+
+    }
     ;
 
+// TODO
+focused_linear_query_statement_body
+    : primitive_result_statement {
 
-// Section 15.7.4 <let statement>
-<let statement>
-    : LET compact_variable_definition_list
-    | statement_mode LET compact_variable_definition_list <where clause>
+    }
+    | simple_linear_query_statement primitive_result_statement {
+
+    }
+    | simple_linear_query_statement from_graph_clause_and_simple_linear_query_statement_list primitive_result_statement {
+
+    }
+    | nested_query_specification {
+
+    }
     ;
 
+from_graph_clause_and_simple_linear_query_statement_list
+    : from_graph_clause simple_linear_query_statement {
 
-// Section 15.7.5 <aggregate statement>
-<aggregate statement>
-    : AGGREGATE compact_value_variable_definition list <where clause>
+    }
+    | from_graph_clause_and_simple_linear_query_statement_list from_graph_clause simple_linear_query_statement {
+
+    }
     ;
 
+ambient_linear_query_statement
+    : opt_simple_linear_query_statement primitive_result_statement {
 
-// Section 15.7.6 <for statement>
-<for statement>
-    : [ statement_mode ] FOR <for item list> [ <for ordinality or index> ] [ <where clause> ]
+    }
+    | nested_query_specification {
+
+    }
     ;
 
-<for item list>
-    : <for item> [ { AND <for item> }... ]
+// TODO
+simple_linear_query_statement
+    : simple_query_statement_list {
+
+    }
     ;
 
-<for item>
-    : <for item alias> <collection value expression>
-    ;
+simple_query_statement_list
+    : simple_query_statement {
 
-<for item alias>
-    : <identifier> IN
-    ;
+    }
+    | simple_query_statement_list simple_query_statement {
 
-<for ordinality or index>
-    : WITH { ORDINALITY | INDEX } [ <identifier> ]
-    ;
-
-
-// Section 15.7.7 <order by and page statement>
-<order by and page statement>
-    : <order by clause> [ <offset clause> ] [ <limit clause> ]
-    | <offset clause> [ <limit clause> ]
-    | <limit clause>
-    ;
-
-
-// Section 15.7.8 <call function statement>
-<call function statement>
-    : call_procedure_statement
-    ;
-
-
-/* Section 15.8 Result projection statements */
-// Section 15.8.1 <primitive result statement>
-<primitive result statement>
-    : <return statement> [ <order by and page statement> ]
-    | <project statement>
-    | END
-    ;
-
-
-// Section 15.8.2 <return statement>
-<return statement>
-    : RETURN <return statement body>
-    ;
-
-<return statement body>
-    : [ <set quantifier> ] { <asterisk> | <return item list> } [ <group by clause> ]
-    ;
-
-<return item list>
-    : <return item> [ { COMMA <return item> }... ]
-    ;
-
-<return item>
-    : value_expression [ <return item alias> ]
-    ;
-
-<return item alias>
-    : AS <identifier>
+    }
     ;
 
 
-// Section 15.8.3 <select statement>
-<select statement>
-    : SELECT [ <set quantifier> ] <select item list>
-    <select statement body>
-    [ <where clause> ]
-    [ <group by clause> ]
-    [ <having clause> ]
-    [ <order by clause> ]
-    [ <offset clause> ] [ <limit clause> ]
+/* Section_15.6_Data_reading_statements */
+// Section_15.6.1_match_statement
+match_statement
+    : opt_statement_mode MATCH graph_pattern {
+
+    }
     ;
 
-<select item list>
-    : <select item> [ { COMMA <select item> }... ]
+opt_statement_mode
+    : %empty {
+
+    }
+    | statement_mode {
+
+    }
     ;
 
-<select item>
-    : value_expression [ <select item alias> ]
-    ;
+// Section_15.6.2_call_query_statement
+call_query_statement
+    : call_procedure_statement {
 
-<select item alias>
-    : AS <identifier>
-    ;
-
-<having clause>
-    : HAVING <search condition>
-    ;
-
-<select statement body>
-    : FROM <select graph match list>
-    | <select query specification>
-    ;
-
-<select graph match list>
-    : <select graph match> [ { COMMA <select graph match> }... ]
-    ;
-
-<select graph match>
-    : graph_expression <match statement>
-    ;
-
-<select query specification>
-    : FROM nested_query_specification
-    | <from graph clause> nested_query_specification
+    }
     ;
 
 
-// Section 16.1 <from graph clause>
-<from graph clause>
-    : FROM graph_expression
+/* Section_15.7_Data_transforming_statements */
+// Section_15.7.1_mandatory_statement
+mandatory_statement
+    : MANDATORY procedure_call {
+
+    }
     ;
 
 
-// Section 16.2 <use graph clause>
-<use graph clause>
-    : USE graph_expression
+
+// Section_15.7.2_optional_statement
+optional_statement
+    : OPTIONAL procedure_call {
+
+    }
+    ;
+
+// Section_15.7.3_filter_statement
+filter_statement
+    : FILTER where_clause {
+
+    }
+    | FILTER search_condition {
+
+    }
     ;
 
 
-// Section 16.3 at_schema_clause
+// Section_15.7.4_let_statement
+let_statement
+    : LET compact_variable_definition_list {
+
+    }
+    | statement_mode LET compact_variable_definition_list where_clause {
+      
+    }
+    ;
+
+
+// Section_15.7.5_aggregate_statement
+aggregate_statement
+    : AGGREGATE_compact_value_variable_definition_list_where clause
+    ;
+
+
+// Section_15.7.6_for_statement
+for_statement
+    : opt_statement_mode FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
+
+    }
+    ;
+
+opt_for_ordinality_or_index
+    : %empty {
+
+    }
+    | for_ordinality_or_index {
+
+    }
+    ;
+
+opt_where_clause
+    : %empty {
+
+    }
+    | where_clause {
+
+    }
+    ;
+
+for_item_list
+    : for_item {
+    
+    }
+    | for_item_list AND for_item {
+
+    }
+    ;
+
+for_item
+    : for_item_alias collection_value_expression {
+
+    }
+    ;
+
+for_item_alias
+    : IDENTIFIER IN {
+
+    }
+    ;
+
+for_ordinality_or_index
+    : WITH ORDINALITY opt_identifier {
+
+    }
+    | WITH INDEX opt_identifier {
+
+    }
+    ;
+
+
+// Section_15.7.7_order_by_and page_statement
+order_by_and_page_statement
+    : order_by_clause opt_offset_clause opt_limit_clause {
+
+    }
+    | offset_clause opt_limit_clause {
+
+    }
+    | limit_clause {
+
+    }
+    ;
+
+opt_offset_clause
+    : %empty {
+
+    }
+    | offset_clause {
+
+    }
+    ;
+
+opt_limit_clause
+    : %empty {
+
+    }
+    | limit_clause {
+
+    }
+    ;
+
+// Section_15.7.8_call_function_statement
+call_function_statement
+    : call_procedure_statement {
+
+    }
+    ;
+
+
+/* Section_15.8_Result_projection_statements */
+// Section_15.8.1_primitive_result_statement
+primitive_result_statement
+    : return_statement {
+    
+    }
+    | return_statement order_by_and_page_statement {
+
+    }
+    | project_statement {
+
+    }
+    | END {
+
+    }
+    ;
+
+
+// Section_15.8.2_return_statement
+return_statement
+    : RETURN return_statement_body {
+
+    }
+    ;
+
+return_statement_body
+    : opt_set_quantifier ASTERISK opt_group_by_clause {
+
+    }
+    | opt_set_quantifier return_item_list opt_group_by_clause {
+
+    }
+    ;
+
+opt_set_quantifier
+    : %empty {
+
+    }
+    | set_quantifier {
+
+    }
+    ;
+
+opt_group_by_clause
+    : %empty {
+
+    }
+    | group_by_clause {
+
+    }
+    ;
+
+return_item_list
+    : return_item {
+    
+    }
+    | return_item_list COMMA return_item {
+
+    }
+    ;
+
+return_item
+    : value_expression {
+    }
+    | value_expression return_item_alias {
+
+    }
+    ;
+
+return_item_alias
+    : AS IDENTIFIER {
+
+    }
+    ;
+
+
+// Section_15.8.3_select_statement
+select_statement
+    : SELECT opt_set_quantifier select_item_list select_statement_body opt_where_clause opt_group_by_clause opt_having_clause opt_order_by_clause opt_offset_clause opt_limit_clause {
+
+    }
+    ;
+
+select_item_list
+    : select_item {
+    
+    }
+    | select_item_list COMMA select_item {
+
+    }
+    ;
+
+select_item
+    : value_expression {
+    
+    }
+    | value_expression select_item_alias {
+
+    }
+    ;
+
+select_item_alias
+    : AS IDENTIFIER {
+
+    }
+    ;
+
+having_clause
+    : HAVING search_condition {
+
+    }
+    ;
+
+select_statement_body
+    : FROM select_graph_match_list {
+
+    }
+    | select_query_specification {
+
+    }
+    ;
+
+select_graph_match_list
+    : select_graph_match {
+
+    }
+    | select_graph_match_list COMMA select_graph_match {
+
+    }
+    ;
+
+select_graph_match
+    : graph_expression match_statement {
+
+    }
+    ;
+
+select_query_specification
+    : FROM nested_query_specification {
+
+    }
+    | from_graph_clause nested_query_specification {
+
+    }
+    ;
+
+opt_having_clause
+    : %empty {
+
+    }
+    | having_clause {
+
+    }
+    ;
+
+opt_order_by_clause
+    : %empty {
+
+    }
+    | order_by_clause {
+
+    }
+    ;
+
+// Section_16.1_from_graph_clause
+from_graph_clause
+    : FROM graph_expression {
+
+    }
+    ;
+
+
+// Section_16.2_use_graph_clause
+use_graph_clause
+    : USE graph_expression {
+
+    }
+    ;
+
+
+// Section_16.3_at_schema_clause
 at_schema_clause
-    : AT <schema reference>
+    : AT schema_reference {
+
+    }
     ;
 
 
-// Section 16.4 Named elements
-<static variable>
-    : static_variable_name
+// Section_16.4_Named_elements
+static_variable
+    : static_variable_name {
+
+    }
     ;
 
-<binding variable>
-    : binding_variable_name
+binding_variable
+    : binding_variable_name {
+      
+    }
     ;
 
-<label>
-    : <label name>
+label
+    : label_name {
+      
+    }
     ;
 
 parameter
-    : PARAMETER_NAME
+    : PARAMETER_NAME {
+      
+    }
     ;
 
 
-// Section 16.5 <type signature>
+// Section_16.5_type_signature
 of_type_signature
-    : [ of_type_prefix ] <type signature>
+    : opt_of_type_prefix type_signature {
+
+    }
+    ;
+
+opt_of_type_prefix
+    : %empty {
+
+    }
+    | of_type_prefix {
+
+    }
+    ;
+
+type_signature
+    : parenthesized_formal_parameter_list opt_of_type_prefix procedure_result_type {
+
+    }
+    ;
+
+parenthesized_formal_parameter_list
+    : LEFT_PAREN opt_formal_parameter_list RIGHT_PAREN {
+
+    }
+    ;
+
+opt_formal_parameter_list
+    : %empty {
+
+    }
+    | formal_parameter_list {
+
+    }
+    ;
+
+formal_parameter_list
+    : mandatory_formal_parameter_list {
+
+    }
+    | mandatory_formal_parameter_list COMMA optional_formal_parameter_list {
+
+    }
+    | optional_formal_parameter_list {
+
+    }
+    ;
+
+mandatory_formal_parameter_list
+    : formal_parameter_declaration_list {
+      
+    }
+    ;
+
+optional_formal_parameter_list
+    : OPTIONAL formal_parameter_definition_list {
+
+    }
+    ;
+
+formal_parameter_declaration_list
+    : formal_parameter_declaration {
+    
+    }
+    | formal_parameter_declaration_list COMMA formal_parameter_declaration {
+
+    }
+    ;
+
+formal_parameter_definition_list
+    : formal_parameter_definition {
+      
+    }
+    | formal_parameter_definition_list COMMA formal_parameter_definition {
+
+    }
+    ;
+
+formal_parameter_declaration
+    : parameter_cardinality compact_variable_declaration {
+
+    }
+    ;
+
+formal_parameter_definition
+    : parameter_cardinality compact_variable_definition {
+
+    }
+    ;
+
+optional_parameter_cardinality
+    : %empty {
+    
+    }
+    | parameter_cardinality {
+
+    }
+    ;
+
+parameter_cardinality
+    : SINGLE {
+    
+    }
+    | MULTI {
+      
+    }
+    | MULTIPLE {
+
+    }
+    ;
+
+procedure_result_type
+    : value_type {
+
+    }
+    ;
+
+
+// Section_16.6_graph_pattern
+graph_pattern
+    : path_pattern_list opt_keep_clause opt_graph_pattern_where_clause opt_yield_clause {
+
+    }
+    ;
+
+opt_keep_clause
+    : %empty {
+
+    }
+    | keep_clause {
+
+    }
     ;
 
-<type signature>
-    : <parenthesized formal parameter list> [ of_type_prefix ] <procedure result type>
+opt_graph_pattern_where_clause
+    : %empty {
+
+    }
+    | graph_pattern_where_clause {
+
+    }
+    ;
+
+opt_yield_clause
+    : %empty {
+
+    }
+    | yield_clause {
+
+    }
     ;
 
-<parenthesized formal parameter list>
-    : <left paren> [ <formal parameter list> ] <right paren>
+path_pattern_list
+    : path_pattern {
+    
+    }
+    | path_pattern_list COMMA path_pattern {
+
+    }
     ;
 
-<formal parameter list>
-    : <mandatory formal parameter list> [ COMMA <optional formal parameter list> ]
-    | <optional formal parameter list>
+// TODO
+path_pattern
+    : opt_path_variable_declaration opt_path_pattern_prefix path_pattern_expression {
+
+    }
     ;
+
+opt_path_variable_declaration
+    : %empty {
 
-<mandatory formal parameter list>
-    : <formal parameter declaration list>
+    }
+    | path_variable_declaration {
+
+    }
     ;
+
+path_variable_declaration
+    : %empty {
 
-<optional formal parameter list>
-    : OPTIONAL <formal parameter definition list>
+    }
+    | path_variable EQUALS_OPERATOR {
+
+    }
     ;
+
+opt_path_pattern_prefix
+    : %empty {
 
-<formal parameter declaration list>
-    : <formal parameter declaration> [ { COMMA <formal parameter declaration> }... ]
+    }
+    | path_pattern_prefix {
+
+    }
     ;
 
-<formal parameter definition list>
-    : <formal parameter definition> [ { COMMA <formal parameter definition> }... ]
+keep_clause
+    : KEEP path_pattern_prefix {
+
+    }
     ;
+
+graph_pattern_where_clause
+    : WHERE search_condition {
 
-<formal parameter declaration>
-    : <parameter cardinality> <compact variable declaration>
+    }
     ;
+
+
+// Section_16.7_path_pattern_expression
+path_pattern_expression
+    : path_term {
+
+    }
+    | path_multiset_alternation {
+
+    }
+    | path_pattern_union {
 
-<formal parameter definition>
-    : <parameter cardinality> compact_variable_definition
+    }
     ;
 
-<optional parameter cardinality>
-    : [ <parameter cardinality> ]
+path_multiset_alternation
+    : path_term MULTISET_ALTERNATION_OPERATOR path_term {
+    
+    }
+    | path_multiset_alternation MULTISET_ALTERNATION_OPERATOR path_term {
+
+    }
     ;
 
-<parameter cardinality>
-    : SINGLE | MULTI | MULTIPLE
+path_pattern_union
+    : path_term VERTICAL_BAR path_term {
+    
+    }
+    | path_pattern_union VERTICAL_BAR path_term {
+
+    }
     ;
+
+path_term
+    : path_factor {
 
-<procedure result type>
-    : <value type>
+    }
+    | path_concatenation {
+
+    }
     ;
 
+path_concatenation
+    : path_term path_factor {
 
-// Section 16.6 <graph pattern>
-<graph pattern>
-    : <path pattern list>
-    [ <keep clause> ]
-    [ <graph pattern where clause> ]
-    [ <yield clause> ]
+    }
     ;
+
+path_factor
+    : path_primary {
+
+    }
+    | quantified_path_primary {
+
+    }
+    | questioned_path_primary {
 
-<path pattern list>
-    : <path pattern> [ { COMMA <path pattern> }... ]
+    }
     ;
 
-<path pattern>
-    : [ <path variable> EQUALS_OPERATOR ] [ <path pattern prefix> ] <path pattern expression>
+quantified_path_primary
+    : path_primary graph_pattern_quantifier {
+
+    }
     ;
 
-<keep clause>
-    : KEEP <path pattern prefix>
+questioned_path_primary
+    : path_primary QUESTION_MARK {
+
+    }
     ;
+
+path_primary
+    : element_pattern {
 
-<graph pattern where clause>
-    : WHERE <search condition>
+    }
+    | parenthesized_path_pattern_expression {
+
+    }
+    | simplified_path_pattern_expression {
+
+    }
     ;
+
+element_pattern
+    : node_pattern {
 
+    }
+    | edge_pattern {
 
-// Section 16.7 <path pattern expression>
-<path pattern expression>
-    : <path term>
-    | <path multiset alternation>
-    | <path pattern union>
+    }
     ;
 
-<path multiset alternation>
-    : <path term> <multiset alternation operator> <path term> [ { <multiset alternation operator> <path term> }... ]
+node_pattern
+    : LEFT_PAREN element_pattern_filler RIGHT_PAREN {
+
+    }
     ;
 
-<path pattern union>
-    : <path term> <vertical bar> <path term> [ { <vertical bar> <path term> }... ]
+element_pattern_filler
+    : opt_element_variable_declaration opt_is_label_expression opt_element_pattern_predicate opt_element_pattern_cost_clause {
+
+    }
     ;
+
+opt_element_variable_declaration
+    : %empty {
 
-<path term>
-    : <path factor>
-    | <path concatenation>
+    }
+    | element_variable_declaration {
+
+    }
     ;
+
+opt_is_label_expression
+    : %empty {
 
-<path concatenation>
-    : <path term> <path factor>
+    }
+    | is_label_expression {
+
+    }
     ;
+
+opt_element_pattern_predicate
+    : %empty {
 
-<path factor>
-    : <path primary>
-    | <quantified path primary>
-    | <questioned path primary>
+    }
+    | element_pattern_predicate {
+
+    }
     ;
+
+opt_element_pattern_cost_clause
+    : %empty {
+
+    }
+    | opt_element_pattern_cost_clause {
 
-<quantified path primary>
-    : <path primary> <graph pattern quantifier>
+    }
     ;
 
-<questioned path primary>
-    : <path primary> <question mark>
+element_variable_declaration
+    : element_variable {
+
+    }
     ;
 
-NOTE 115 — Unlike most regular expression languages, <question mark> is not equivalent to the quantifier {0,1}: the
-quantifier {0,1} exposes variables as group, whereas <question mark> does not change the singleton variables that it exposes
-to group. However, <question mark> does expose any singleton variables as conditional singletons.
+is_label_expression
+    : is_or_colon label_expression {
 
-<path primary>
-    : <element pattern>
-    | <parenthesized path pattern expression>
-    | <simplified path pattern expression>
+    }
     ;
+
+is_or_colon
+    : IS {
 
-<element pattern>
-    : <node pattern>
-    | <edge pattern>
+    }
+    | COLON {
+
+    }
     ;
+
+element_pattern_predicate
+    : element_pattern_where_clause {
 
-<node pattern>
-    : <left paren> <element pattern filler> <right paren>
+    }
+    | element_property_specification {
+
+    }
     ;
 
-<element pattern filler>
-    : [ <element variable declaration> ]
-    [ <is label expression> ]
-    [ <element pattern predicate> ]
-    [ <element pattern cost clause> ]
+element_pattern_where_clause
+    : WHERE search_condition {
+
+    }
     ;
+
+element_property_specification
+    : LEFT_BRACE property_key_value_pair_list RIGHT_BRACE {
 
-<element variable declaration>
-    : <element variable>
+    }
     ;
 
-<is label expression>
-    : <is or colon> <label expression>
+property_key_value_pair_list
+    : property_key_value_pair {
+      
+    }
+    | property_key_value_pair_list COMMA property_key_value_pair {
+
+    }
     ;
+
+property_key_value_pair
+    : property_name COLON value_expression {
 
-<is or colon>
-    : IS
-    | COLON
+    }
     ;
 
-<element pattern predicate>
-    : <element pattern where clause>
-    | <element property specification>
+element_pattern_cost_clause
+    : cost_clause {
+
+    }
     ;
+
+cost_clause
+    : COST value_expression {
+    
+    }
+    | COST value_expression DEFAULT value_expression {
 
-<element pattern where clause>
-    : WHERE <search condition>
+    }
     ;
 
-<element property specification>
-    : LEFT_BRACE <property key value pair list> RIGHT_BRACE
+edge_pattern
+    : full_edge_pattern {
+
+    }
+    | abbreviated_edge_pattern {
+
+    }
     ;
+
+full_edge_pattern
+    : full_edge_pointing_left {
 
-<property key value pair list>
-    : <property key value pair> [ { COMMA <property key value pair> }... ]
+    }
+    | full_edge_undirected {
+      
+    }
+    | full_edge_pointing_right {
+      
+    }
+    | full_edge_left_or_undirected {
+      
+    }
+    | full_edge_undirected_or_right {
+      
+    }
+    | full_edge_left_or_right {
+      
+    }
+    | full_edge_any_direction {
+      
+    }
     ;
 
-<property key value pair>
-    : <property name> COLON value_expression
+full_edge_pointing_left
+    : LEFT_ARROW_BRACKET element_pattern_filler RIGHT_BRACKET_MINUS {
+
+    }
     ;
 
-<element pattern cost clause>
-    : <cost clause>
+full_edge_undirected
+    : TILDE_LEFT_BRACKET element_pattern_filler RIGHT_BRACKET_TILDE {
+
+    }
     ;
+
+full_edge_pointing_right
+    :  MINUS_LEFT_BRACKET element_pattern_filler BRACKET_RIGHT_ARROW {
 
-<cost clause>
-    : COST value_expression [ DEFAULT value_expression ]
+    }
     ;
 
-** Editor’s Note (number 260) **
-WG3:SXM-052 added the BNF for <cost clause> but did not provide any Syntax Rules or General
-Rules for it. See Possible Problem GQL-024 .
+full_edge_left_or_undirected
+    : LEFT_ARROW_TILDE_BRACKET element_pattern_filler RIGHT_BRACKET_TILDE {
 
+    }
+    ;
 
-<edge pattern>
-    : <full edge pattern>
-    | <abbreviated edge pattern>
+full_edge_undirected_or_right
+    : TILDE_LEFT_BRACKET element_pattern_filler BRACKET_TILDE_RIGHT_ARROW {
+
+    }
     ;
+
+full_edge_left_or_right
+    : LEFT_ARROW_BRACKET element_pattern_filler BRACKET_RIGHT_ARROW {
 
-<full edge pattern>
-    : <full edge pointing left>
-    | <full edge undirected>
-    | <full edge pointing right>
-    | <full edge left or undirected>
-    | <full edge undirected or right>
-    | <full edge left or right>
-    | <full edge any direction>
+    }
     ;
 
-<full edge pointing left>
-    : <left arrow bracket> <element pattern filler> <right bracket minus>
+full_edge_any_direction
+    :  MINUS_LEFT_BRACKET element_pattern_filler RIGHT_BRACKET_MINUS {
+
+    }
     ;
+
+abbreviated_edge_pattern
+    : LEFT_ARROW {
+      
+    }
+    | TILDE {
 
-<full edge undirected>
-    : <tilde left bracket> <element pattern filler> <right bracket tilde>
+    }
+    | RIGHT_ARROW {
+      
+    }
+    | LEFT_ARROW_TILDE {
+      
+    }
+    | TILDE_RIGHT_ARROW {
+      
+    }
+    | LEFT_MINUS_RIGHT {
+      
+    }
+    | MINUS_SIGN {
+      
+    }
     ;
+
+graph_pattern_quantifier
+    : ASTERISK {
+
+    }
+    | PLUS_SIGN {
 
-<full edge pointing right>
-    : <minus left bracket> <element pattern filler> <bracket right arrow>
+    }
+    | fixed_quantifier {
+
+    }
+    | general_quantifier {
+
+    }
     ;
+
+fixed_quantifier
+    : LEFT_BRACE unsigned_integer RIGHT_BRACE {
 
-<full edge left or undirected>
-    : <left arrow tilde bracket> <element pattern filler> <right bracket tilde>
+    }
     ;
 
-<full edge undirected or right>
-    : <tilde left bracket> <element pattern filler> <bracket tilde right arrow>
+general_quantifier
+    : LEFT_BRACE opt_lower_bound COMMA opt_upper_bound RIGHT_BRACE {
+
+    }
     ;
+
+opt_lower_bound
+    : %empty {
 
-<full edge left or right>
-    : <left arrow bracket> <element pattern filler> <bracket right arrow>
+    }
+    | lower_bound {
+
+    }
     ;
+
+opt_upper_bound
+    : %empty {
 
-<full edge any direction>
-    : <minus left bracket> <element pattern filler> <right bracket minus>
+    }
+    | upper_bound {
+
+    }
     ;
 
-** Editor’s Note (number 261) **
-In the BNF for <full edge any direction>, the delimiter tokens <~[ ]~> have been suggested
-as a synonym for -[ ]- as part of Feature G001, “Undirected edge patterns”. The synonym
-for the <abbreviated edge pattern> - (<minus sign>) would then be <~>, the synonym for
-<simplified defaulting any direction> would use the delimiter tokens <~/ /~> and the
-synonym for <simplified override any direction> would use the tokens <~ and > surrounding
-a label as originally proposed in WG3:MMX-060. These synonyms might be considered to make
-the table of edge patterns more harmonious and internally consistent. See Language
-Opportunity GQL-212 .
+lower_bound
+    : unsigned_integer
+    ;
 
-<abbreviated edge pattern>
-    : <left arrow>
-    | <tilde>
-    | <right arrow>
-    | <left arrow tilde>
-    | <tilde right arrow>
-    | <left minus right>
-    | <minus sign>
+upper_bound
+    : unsigned_integer
     ;
+
+parenthesized_path_pattern_expression
+    : LEFT_PAREN opt_subpath_variable_declaration opt_path_mode_prefix path_pattern_expression opt_parenthesized_path_pattern_where_clause opt_parenthesized_path_pattern_cost_clause RIGHT_PAREN {
 
-<graph pattern quantifier>
-    : <asterisk>
-    | <plus sign>
-    | <fixed quantifier>
-    | <general quantifier>
+    }
+    | LEFT_BRACKET opt_subpath_variable_declaration opt_path_mode_prefix path_pattern_expression opt_parenthesized_path_pattern_where_clause opt_parenthesized_path_pattern_cost_clause RIGHT_BRACKET {
+
+    }
     ;
+
+opt_subpath_variable_declaration
+    : %empty {
 
-<fixed quantifier>
-    : LEFT_BRACE <unsigned integer> RIGHT_BRACE
+    }
+    | subpath_variable_declaration {
+
+    }
     ;
+
+opt_path_mode_prefix
+    : %empty {
 
-<general quantifier>
-    : LEFT_BRACE [ <lower bound> ] COMMA [ <upper bound> ] RIGHT_BRACE
+    }
+    | path_mode_prefix {
+
+    }
     ;
+
+opt_parenthesized_path_pattern_where_clause
+    : %empty {
+
+    }
+    | parenthesized_path_pattern_where_clause {
 
-<lower bound>
-    : <unsigned integer>
+    }
     ;
 
-<upper bound>
-    : <unsigned integer>
+opt_parenthesized_path_pattern_cost_clause
+    : %empty {
+
+    }
+    | parenthesized_path_pattern_cost_clause {
+
+    }
     ;
+
+subpath_variable_declaration
+    : subpath_variable EQUALS_OPERATOR {
 
-<parenthesized path pattern expression>
-    : <left paren>
-    [ <subpath variable declaration> ]
-    [ <path mode prefix> ]
-    <path pattern expression>
-    [ <parenthesized path pattern where clause> ]
-    [ <parenthesized path pattern cost clause> ]
-    <right paren>
-    | <left bracket>
-    [ <subpath variable declaration> ]
-    [ <path mode prefix> ]
-    <path pattern expression>
-    [ <parenthesized path pattern where clause> ]
-    [ <parenthesized path pattern cost clause> ]
-    <right bracket>
+    }
     ;
 
-** Editor’s Note (number 262) **
-The ability to use square brackets as an alternative to round parentheses for grouping
-in path patterns introduces an ambiguity in the grammar where a bare edge pattern followed
-248
-Informal_working_drafts 39075:202y(E)
-16.7 <path pattern expression>
-by a group (... - [ ...) looks a lot like the start of an edge pattern (... -[ ...), the
-difference being only whitespace. See Possible Problem GQL-046
+parenthesized_path_pattern_where_clause
+    : WHERE search_condition {
 
+    }
+    ;
 
-<subpath variable declaration>
-    : <subpath variable> EQUALS_OPERATOR
+parenthesized_path_pattern_cost_clause
+    : cost_clause {
+
+    }
     ;
+
 
-<parenthesized path pattern where clause>
-    : WHERE <search condition>
+// Section_16.8_path_pattern_prefix
+path_pattern_prefix
+    : path_mode_prefix {
+
+    }
+    | path_search_prefix {
+
+    }
     ;
 
-<parenthesized path pattern cost clause>
-    : <cost clause>
+path_mode_prefix
+    : path_mode opt_path_or_paths {
+
+    }
     ;
+
+opt_path_or_paths
+    : %empty {
 
+    }
+    | path_or_paths {
 
-// Section 16.8 <path pattern prefix>
-<path pattern prefix>
-    : <path mode prefix>
-    | <path search prefix>
+    }
     ;
 
-<path mode prefix>
-    : <path mode> [ <path or paths> ]
+path_mode
+    : WALK {
+
+    }
+    | TRAIL {
+
+    }
+    | SIMPLE {
+
+    }
+    | ACYCLIC {
+
+    }
     ;
+
+path_search_prefix
+    : all_path_search {
+
+    }
+    | any_path_search {
+
+    }
+    | shortest_path_search {
 
-<path mode>
-    : WALK
-    | TRAIL
-    | SIMPLE
-    | ACYCLIC
+    }
     ;
 
-<path search prefix>
-    : <all path search>
-    | <any path search>
-    | <shortest path search>
+all_path_search
+    : ALL opt_path_mode opt_path_or_paths {
+
+    }
     ;
 
-** Editor’s Note (number 272) **
-The ability to specify “cheapest” queries (analogous to SHORTEST, but minimizing the sum
-of costs along a path) is desirable. See Language Opportunity GQL-052 .
+path_or_paths
+    : PATH {
+    
+    }
+    | PATHS {
+
+    }
+    ;
 
+any_path_search
+    : ANY opt_number_of_paths opt_path_mode opt_path_or_paths {
 
-<all path search>
-    : ALL [ <path mode> ] [ <path or paths> ]
+    }
     ;
 
-<path or paths>
-    : PATH | PATHS
+opt_number_of_paths
+    : %empty {
+
+    }
+    | number_of_paths {
+
+    }
     ;
+
+opt_path_mode
+    : %empty {
+
+    }
+    | path_mode {
 
-<any path search>
-    : ANY [ <number of paths> ] [ <path mode> ] [ <path or paths> ]
+    }
     ;
 
-<number of paths>
-    : <unsigned integer specification>
+number_of_paths
+    : unsigned_integer_specification {
+
+    }
     ;
 
-** Editor’s Note (number 273) **
-This differs from the SQL/PGQ definition of <number of paths>.
+shortest_path_search
+    : all_shortest_path_search {
+
+    }
+    | any_shortest_path_search {
+      
+    }
+    | counted_shortest_path_search {
+      
+    }
+    | counted_shortest_group_search {
+      
+    }
+    ;
 
+all_shortest_path_search
+    : ALL SHORTEST opt_path_mode opt_path_or_paths {
 
-<shortest path search>
-    : <all shortest path search>
-    | <any shortest path search>
-    | <counted shortest path search>
-    | <counted shortest group search>
+    }
     ;
 
-<all shortest path search>
-    : ALL SHORTEST [ <path mode> ] [ <path or paths> ]
+any_shortest_path_search
+    : ANY SHORTEST opt_path_mode opt_path_or_paths {
+
+    }
     ;
 
-<any shortest path search>
-    : ANY SHORTEST [ <path mode> ] [ <path or paths> ]
+counted_shortest_path_search
+    : SHORTEST number_of_paths opt_path_mode opt_path_or_paths {
+
+    }
     ;
 
-<counted shortest path search>
-    : SHORTEST <number of paths> [ <path mode> ] [ <path or paths> ]
+counted_shortest_group_search
+    : SHORTEST number_of_groups opt_path_mode opt_path_or_paths group_or_groups {
+      
+    }
     ;
+
+group_or_groups
+    : GROUP {
 
-<counted shortest group search>
-    : SHORTEST <number of groups> [ <path mode> ] [ <path or paths> ] { GROUP | GROUPS }
+    }
+    | GROUPS {
+
+    }
     ;
 
-<number of groups>
-    : <unsigned integer specification>
+number_of_groups
+    : unsigned_integer_specification {
+
+    }
     ;
+
 
+// Section_16.9_simple_graph_pattern
+simple_graph_pattern
+    : simple_path_pattern_list {
 
-// Section 16.9 <simple graph pattern>
-<simple graph pattern>
-    : <simple path pattern list>
+    }
     ;
 
-<simple path pattern list>
-    : <simple path pattern> [ { COMMA <simple path pattern> }... ]
+simple_path_pattern_list
+    : simple_path_pattern {
+    
+    }
+    | simple_path_pattern_list COMMA simple_path_pattern {
+
+    }
     ;
+
+simple_path_pattern
+    : !! Predicative_production_rule.
+    path_pattern_expression {
 
-<simple path pattern>
-    : !! Predicative production rule.
-    <path pattern expression>
+    }
     ;
+
+
+// Section_16.10_label_expression
+label_expression
+    : label_term {
 
+    }
+    | label_disjunction {
 
-// Section 16.10 <label expression>
-<label expression>
-    : <label term>
-    | <label disjunction>
+    }
     ;
 
-<label disjunction>
-    : <label expression> <vertical bar> <label term>
+label_disjunction
+    : label_expression VERTICAL_BAR label_term {
+
+    }
     ;
+
+label_term
+    : label_factor {
+
+    }
+    | label_conjunction {
 
-<label term>
-    : <label factor>
-    | <label conjunction>
+    }
     ;
 
-<label conjunction>
-    : <label term> <ampersand> <label factor>
+label_conjunction
+    : label_term AMPERSAND label_factor {
+
+    }
     ;
+
+label_factor
+    : label_primary {
 
-<label factor>
-    : <label primary>
-    | <label negation>
+    }
+    | label_negation {
+
+    }
     ;
+
+label_negation
+    : EXCLAMATION_MARK label_primary {
 
-<label negation>
-    : <exclamation mark> <label primary>
+    }
     ;
 
-<label primary>
-    : <label>
-    | <wildcard label>
-    | <parenthesized label expression>
+label_primary
+    : label {
+
+    }
+    | wildcard_label {
+
+    }
+    | parenthesized_label_expression {
+
+    }
     ;
 
-<wildcard label>
-    : <percent>
+wildcard_label
+    : PERCENT {
+
+    }
     ;
+
+parenthesized_label_expression
+    : LEFT_PAREN label_expression RIGHT_PAREN {
 
-** Editor’s Note (number 280) **
-Various options for <wildcard label> were discussed. See Possible Problem GQL-033 .
+    }
+    | LEFT_BRACKET label_expression RIGHT_BRACKET {
 
-<parenthesized label expression>
-    : <left paren> <label expression> <right paren>
-    | <left bracket> <label expression> <right bracket>
+    }
     ;
 
 
+// Section_16.11_simplified_path_pattern expression
+simplified_path_pattern_expression
+    : simplified_defaulting_left {
 
-// Section 16.11 <simplified path pattern expression>
-<simplified path pattern expression>
-    : <simplified defaulting left>
-    | <simplified defaulting undirected>
-    | <simplified defaulting right>
-    | <simplified defaulting left or undirected>
-    | <simplified defaulting undirected or right>
-    | <simplified defaulting left or right>
-    | <simplified defaulting any direction>
+    }
+    | simplified_defaulting_undirected {
+      
+    }
+    | simplified_defaulting_right {
+      
+    }
+    | simplified_defaulting_left_or_undirected {
+      
+    }
+    | simplified_defaulting_undirected_or_right {
+      
+    }
+    | simplified_defaulting_left_or_right {
+      
+    }
+    | simplified_defaulting_any_direction {
+      
+    }
     ;
 
-<simplified defaulting left>
-    : <left minus slash> <simplified contents> <slash minus>
+simplified_defaulting_left
+    : LEFT_MINUS_SLASH simplified_contents SLASH_MINUS {
+
+    }
     ;
+
+simplified_defaulting_undirected
+    : TILDE_SLASH simplified_contents SLASH_TILDE {
 
-<simplified defaulting undirected>
-    : <tilde slash> <simplified contents> <slash tilde>
+    }
     ;
 
-<simplified defaulting right>
-    : <minus slash> <simplified contents> <slash minus right>
+simplified_defaulting_right
+    : MINUS_SLASH simplified_contents SLASH_MINUS_RIGHT {
+
+    }
     ;
 
-<simplified defaulting left or undirected>
-    : <left tilde slash> <simplified contents> <slash tilde>
+simplified_defaulting_left_or_undirected
+    : LEFT_TILDE_SLASH simplified_contents SLASH_TILDE {
+
+    }
     ;
+
+simplified_defaulting_undirected_or_right
+    : TILDE_SLASH simplified_contents SLASH_TILDE_RIGHT {
 
-<simplified defaulting undirected or right>
-    : <tilde slash> <simplified contents> <slash tilde right>
+    }
     ;
 
-<simplified defaulting left or right>
-    : <left minus slash> <simplified contents> <slash minus right>
+simplified_defaulting_left_or_right
+    : LEFT_MINUS_SLASH simplified_contents SLASH_MINUS_RIGHT {
+
+    }
     ;
+
+simplified_defaulting_any_direction
+    : MINUS_SLASH simplified_contents SLASH_MINUS {
 
-<simplified defaulting any direction>
-    : <minus slash> <simplified contents> <slash minus>
+    }
     ;
+
+simplified_contents
+    : simplified_term {
+
+    }
+    | simplified_path_union {
 
-<simplified contents>
-    : <simplified term>
-    | <simplified path union>
-    | <simplified multiset alternation>
+    }
+    | simplified_multiset_alternation {
+
+    }
     ;
 
-<simplified path union>
-    : <simplified term> <vertical bar> <simplified term> [ { <vertical bar> <simplified term> }... ]
+simplified_path_union
+    : simplified_term VERTICAL_BAR simplified_term {
+    
+    }
+    | simplified_path_union VERTICAL_BAR simplified_term {
+
+    }
     ;
+
+simplified_multiset_alternation
+    : simplified_term MULTISET_ALTERNATION_OPERATOR simplified_term {
+    
+    }
+    | simplified_multiset_alternation MULTISET_ALTERNATION_OPERATOR simplified_term {
 
-<simplified multiset alternation>
-    : <simplified term> <multiset alternation operator> <simplified term> [ { <multiset alternation operator> <simplified term> }... ]
+    }
     ;
 
-<simplified term>
-    : <simplified factor low>
-    | <simplified concatenation>
+simplified_term
+    : simplified_factor_low {
+
+    }
+    | simplified_concatenation {
+
+    }
     ;
 
-<simplified concatenation>
-    : <simplified term> <simplified factor low>
+simplified_concatenation
+    : simplified_term simplified_factor_low {
+
+    }
     ;
+
+simplified_factor_low
+    : simplified_factor_high {
 
-<simplified factor low>
-    : <simplified factor high>
-    | <simplified conjunction>
+    }
+    | simplified_conjunction {
+      
+    }
     ;
 
-<simplified conjunction>
-    : <simplified factor low> <ampersand> <simplified factor high>
+simplified_conjunction
+    : simplified_factor_low AMPERSAND simplified_factor_high {
+      
+    }
     ;
 
-<simplified factor high>
-    : <simplified tertiary>
-    | <simplified quantified>
-    | <simplified questioned>
+simplified_factor_high
+    : simplified_tertiary {
+      
+    }
+    | simplified_quantified {
+      
+    }
+    | simplified_questioned {
+      
+    }
     ;
 
-<simplified quantified>
-    : <simplified tertiary> <graph pattern quantifier>
+simplified_quantified
+    : simplified_tertiary graph_pattern_quantifier {
+
+    }
     ;
 
-<simplified questioned>
-    : <simplified tertiary> <question mark>
+simplified_questioned
+    : simplified_tertiary QUESTION_MARK {
+
+    }
     ;
 
-<simplified tertiary>
-    : <simplified direction override>
-    | <simplified secondary>
+simplified_tertiary
+    : simplified_direction_override {
+      
+    }
+    | simplified_secondary {
+      
+    }
     ;
 
-<simplified direction override>
-    : <simplified override left>
-    | <simplified override undirected>
-    | <simplified override right>
-    | <simplified override left or undirected>
-    | <simplified override undirected or right>
-    | <simplified override left or right>
-    | <simplified override any direction>
+simplified_direction_override
+    : simplified_override_left {
+      
+    }
+    | simplified_override_undirected {
+      
+    }
+    | simplified_override_right {
+      
+    }
+    | simplified_override_left_or_undirected {
+      
+    }
+    | simplified_override_undirected_or_right {
+      
+    }
+    | simplified_override_left_or_right {
+      
+    }
+    | simplified_override_any_direction {
+      
+    }
     ;
 
-<simplified override left>
-    : <left angle bracket> <simplified secondary>
+simplified_override_left
+    : LEFT_ANGLE_BRACKET simplified_secondary {
+      
+    }
     ;
 
-<simplified override undirected>
-    : <tilde> <simplified secondary>
+simplified_override_undirected
+    : TILDE simplified_secondary {
+      
+    }
     ;
+
+simplified_override_right
+    : simplified_secondary RIGHT_ANGLE_BRACKET {
 
-<simplified override right>
-    : <simplified secondary> <right angle bracket>
+    }
     ;
 
-<simplified override left or undirected>
-    : <left arrow tilde> <simplified secondary>
+simplified_override_left_or_undirected
+    : LEFT_ARROW_TILDE simplified_secondary {
+
+    }
     ;
+
+simplified_override_undirected_or_right
+    : TILDE simplified_secondary RIGHT_ANGLE_BRACKET {
 
-<simplified override undirected or right>
-    : <tilde> <simplified secondary> <right angle bracket>
+    }
     ;
 
-<simplified override left or right>
-    : <left angle bracket> <simplified secondary> <right angle bracket>
+simplified_override_left_or_right
+    : LEFT_ANGLE_BRACKET simplified_secondary RIGHT_ANGLE_BRACKET {
+
+    }
     ;
+
+simplified_override_any_direction
+    : MINUS_SIGN simplified_secondary {
 
-<simplified override any direction>
-    : <minus sign> <simplified secondary>
+    }
     ;
 
-<simplified secondary>
-    : <simplified primary>
-    | <simplified negation>
+simplified_secondary
+    : simplified_primary {
+
+    }
+    | simplified_negation {
+
+    }
     ;
+
+simplified_negation
+    : EXCLAMATION_MARK simplified_primary {
 
-<simplified negation>
-    : <exclamation mark> <simplified primary>
+    }
     ;
 
-<simplified primary>
-    : <label>
-    | <left paren> <simplified contents> <right paren>
-    | <left bracket> <simplified contents> <right bracket>
+simplified_primary
+    : label {
+
+    }
+    | LEFT_PAREN simplified_contents RIGHT_PAREN {
+
+    }
+    | LEFT_BRACKET simplified_contents RIGHT_BRACKET {
+
+    }
     ;
+
 
+// Section_16.12_where_clause
+where_clause
+    : WHERE search_condition {
 
-// Section 16.12 <where clause>
-<where clause>
-    : WHERE <search condition>
+    }
     ;
 
 
-// Section 16.13 procedure_call
+// Section_16.13_procedure_call
 procedure_call
-    : <inline procedure call>
-    | <named procedure call>
+    : inline_procedure_call {
+
+    }
+    | named_procedure_call {
+
+    }
     ;
 
 
-// Section 16.14 <inline procedure call>
-<inline procedure call>
-    : <nested procedure specification>
+// Section_16.14_inline_procedure_call
+inline_procedure_call
+    : nested_procedure_specification {
+
+    }
     ;
 
 
-// Section 16.15 <named procedure call>
-<named procedure call>
-    : <procedure reference> <left paren> [ <procedure argument list> ] <right paren> [ <yield clause> ]
+// Section_16.15_named_procedure_call
+named_procedure_call
+    : procedure_reference LEFT_PAREN opt_procedure_argument_list RIGHT_PAREN opt_yield_clause {
+
+    }
     ;
 
-<procedure argument list>
-    : <procedure argument> [ { COMMA <procedure argument> }... ]
+opt_procedure_argument_list
+    : %empty {
+
+    }
+    | procedure_argument_list {
+
+    }
     ;
 
-<procedure argument>
-    : value_expression
+procedure_argument_list
+    : procedure_argument {
+    
+    }
+    | procedure_argument_list COMMA procedure_argument {
+
+    }
     ;
 
+procedure_argument
+    : value_expression {
 
-// Section 16.16 <yield clause>
-<yield clause>
-    : YIELD <yield item list>
-    ;
-
-<yield item list>
-    : <yield item> [ { COMMA <yield item> }... ]
-    ;
-
-<yield item>
-    : { <yield item name> [ <yield item alias> ] }
-    ;
-
-<yield item name>
-    : <identifier>
-    ;
-
-<yield item alias>
-    : AS <variable name>
+    }
     ;
 
 
-// Section 16.17 <group by clause>
-<group by clause>
-    : GROUP BY <grouping element list>
+// Section_16.16_yield_clause
+yield_clause
+    : YIELD yield_item_list {
+
+    }
     ;
 
-<grouping element list>
-    : <grouping element> [ { COMMA <grouping element> } ]
-    | <empty grouping set>
+yield_item_list
+    : yield_item {
+    
+    }
+    | yield_item_list COMMA yield_item {
+    
+    }
     ;
 
-<grouping element>
-    : <binding variable>
+yield_item
+    : yield_item_name opt_yield_item_alias {
+
+    }
     ;
 
-<empty grouping set>
-    : <left paren> <right paren>
+opt_yield_item_alias
+    : %empty {
+
+    }
+    | yield_item_alias {
+
+    }
     ;
 
+yield_item_name
+    : IDENTIFIER {
 
-// Section 16.18 <order by clause>
-<order by clause>
-    : ORDER BY <sort specification list>
+    }
     ;
 
+yield_item_alias
+    : AS variable_name {
 
-// Section 16.19 <aggregate function>
-<aggregate function>
-    : COUNT <left paren> <asterisk> <right paren>
-    | <general set function>
-    | <binary set function>
-    ;
-
-** Editor’s Note (number 307) **
-Consider inclusion of aggregate function calls to procedures with formal parameters of
-multiple parameter cardinality. See Language Opportunity GQL-186 .
-
-
-<general set function>
-    : <general set function type> <left paren> <set quantifier> value_expression <right paren>
-    ;
-
-<binary set function>
-    : <binary set function type> <left paren> <dependent value expression> COMMA <independent value expression> <right paren>
-    ;
-
-<general set function type>
-    : AVG
-    | COUNT
-    | MAX
-    | MIN
-    | SUM
-    | PRODUCT
-    | COLLECT
-    | stDev
-    | stDevP
-    ;
-
-<set quantifier>
-    : DISTINCT
-    | ALL
-    ;
-
-<binary set function type>
-    : percentileCont
-    | percentileDist
-    ;
-
-<dependent value expression>
-    : [ <set quantifier> ] <numeric value expression>
-    ;
-
-<independent value expression>
-    : <numeric value expression>
-    ;
-
-// Section 16.20 <sort specification list>
-<sort specification list>
-    : <sort specification> [ { COMMA <sort specification> }... ]
-    ;
-
-<sort specification>
-    : <sort key> [ <ordering specification> ] [ <null ordering> ]
-    ;
-
-<sort key>
-    : value_expression
-    ;
-
-<ordering specification>
-    : ASC
-    | DESC
-    ;
-
-<null ordering>
-    : NULLS FIRST
-    | NULLS LAST
-    ;
-
-// Section 16.21 <limit clause>
-<limit clause>
-    : LIMIT <unsigned integer specification>
+    }
     ;
 
 
-// Section 16.22 <offset clause>
-<offset clause>
-    : <offset synonym> <unsigned integer specification>
+// Section_16.17_group_by_clause
+group_by_clause
+    : GROUP BY grouping_element_list {
+
+    }
     ;
 
-<offset synonym>
-    : OFFSET | SKIP
+grouping_element_list
+    : grouping_elements {
+
+    }
+    | empty_grouping_set
+    ;
+
+// TODO
+grouping_elements
+    : grouping_element {
+
+    }
+    | grouping_elements COMMA grouping_element {
+
+    }
+    ;
+
+grouping_element
+    : binding_variable {
+
+    }
+    ;
+
+empty_grouping_set
+    : LEFT_PAREN RIGHT_PAREN {
+
+    }
     ;
 
 
-// Section 17.1 Schema references
-<schema reference>
-    : <predefined schema parameter>
-    | <catalog schema parent and name>
-    | <external object reference>
-    ;
+// Section_16.18_order_by_clause
+order_by_clause
+    : ORDER_BY sort_specification_list {
 
-<catalog schema parent and name>
-    : [ <absolute url path> ] <solidus> <schema name>
-    | <url path parameter>
+    }
     ;
 
 
-// Section 17.2 Graph references
+// Section_16.19_aggregate_function
+aggregate_function
+    : COUNT LEFT_PAREN ASTERISK RIGHT_PAREN {
+
+    }
+    | general_set_function {
+
+    }
+    | binary_set_function {
+
+    }
+    ;
+
+general_set_function
+    : general_set_function_type LEFT_PAREN set_quantifier value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+binary_set_function
+    : binary_set_function_type LEFT_PAREN dependent_value_expression COMMA independent_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+general_set_function_type
+    : AVG {
+
+    }
+    | COUNT {
+
+    }
+    | MAX {
+
+    }
+    | MIN {
+
+    }
+    | SUM {
+
+    }
+    | PRODUCT {
+
+    }
+    | COLLECT {
+
+    }
+    | stDev {
+
+    }
+    | stDevP {
+
+    }
+    ;
+
+set_quantifier
+    : DISTINCT {
+
+    }
+    | ALL {
+
+    }
+    ;
+
+binary_set_function_type
+    : percentileCont {
+
+    }
+    | percentileDist {
+
+    }
+    ;
+
+dependent_value_expression
+    : opt_set_quantifier numeric_value_expression {
+
+    }
+    ;
+
+independent_value_expression
+    : numeric_value_expression {
+
+    }
+    ;
+
+// Section_16.20_sort_specification_list
+sort_specification_list
+    : sort_specification {
+    
+    }
+    | sort_specification_list COMMA sort_specification {
+
+    }
+    ;
+
+sort_specification
+    : sort_key opt_ordering_specification opt_null_ordering {
+
+    }
+    ;
+
+opt_ordering_specification
+    : %empty {
+
+    }
+    | ordering_specification {
+
+    }
+    ;
+
+opt_null_ordering
+    : %empty {
+
+    }
+    | null_ordering {
+
+    }
+    ;
+
+sort_key
+    : value_expression {
+
+    }
+    ;
+
+ordering_specification
+    : ASC {
+      
+    }
+    | DESC {
+      
+    }
+    ;
+
+null_ordering
+    : NULLS FIRST {
+      
+    }
+    | NULLS LAST {
+      
+    }
+    ;
+
+// Section_16.21_limit_clause
+limit_clause
+    : LIMIT unsigned_integer_specification {
+
+    }
+    ;
+
+
+// Section_16.22_offset_clause
+offset_clause
+    : offset_synonym unsigned_integer_specification {
+    
+    }
+    ;
+
+offset_synonym
+    : OFFSET {
+    
+    }
+    | SKIP {
+
+    }
+    ;
+
+
+// Section_17.1_Schema_references
+schema_reference
+    : predefined_schema_parameter {
+    
+    }
+    | catalog_schema_parent_and_name {
+    
+    }
+    | external_object_reference {
+    
+    }
+    ;
+
+catalog_schema_parent_and_name
+    : opt_absolute_url_path SOLIDUS schema_name {
+
+    }
+    | url_path_parameter {
+    
+    }
+    ;
+
+
+// Section_17.2_Graph_references
 graph_reference
-    : <graph resolution expression>
-    | <local graph reference>
+    : graph_resolution_expression {
+    
+    }
+    | local_graph_reference {
+    
+    }
     ;
 
-<graph resolution expression>
-    : PROPERTY_GRAPH catalog_graph_reference
+graph_resolution_expression
+    : PROPERTY_GRAPH catalog_graph_reference {
+    
+    }
     ;
 
 catalog_graph_reference
-    : <catalog graph parent and name>
-    | <predefined graph parameter>
-    | <external object reference>
+    : catalog_graph_parent_and_name {
+    
+    }
+    | predefined_graph_parameter {
+    
+    }
+    | external_object_reference {
+    
+    }
     ;
 
-<catalog graph parent and name>
-    : <graph parent specification> <graph name>
-    | <url path parameter>
+catalog_graph_parent_and_name
+    : graph_parent_specification graph_name {
+    
+    }
+    | url_path_parameter {
+    
+    }
     ;
 
-<graph parent specification>
-    : [ <parent catalog object reference> ] [ <qualified object name> <period> ]
+// TODO
+graph_parent_specification
+    : opt_parent_catalog_object_reference opt_qualified_object_name_period {
+    
+    }
     ;
 
-<local graph reference>
-    : <qualified graph name>
+opt_qualified_object_name_period
+    : %empty {
+
+    }
+    | qualified_object_name PERIOD {
+
+    }
     ;
 
-<qualified graph name>
-    : [ <qualified object name> <period> ] <graph name>
+
+opt_parent_catalog_object_reference
+    : %empty {
+
+    }
+    | parent_catalog_object_reference {
+
+    }
+    ;
+
+local_graph_reference
+    : qualified_graph_name {
+
+    }
+    ;
+
+qualified_graph_name
+    : graph_name {
+
+    }
     ;
 
 
 
-// Section 17.3 Graph type references
+// Section_17.3_Graph_type_references
 graph_type_reference
-    : <graph type resolution expression>
-    | <local graph type reference>
+    : graph_type_resolution_expression {
+
+    }
+    | local_graph_type_reference {
+
+    }
     ;
 
-<graph type resolution expression>
-    : PROPERTY_GRAPH TYPE <catalog graph type reference>
+graph_type_resolution_expression
+    : PROPERTY_GRAPH TYPE catalog_graph_type_reference {
+
+    }
     ;
 
-<catalog graph type reference>
-    : <catalog graph type parent and name>
-    | <external object reference>
+catalog_graph_type_reference
+    : catalog_graph_type_parent_and_name {
+
+    }
+    | external_object_reference {
+
+    }
     ;
 
-<catalog graph type parent and name>
-    : <graph type parent specification> <graph type name>
-    | <url path parameter>
+catalog_graph_type_parent_and_name
+    : graph_type_parent_specification graph_type_name {
+
+    }
+    | url_path_parameter {
+
+    }
     ;
 
-<graph type parent specification>
-    : [ <parent catalog object reference> ] [ <qualified object name> <period> ]
+// TODO
+graph_type_parent_specification
+    : opt_parent_catalog_object_reference opt_qualified_object_name_period {
+
+    }
     ;
 
-<local graph type reference>
-    : <qualified graph type name>
+local_graph_type_reference
+    : qualified_graph_type_name {
+
+    }
     ;
 
-<qualified graph type name>
-    : [ <qualified object name> <period> ] <graph type name>
+qualified_graph_type_name
+    : opt_qualified_object_name_period graph_type_name {
+
+    }
     ;
 
 
-// Section 17.4 Binding table references
+// Section_17.4_Binding_table_references
 binding_table_reference
-    : <binding table resolution expression>
-    | <local binding table reference>
+    : binding_table_resolution_expression {
+
+    }
+    | local_binding_table_reference {
+
+    }
     ;
 
-<binding table resolution expression>
-    : BINDING_TABLE catalog_binding_table_reference
+binding_table_resolution_expression
+    : BINDING_TABLE catalog_binding_table_reference {
+
+    }
     ;
 
 catalog_binding_table_reference
-    : <catalog binding table parent and name>
-    | <predefined table parameter>
-    | <external object reference>
+    : catalog_binding_table_parent_and_name {
+
+    }
+    | predefined_table_parameter {
+
+    }
+    | external_object_reference {
+
+    }
     ;
 
-<catalog binding table parent and name>
-    : <binding table parent specification> <binding table name>
-    | <url path parameter>
+catalog_binding_table_parent_and_name
+    : binding_table_parent_specification binding_table_name {
+
+    }
+    | url_path_parameter {
+
+    }
     ;
 
-<binding table parent specification>
-    : [ <parent catalog object reference> ] [ <qualified object name> <period> ]
+binding_table_parent_specification
+    : opt_parent_catalog_object_reference opt_qualified_object_name_period {
+
+    }
     ;
 
-<local binding table reference>
-    : <qualified binding table name>
+local_binding_table_reference
+    : qualified_binding_table_name {
+
+    }
     ;
 
-<qualified binding table name>
-    : [ <qualified object name> <period> ] <binding table name>
-    ;
+qualified_binding_table_name
+    : opt_qualified_object_name_period binding_table_name {
 
-
-// Section 17.5 Procedure references
-<procedure reference>
-    : <procedure resolution expression>
-    | <local procedure reference>
-    ;
-
-<procedure resolution expression>
-    : PROCEDURE <catalog procedure reference>
-    ;
-
-<catalog procedure reference>
-    : <catalog procedure parent and name>
-    | <external object reference>
-    ;
-
-<catalog procedure parent and name>
-    : <procedure parent specification> <procedure name>
-    | <url path parameter>
-    ;
-
-<procedure parent specification>
-    : [ <parent catalog object reference> ] [ <qualified object name> <period> ]
-    ;
-
-<local procedure reference>
-    : <qualified procedure name>
-    ;
-
-<qualified procedure name>
-    : [ <qualified object name> <period> ] <procedure name>
+    }
     ;
 
 
+// Section_17.5_Procedure_references
+procedure_reference
+    : procedure_resolution_expression {
 
-// Section 17.6 Query references
-<query reference>
-    : <query resolution expression>
-    | <local query reference>
+    }
+    | local_procedure_reference {
+
+    }
     ;
 
-<query resolution expression>
-    : QUERY <catalog query reference>
+procedure_resolution_expression
+    : PROCEDURE catalog_procedure_reference {
+
+    }
     ;
 
-<catalog query reference>
-    : <catalog query parent and name>
-    | <external object reference>
+catalog_procedure_reference
+    : catalog_procedure_parent_and_name {
+
+    }
+    | external_object_reference {
+
+    }
     ;
 
-<catalog query parent and name>
-    : <query parent specification> <query name>
-    | <url path parameter>
+catalog_procedure_parent_and_name
+    : procedure_parent_specification procedure_name {
+
+    }
+    | url_path_parameter {
+
+    }
     ;
 
-<query parent specification>
-    : [ <parent catalog object reference> ] [ <qualified object name> <period> ]
+procedure_parent_specification
+    : opt_parent_catalog_object_reference opt_qualified_object_name_period {
+
+    }
     ;
 
-<local query reference>
-    : <qualified query name>
+local_procedure_reference
+    : qualified_procedure_name {
+
+    }
     ;
 
-<qualified query name>
-    : [ <qualified object name> <period> ] <query name>
+qualified_procedure_name
+    : opt_qualified_object_name_period procedure_name {
+
+    }
     ;
 
 
-// Section 17.7 Function references
+
+// Section_17.6_Query_references
+query_reference
+    : query_resolution_expression {
+
+    }
+    | local_query_reference {
+
+    }
+    ;
+
+query_resolution_expression
+    : QUERY catalog_query_reference {
+
+    }
+    ;
+
+catalog_query_reference
+    : catalog_query_parent_and_name {
+
+    }
+    | external_object_reference {
+
+    }
+    ;
+
+catalog_query_parent_and_name
+    : query_parent_specification query_name {
+
+    }
+    | url_path_parameter {
+
+    }
+    ;
+
+query_parent_specification
+    : opt_parent_catalog_object_reference opt_qualified_object_name_period {
+
+    }
+    ;
+
+local_query_reference
+    : qualified_query_name
+    ;
+
+qualified_query_name
+    : opt_qualified_object_name_period query_name {
+
+    }
+    ;
+
+
+// Section_17.7_Function_references
 function_reference
-    : <function resolution expression>
-    | <local function reference>
+    : function_resolution_expression {
+
+    }
+    | local_function_reference {
+
+    }
     ;
 
-<function resolution expression>
-    : FUNCTION catalog_function_reference
+function_resolution_expression
+    : FUNCTION catalog_function_reference {
+
+    }
     ;
 
 catalog_function_reference
-    : <catalog function parent and name>
-    | <external object reference>
+    : catalog_function_parent_and name
+    | external_object_reference
     ;
 
-<catalog function parent and name>
-    : <function parent specification> <function name>
-    | <url path parameter>
+catalog_function_parent_and_name
+    : function_parent_specification function_name {
+
+    }
+    | url_path_parameter {
+
+    }
     ;
 
-<function parent specification>
-    : [ <parent catalog object reference> ] [ <qualified object name> <period> ]
+function_parent_specification
+    : opt_parent_catalog_object_reference opt_qualified_object_name_period {
+
+    }
     ;
 
-<local function reference>
-    : <qualified function name>
+local_function_reference
+    : qualified_function_name {
+
+    }
     ;
 
-<qualified function name>
-    : [ <qualified object name> <period> ] <function name>
+qualified_function_name
+    : opt_qualified_object_name_period function_name {
+
+    }
     ;
 
 
 
-// Section 17.8 catalog_object_reference
+// Section_17.8_catalog_object_reference
 catalog_object_reference
-    : <catalog url path>
+    : catalog_url_path {
+
+    }
     ;
 
-<parent catalog object reference>
-    : catalog_object_reference [ <solidus> ]
+parent_catalog_object_reference
+    : catalog_object_reference {
+
+    }
+    | catalog_object_reference SOLIDUS {
+
+    }
     ;
 
-<catalog url path>
-    : <absolute url path>
-    | <relative url path>
-    | <parameterized url path>
+catalog_url_path
+    : absolute_url_path {
+
+    }
+    | relative_url_path {
+
+    }
+    | parameterized_url_path {
+
+    }
     ;
 
-<absolute url path>
-    : <solidus> [ <simple url path> ]
+absolute_url_path
+    : SOLIDUS {
+
+    }
+    | SOLIDUS simple_url_path {
+
+    }
     ;
 
-<relative url path>
-    : <parent object relative url path>
-    | <simple relative url path>
-    | <period>
+relative_url_path
+    : parent_object_relative_url_path {
+
+    }
+    | simple_relative_url_path {
+
+    }
+    | PERIOD {
+
+    }
     ;
 
-<parent object relative url path>
-    : <predefined parent object parameter> [ <solidus> <simple url path> ]
+parent_object_relative_url_path
+    : predefined_parent_object_parameter {
+    
+    }
+    | predefined_parent_object_parameter SOLIDUS simple_url_path {
+
+    }
     ;
 
-<simple relative url path>
-    : <double period> [ { <solidus> <double period> }... ] [ <solidus> <simple url path> ]
-    | <simple url path>
+simple_relative_url_path
+    : DOUBLE_PERIOD opt_solidus_double_period_list opt_solidus_simple_url_path {
+    
+    }                 [ { SOLIDUS__DOUBLE_PERIOD }... ] [ SOLIDUS__simple_url_path ]
+    | simple_url_path
     ;
 
-<parameterized url path>
-    : <url path parameter> [ <solidus> <simple url path> ]
+opt_solidus_double_period_list
+    : %empty {
+
+    }
+    | solidus_double_period_list {
+
+    }
     ;
 
-<simple url path>
-    : <url segment> [ { <solidus> <url segment> }... ]
+solidus_double_period_list
+    : solidus_double_period {
+
+    }
+    | solidus_double_period_list solidus_double_period {
+
+    }
     ;
 
-<url segment>
-    : <identifier>
+solidus_double_period
+    : SOLIDUS DOUBLE_PERIOD {
+
+    }
     ;
 
+opt_solidus_simple_url_path
+    : %empty {
 
-// Section 17.9 <qualified object name>
-<qualified object name>
-    : <qualified name prefix> <object name>
+    }
+    | solidus_simple_url_path {
+
+    }
     ;
 
-<qualified name prefix>
-    : [ { <object name> <period> }... ]
+solidus_simple_url_path
+    : SOLIDUS simple_url_path {
+
+    }
     ;
 
+parameterized_url_path
+    : url_path_parameter opt_solidus_simple_url_path {
 
-
-// Section 17.10 <url path parameter>
-<url path parameter>
-    : parameter
+    }
     ;
 
+simple_url_path
+    : url_segment opt_solidus_url_segment_list {
 
-// Section 17.11 <external object reference>
-<external object reference>
-    : <external object url>
+    }
     ;
 
-<external object url>
-    : !! See the Syntax Rules.
+opt_solidus_url_segment_list
+    : %empty {
+
+    }
+    | solidus_url_segment_list {
+
+    }
     ;
 
+solidus_url_segment_list
+    : solidus_url_segment {
 
-// Section 17.12 <element reference>
-<element reference>
-    : <element variable>
+    }
+    | solidus_url_segment_list solidus_url_segment {
+
+    }
     ;
 
+solidus_url_segment
+    : SOLIDUS url_segment {
 
-
-// Section 19.1 <search condition>
-<search condition>
-    : <boolean value expression>
+    }
     ;
 
+url_segment
+    : IDENTIFIER {
 
-// Section 19.2 <predicate>
-<predicate>
-    : <comparison predicate>
-    | <exists predicate>
-    | <null predicate>
-    | <normalized predicate>
-    | <directed predicate>
-    | <labeled predicate>
-    | <source/destination predicate>
-    | <all_different predicate>
-    | <same predicate>
-    ;
-
-
-// Section 19.3 <comparison predicate>
-<comparison predicate>
-    : <non-parenthesized value expression primary> <comparison predicate part 2>
-    ;
-
-<comparison predicate part 2>
-    : <comp op> <non-parenthesized value expression primary>
-    ;
-
-<comp op>
-    : EQUALS_OPERATOR
-    | <not equals operator>
-    | <less than operator>
-    | <greater than operator>
-    | <less than or equals operator>
-    | <greater than or equals operator>
+    }
     ;
 
 
-// Section 19.4 <exists predicate>
-<exists predicate>
-    : EXISTS {
-      <left paren> <graph pattern> <right paren>
-      | nested_query_specification
+// Section_17.9_qualified_object_name
+qualified_object_name
+    : qualified_name_prefix object_name {
+
+    }
+    ;
+
+qualified_name_prefix
+    : opt_object_name_period_list {
+
+    }
+    ;
+
+opt_object_name_period_list
+    : %empty {
+
+    }
+    | object_name_period_list {
+
+    }
+    ;
+
+object_name_period_list
+    : object_name_period {
+
+    }
+    | object_name_period_list object_name_period {
+
+    }
+    ;
+
+object_name_period
+    : object_name PERIOD {
+
+    }
+    ;
+
+// Section_17.10_url_path_parameter
+url_path_parameter
+    : parameter {
+
+    }
+    ;
+
+
+// Section_17.11_external_object_reference
+external_object_reference
+    : external_object_url {
+
+    }
+    ;
+
+external_object_url
+    : !! See_the_Syntax_Rules.
+    ;
+
+
+// Section_17.12_element_reference
+element_reference
+    : element_variable {
+
     }
     ;
 
 
 
-// Section 19.5 <null predicate>
-<null predicate>
-    : <value expression primary> <null predicate part 2>
-    ;
+// Section_19.1_search_condition
+search_condition
+    : boolean_value_expression {
 
-<null predicate part 2>
-    : IS [ NOT ] NULL
-    ;
-
-
-// Section 19.6 <normalized predicate>
-<normalized predicate>
-    : <string value expression> <normalized predicate part 2>
-    ;
-
-<normalized predicate part 2>
-    : IS [ NOT ] [ <normal form> ] NORMALIZED
+    }
     ;
 
 
-// Section 19.7 <directed predicate>
-<directed predicate>
-    : <element reference> <directed predicate part 2>
-    ;
+// Section_19.2_predicate
+predicate
+    : comparison_predicate {
+      
+    }
+    | exists_predicate {
+      
+    }
+    | null_predicate {
+      
+    }
+    | normalized_predicate {
+      
+    }
+    | directed_predicate {
+      
+    }
+    | labeled_predicate {
+      
+    }
+    | source_or_destination_predicate {
 
-<directed predicate part 2>
-    : IS [ NOT ] DIRECTED
-    ;
+    }
+    | all_different_predicate {
 
+    }
+    | same_predicate {
 
-
-// Section 19.8 <labeled predicate>
-<labeled predicate>
-    : <element reference> <labeled predicate part 2>
-    ;
-
-<labeled predicate part 2>
-    : IS [ NOT ] LABELED <label expression>
-    ;
-
-
-// Section 19.9 <source/destination predicate>
-<source/destination predicate>
-    : <node reference> <source predicate part 2>
-    | <node reference> <destination predicate part 2>
-    ;
-
-<node reference>
-    : <element reference>
-    ;
-
-<source predicate part 2>
-    : IS [ NOT ] SOURCE [ OF ] <edge reference>
-    ;
-
-<destination predicate part 2>
-    : IS [ NOT ] DESTINATION [ OF ] <edge reference>
-    ;
-
-<edge reference>
-    : <element reference>
+    }
     ;
 
 
+// Section_19.3_comparison_predicate
+comparison_predicate
+    : non_parenthesized_value_expression_primary comparison_predicate_part_2 {
 
-// Section 19.10 <all_different predicate>
-<all_different predicate>
-    : ALL_DIFFERENT <left paren> <element reference> COMMA <element reference> [ { COMMA <element reference> }... ] <right paren>
+    }
+    ;
+
+comparison_predicate_part_2
+    : comp_op non_parenthesized_value_expression_primary {
+
+    }
+    ;
+
+comp_op
+    : EQUALS_OPERATOR {
+
+    }
+    | NOT_EQUALS_OPERATOR {
+      
+    }
+    | LESS_THAN_OPERATOR {
+      
+    }
+    | GREATER_THAN_OPERATOR {
+      
+    }
+    | LESS_THAN_OR_EQUALS_OPERATOR {
+      
+    }
+    | GREATER_THAN_OR_EQUALS_OPERATOR {
+
+    }
     ;
 
 
-// Section 19.11 <same predicate>
-<same predicate>
-    : SAME <left paren> <element reference> COMMA <element reference> [ { COMMA <element reference> }... ] <right paren>
+// Section_19.4_exists_predicate
+exists_predicate
+    : EXISTS LEFT_PAREN_graph_pattern RIGHT_PAREN {
+
+    }
+    | EXISTS nested_query_specification {
+
+    }
     ;
 
 
-// Section 20.1 <value specification>
-<value specification>
-    : <literal>
-    | <parameter value specification>
+
+// Section_19.5_null_predicate
+null_predicate
+    : value_expression_primary null_predicate_part_2 {
+
+    }
     ;
 
-<unsigned value specification>
-    : <unsigned literal>
-    | <parameter value specification>
-    ;
+null_predicate_part_2
+    : IS  NULL {
 
-<unsigned integer specification>
-    : <unsigned integer>
-    | parameter
-    ;
+    }
+    | IS NOT NULL {
 
-<parameter value specification>
-    : parameter
-    | <predefined parameter>
-    ;
-
-<predefined parameter>
-    : <predefined parent object parameter>
-    | <predefined table parameter>
-    | CURRENT_USER
-    ;
-
-<predefined parent object parameter>
-    : <predefined schema parameter>
-    | <predefined graph parameter>
-    ;
-
-<predefined schema parameter>
-    : HOME_SCHEMA
-    | CURRENT_SCHEMA
-    ;
-
-<predefined graph parameter>
-    : EMPTY_PROPERTY_GRAPH
-    | EMPTY_GRAPH
-    | HOME_PROPERTY_GRAPH
-    | HOME_GRAPH
-    | CURRENT_PROPERTY_GRAPH
-    | CURRENT_GRAPH
-    ;
-
-<predefined table parameter>
-    : EMPTY_BINDING_TABLE
-    | EMPTY_TABLE
-    | UNIT_BINDING_TABLE
-    | UNIT_TABLE
+    }
     ;
 
 
-// Section 20.2 value_expression
+// Section_19.6_normalized_predicate
+normalized_predicate
+    : string_value_expression normalized_predicate_part_2 {
+
+    }
+    ;
+
+normalized_predicate_part_2
+    : IS opt_normal_form NORMALIZED {
+
+    }
+    | IS NOT opt_normal_form NORMALIZED {
+
+    }
+    ;
+
+opt_normal_form
+    : %empty {
+
+    }
+    | normal_form {
+
+    }
+    ;
+
+// Section_19.7_directed_predicate
+directed_predicate
+    : element_reference directed_predicate_part_2 {
+
+    }
+    ;
+
+directed_predicate_part_2
+    : IS DIRECTED {
+
+    }
+    | IS NOT DIRECTED {
+
+    }
+    ;
+
+
+
+// Section_19.8_labeled_predicate
+labeled_predicate
+    : element_reference labeled_predicate_part_2 {
+
+    }
+    ;
+
+labeled_predicate_part_2
+    : IS LABELED label_expression {
+
+    }
+    | IS NOT LABELED label_expression {
+
+    }
+    ;
+
+
+// Section_19.9 <source/destination_predicate>
+source_or_destination_predicate
+    : node_reference source_predicate_part_2 {
+      
+    }
+    | node_reference destination_predicate_part_2 {
+
+    }
+    ;
+
+node_reference
+    : element_reference {
+
+    }
+    ;
+
+// TODO
+source_predicate_part_2
+    : IS [ NOT ] SOURCE [ OF ] edge_reference {
+      
+    }
+    ;
+
+destination_predicate_part_2
+    : IS [ NOT ] DESTINATION [ OF ] edge_reference {
+
+    }
+    ;
+
+edge_reference
+    : element_reference {
+
+    }
+    ;
+
+
+// TODO, at least 2 elements
+// Section_19.10_all_different_predicate
+all_different_predicate
+    : ALL_DIFFERENT LEFT_PAREN element_reference_list RIGHT_PAREN {
+
+    }
+    ;
+
+
+// TODO, at least 2 elements
+// Section_19.11_same_predicate
+same_predicate
+    : SAME LEFT_PAREN element_reference_list RIGHT_PAREN {
+
+    }
+    ;
+
+
+element_reference_list
+    : element_reference {
+
+    }
+    | element_reference_list COMMA element_reference {
+
+    }
+    ;
+
+// Section_20.1_value_specification
+value_specification
+    : literal {
+
+    }
+    | parameter_value_specification {
+
+    }
+    ;
+
+unsigned_value_specification
+    : unsigned_literal {
+      
+    }
+    | parameter_value_specification {
+      
+    }
+    ;
+
+unsigned_integer_specification
+    : unsigned_integer {
+      
+    }
+    | parameter {
+      
+    }
+    ;
+
+parameter_value_specification
+    : parameter {
+      
+    }
+    | predefined_parameter {
+      
+    }
+    ;
+
+predefined_parameter
+    : predefined_parent_object_parameter {
+      
+    }
+    | predefined_table_parameter {
+      
+    }
+    | CURRENT_USER {
+      
+    }
+    ;
+
+predefined_parent_object_parameter
+    : predefined_schema_parameter {
+      
+    }
+    | predefined_graph_parameter {
+      
+    }
+    ;
+
+predefined_schema_parameter
+    : HOME_SCHEMA {
+      
+    }
+    | CURRENT_SCHEMA {
+      
+    }
+    ;
+
+predefined_graph_parameter
+    : EMPTY_PROPERTY_GRAPH {
+      
+    }
+    | EMPTY_GRAPH {
+      
+    }
+    | HOME_PROPERTY_GRAPH {
+      
+    }
+    | HOME_GRAPH {
+      
+    }
+    | CURRENT_PROPERTY_GRAPH {
+      
+    }
+    | CURRENT_GRAPH {
+      
+    }
+    ;
+
+predefined_table_parameter
+    : EMPTY_BINDING_TABLE {
+      
+    }
+    | EMPTY_TABLE {
+      
+    }
+    | UNIT_BINDING_TABLE {
+      
+    }
+    | UNIT_TABLE {
+      
+    }
+    ;
+
+
+// Section_20.2_value_expression
 value_expression
-    : <untyped value expression> [ of_value_type ]
-    ;
+    : untyped_value_expression opt_of_value_type {
 
-<untyped value expression>
-    : <common value expression>
-    | <boolean value expression>
-    ;
-
-<common value expression>
-    : <numeric value expression>
-    | <string value expression>
-    | <datetime value expression>
-    | <duration value expression>
-    | <collection value expression>
-    | <map value expression>
-    | <record value expression>
-    | <reference value expression>
-    ;
-
-<reference value expression>
-    : primary_result_object_expression
-    | <graph element value expression>
-    ;
-
-<collection value expression>
-    : <list value expression>
-    | <multiset value expression>
-    | <set value expression>
-    | <ordered set value expression>
-    ;
-
-<set value expression>
-    : <value expression primary>
-    ;
-
-** Editor’s Note (number 340) **
-Further detail needs to be added regarding <set value expression>. See Possible Problem
-GQL-081 .
-<ordered set value expression> :
-<value expression primary>
-** Editor’s Note (number 341) **
-Further detail needs to be added regarding <ordered set value expression>. See Possible
-Problem GQL-082 .
-
-
-<map value expression>
-    : <value expression primary>
-    ;
-
-** Editor’s Note (number 342) **
-Further detail needs to be added regarding <map value expression>. See Possible Problem
-GQL-083 .
-
-
-<record value expression>
-    : <value expression primary>
-    ;
-
-// Section 20.3 <boolean value expression>
-<boolean value expression>
-    : <boolean term>
-    | <boolean value expression> OR <boolean term>
-    | <boolean value expression> XOR <boolean term>
-    ;
-
-<boolean term>
-    : <boolean factor>
-    | <boolean term> AND <boolean factor>
-    ;
-
-<boolean factor>
-    : [ NOT ] <boolean test>
-    ;
-
-<boolean test>
-    : <boolean primary> [ {
-      IS [ NOT ]
-      | EQUALS_OPERATOR
-      | <not equals operator>
-    } <truth value> ]
-    ;
-
-<truth value>
-    : TRUE
-    | FALSE
-    | UNKNOWN
-    | NULL
-    ;
-
-<boolean primary>
-    : <predicate>
-    | <boolean predicand>
-    ;
-
-<boolean predicand>
-    : <parenthesized Boolean value expression>
-    | <non-parenthesized value expression primary>
-    ;
-
-<parenthesized Boolean value expression>
-    : <left paren> <boolean value expression> <right paren>
-    ;
-
-
-// Section 20.4 <numeric value expression>
-<numeric value expression>
-    : <term>
-    | <numeric value expression> <plus sign> <term>
-    | <numeric value expression> <minus sign> <term>
-    ;
-
-<term>
-    : <factor>
-    | <term> <asterisk> <factor>
-    | <term> <solidus> <factor>
-    ;
-
-<factor>
-    : [ <sign> ] <numeric primary>
-    ;
-
-<numeric primary>
-    : <value expression primary>
-    | <numeric value function>
-    ;
-
-
-// Section 20.5 <value expression primary>
-<value expression primary>
-    : <parenthesized value expression>
-    | <non-parenthesized value expression primary>
-    ;
-
-<parenthesized value expression>
-    : <left paren> value_expression <right paren>
-    ;
-
-<non-parenthesized value expression primary>
-    : <property reference>
-    | <binding variable>
-    | <parameter value specification>
-    | <unsigned value specification>
-    | <aggregate function>
-    | <collection value constructor>
-    | <value query expression>
-    | <case expression>
-    | <cast specification>
-    | <element_id function>
-    ;
-
-
-// Section 20.6 <numeric value function>
-<numeric value function>
-    : <length expression>
-    | <absolute value expression>
-    | <modulus expression>
-    | <trigonometric function>
-    | <general logarithm function>
-    | <common logarithm>
-    | <natural logarithm>
-    | <exponential function>
-    | <power function>
-    | <square root>
-    | <floor function>
-    | <ceiling function>
-    | <inDegree function>
-    | <outDegree function>
-    ;
-
-<length expression>
-    : <char length expression>
-    | <byte length expression>
-    | <path length expression>
-    ;
-
-<char length expression>
-    : CHARACTER_LENGTH <left paren> <character string value expression> <right paren>
-    ;
-
-<byte length expression>
-    : {
-    BYTE_LENGTH
-    | OCTET_LENGTH
-    } <left paren> <string value expression> <right paren>
-    ;
-
-<path length expression>
-    : LENGTH <left paren> <binding variable> <right paren>
-    ;
-
-<absolute value expression>
-    : ABS <left paren> <numeric value expression> <right paren>
-    ;
-
-<modulus expression>
-    : MOD <left paren> <numeric value expression dividend> COMMA <numeric value expression divisor> <right paren>
-    ;
-
-<numeric value expression dividend>
-    : <numeric value expression>
-    ;
-
-<numeric value expression divisor>
-    : <numeric value expression>
-    ;
-
-<trigonometric function>
-    : <trigonometric function name> <left paren> <numeric value expression> <right paren>
-    ;
-
-<trigonometric function name>
-    : SIN | COS | TAN | COT | SINH | COSH | TANH | ASIN | ACOS | ATAN | DEGREES | RADIANS
-    ;
-
-<general logarithm function>
-    : LOG <left paren> <general logarithm base> COMMA <general logarithm argument> <right paren>
-    ;
-
-<general logarithm base>
-    : <numeric value expression>
-    ;
-
-<general logarithm argument>
-    : <numeric value expression>
-    ;
-
-<common logarithm>
-    : LOG10 <left paren> <numeric value expression> <right paren>
-    ;
-
-<natural logarithm>
-    : LN <left paren> <numeric value expression> <right paren>
-    ;
-
-<exponential function>
-    : EXP <left paren> <numeric value expression> <right paren>
-    ;
-
-<power function>
-    : POWER <left paren> <numeric value expression base> COMMA <numeric value expression exponent> <right paren>
-    ;
-
-<numeric value expression base>
-    : <numeric value expression>
-    ;
-
-<numeric value expression exponent>
-    : <numeric value expression>
-    ;
-
-<square root>
-    : SQRT <left paren> <numeric value expression> <right paren>
-    ;
-
-<floor function>
-    : FLOOR <left paren> <numeric value expression> <right paren>
-    ;
-
-<ceiling function>
-    : { CEIL | CEILING } <left paren> <numeric value expression> <right paren>
-    ;
-
-<inDegree function>
-    : inDegree <left paren> <binding variable> <right paren>
-    ;
-
-<outDegree function>
-    : outDegree <left paren> <binding variable> <right paren>
-    ;
-
-
-
-// Section 20.7 <string value expression>
-<string value expression>
-    : <character string value expression>
-    | <byte string value expression>
-    ;
-
-<character string value expression>
-    : <character string concatenation>
-    | <character string factor>
-    ;
-
-<character string concatenation>
-    : <character string value expression> <concatenation operator> <character string factor>
-    ;
-
-<character string factor>
-    : <character string primary>
-    ;
-
-<character string primary>
-    : <value expression primary>
-    | <string value function>
-    ;
-
-<byte string value expression>
-    : <byte string concatenation>
-    | <byte string factor>
-    ;
-
-<byte string factor>
-    : <byte string primary>
-    ;
-
-<byte string primary>
-    : <value expression primary>
-    | <string value function>
-    ;
-
-<byte string concatenation>
-    : <byte string value expression> <concatenation operator> <byte string factor>
-    ;
-
-
-// Section 20.8 <string value function>
-<string value function>
-    : <character string function>
-    | <byte string function>
-    ;
-
-<character string function>
-    : <substring function>
-    | <fold>
-    | <trim function>
-    | <normalize function>
-    ;
-
-<substring function>
-    : SUBSTRING <left paren> <character string value expression> COMMA <start position> [ COMMA <string length> ] <right paren>
-    | LEFT <left paren> <character string value expression> COMMA <string length> <right paren>
-    | RIGHT <left paren> <character string value expression> COMMA <string length> <right paren>
-    ;
-
-<fold>
-    : { UPPER | toUpper | LOWER | toLower } <left paren> <character string value expression> <right paren>
-    ;
-
-<trim function>
-    : TRIM <left paren> <trim source> [ COMMA <trim specification> [ <trim character string> ] ] <right paren>
-    | lTrim <left paren> <trim source> <right paren>
-    | rTrim <left paren> <trim source> <right paren>
-    ;
-
-<trim source>
-    : <character string value expression>
-    ;
-
-<trim specification>
-    : LEADING
-    | TRAILING
-    | BOTH
-    ;
-
-<trim character string>
-    : <character string value expression>
-    ;
-
-<normalize function>
-    : NORMALIZE <left paren> <character string value expression> [ COMMA <normal form> ] <right paren>
-    ;
-
-<normal form>
-    : NFC
-    | NFD
-    | NFKC
-    | NFKD
-    ;
-
-<byte string function>
-    : <byte substring function>
-    | <byte string trim function>
-    ;
-
-<byte substring function>
-    : SUBSTRING <left paren> <byte string value expression> COMMA <start position> [ COMMA <string length> ] <right paren>
-    | LEFT <left paren> <byte string value expression> COMMA <string length> <right paren>
-    | RIGHT <left paren> <byte string value expression> COMMA <string length> <right paren>
-    ;
-
-<byte string trim function>
-    : TRIM <left paren> <byte string trim source> [ COMMA <trim specification> [ <trim byte string> ] ] <right paren>
-    | lTrim <left paren> <byte string trim source> <right paren>
-    | rTrim <left paren> <byte string trim source> <right paren>
-    ;
-
-<byte string trim source>
-    : <byte string value expression>
-    ;
-
-<trim byte string>
-    : <byte string value expression>
-    ;
-
-<start position>
-    : <numeric value expression>
-    ;
-
-<string length>
-    : <numeric value expression>
-    ;
-
-
-// Section 20.9 <datetime value expression>
-<datetime value expression>
-    : <datetime term>
-    | <duration value expression> <plus sign> <datetime term>
-    | <datetime value expression> <plus sign> <duration term>
-    | <datetime value expression> <minus sign> <duration term>
-    ;
-    
-<datetime term>
-    : <datetime factor>
-    ;
-
-<datetime factor>
-    : <datetime primary>
-    ;
-
-<datetime primary>
-    : <value expression primary>
-    | <datetime value function>
-    ;
-
-
-
-// Section 20.10 <datetime value function>
-<datetime value function>
-    : <date function>
-    | <time function>
-    | <datetime function>
-    | <local time function>
-    | <local datetime function>
-    ;
-
-<date function>
-    : CURRENT_DATE
-    | DATE <left paren> [ <date function parameters> ] <right paren>
-    ;
-
-<time function>
-    : CURRENT_TIME
-    | TIME <left paren> [ <time function parameters> ] <right paren>
-    ;
-
-<local time function>
-    : LOCALTIME
-    | LOCALTIME <left paren> [ <time function parameters> ] <right paren>
-    ;
-
-<datetime function>
-    : CURRENT_TIMESTAMP
-    | DATETIME <left paren> [ <datetime function parameters> ] <right paren>
-    ;
-
-<local datetime function>
-    : LOCALTIMESTAMP
-    | LOCALDATETIME <left paren> [ <datetime function parameters> ] <right paren>
-    ;
-
-<date function parameters>
-    : <date string>
-    | <map value constructor>
-    ;
-
-<time function parameters>
-    : <time string>
-    | <map value constructor>
-    ;
-
-<datetime function parameters>
-    : <datetime string>
-    | <map value constructor>
-    ;
-
-
-
-// Section 20.11 <duration value expression>
-<duration value expression>
-    : <duration term>
-    | <duration value expression 1> <plus sign> <duration term 1>
-    | <duration value expression 1> <minus sign> <duration term 1>
-    | <left paren> <datetime value expression> <minus sign> <datetime term> <right paren>
-    ;
-
-<duration term>
-    : <duration factor>
-    | <duration term 2> <asterisk> <factor>
-    | <duration term 2> <solidus> <factor>
-    | <term> <asterisk> <duration factor>
-    ;
-
-<duration factor>
-    : [ <sign> ] <duration primary>
-    ;
-
-<duration primary>
-    : <value expression primary>
-    | <duration value function>
-    ;
-
-<duration value expression 1>
-    : <duration value expression>
-    ;
-
-<duration term 1>
-    : <duration term>
-    ;
-
-<duration term 2>
-    : <duration term>
-    ;
-
-
-// Section 20.12 <duration value function>
-<duration value function>
-    : <duration function>
-    | <duration absolute value function>
-    ;
-
-<duration function>
-    : DURATION <left paren> <duration function parameters> <right paren>
-    ;
-
-<duration function parameters>
-    : <duration string>
-    | <map value constructor>
-    ;
-
-<duration absolute value function>
-    : ABS <left paren> <duration value expression> <right paren>
-    ;
-
-
-
-// Section 20.13 <graph element value expression>
-<graph element value expression>
-    : <graph element primary>
-    ;
-
-<graph element primary>
-    : <graph element function>
-    | <value expression primary>
-    ;
-
-// Section 20.14 <graph element function>
-<graph element function>
-    : <start node function>
-    | <end node function>
-    ;
-
-<start node function>
-    : startNode <left paren> <binding variable> <right paren>
-    ;
-
-<end node function>
-    : endNode <left paren> <binding variable> <right paren>
-    ;
-
-// Section 20.15 <collection value constructor>
-<collection value constructor>
-    : <list value constructor>
-    | <multiset value constructor>
-    | <set value constructor>
-    | <ordered set value constructor>
-    | <map value constructor>
-    | <record value constructor>
-    ;
-
-
-// Section 20.16 <list value expression>
-<list value expression>
-    : <list concatenation>
-    | <list primary>
-    ;
-
-<list concatenation>
-    : <list value expression 1> <concatenation operator> <list primary>
-    ;
-
-<list value expression 1>
-    : <list value expression>
-    ;
-
-<list primary>
-    : <list value function>
-    | <value expression primary>
-    ;
-
-
-// Section 20.17 <list value function>
-<list value function>
-    : <tail list function>
-    | <trim list function>
-    ;
-
-<tail list function>
-    : tail <left paren> <list value expression> <right paren>
-    ;
-
-<trim list function>
-    : TRIM <left paren> <list value expression> COMMA <numeric value expression> <right paren>
-    ;
-
-
-
-// Section 20.18 <list value constructor>
-<list value constructor>
-    : <list value constructor by enumeration>
-    ;
-
-<list value constructor by enumeration>
-    : <list value type name> <left bracket> <list element list> <right bracket>
-    ;
-
-<list element list>
-    : <list element> [ { COMMA <list element> }... ]
-    ;
-
-<list element>
-    : value_expression
-    ;
-
-
-
-// Section 20.19 <multiset value expression>
-<multiset value expression>
-    : <multiset term>
-    | <multiset value expression> MULTISET UNION [ ALL | DISTINCT ] <multiset term>
-    | <multiset value expression> MULTISET EXCEPT [ ALL | DISTINCT ] <multiset term>
-    ;
-
-<multiset term>
-    : <multiset primary>
-    | <multiset term> MULTISET INTERSECT [ ALL | DISTINCT ] <multiset primary>
-    ;
-
-<multiset primary>
-    : <multiset value function>
-    | <value expression primary>
-    ;
-
-
-
-// Section 20.20 <multiset value function>
-<multiset value function>
-    : <multiset set function>
-    ;
-
-<multiset set function>
-    : SET <left paren> <multiset value expression> <right paren>
-    ;
-
-
-// Section 20.21 <multiset value constructor>
-<multiset value constructor>
-    : <multiset value constructor by enumeration>
-    ;
-
-<multiset value constructor by enumeration>
-    : MULTISET LEFT_BRACE <multiset element list> RIGHT_BRACE
-    ;
-
-<multiset element list>
-    : <multiset element> [ { COMMA <multiset element> }... ]
-    ;
-
-<multiset element>
-    : value_expression
-    ;
-
-
-
-// Section 20.22 <set value constructor>
-<set value constructor>
-    : <set value constructor by enumeration>
-    ;
-
-<set value constructor by enumeration>
-    : SET LEFT_BRACE <set element list> RIGHT_BRACE
-    ;
-
-<set element list>
-    : <set element> [ { COMMA <set element> }... ]
-    ;
-
-<set element>
-    : value_expression
-    ;
-
-
-// Section 20.23 <ordered set value constructor>
-<ordered set value constructor>
-    : <ordered set value constructor by enumeration>
-    ;
-
-<ordered set value constructor by enumeration>
-    : ORDERED SET {
-      LEFT_BRACE <ordered set element list> RIGHT_BRACE
-      | <left bracket> <ordered set element list> <right bracket>
     }
     ;
 
-<ordered set element list>
-    : <ordered set element> [ { COMMA <ordered set element> }... ]
+untyped_value_expression
+    : common_value_expression {
+
+    }
+    | boolean_value_expression {
+      
+    }
     ;
 
-<ordered set element>
-    : value_expression
+common_value_expression
+    : numeric_value_expression {
+      
+    }
+    | string_value_expression {
+      
+    }
+    | datetime_value_expression {
+      
+    }
+    | duration_value_expression {
+      
+    }
+    | collection_value_expression {
+      
+    }
+    | map_value_expression {
+      
+    }
+    | record_value_expression {
+      
+    }
+    | reference_value_expression {
+      
+    }
+    ;
+
+reference_value_expression
+    : primary_result_object_expression {
+      
+    }
+    | graph_element_value_expression {
+      
+    }
+    ;
+
+collection_value_expression
+    : list_value_expression {
+      
+    }
+    | multiset_value_expression {
+      
+    }
+    | set_value_expression {
+      
+    }
+    | ordered_set_value_expression {
+      
+    }
+    ;
+
+set_value_expression
+    : value_expression_primary {
+      
+    }
+    ;
+
+map_value_expression
+    : value_expression_primary {
+      
+    }
+    ;
+
+record_value_expression
+    : value_expression_primary {
+      
+    }
+    ;
+
+// Section_20.3_boolean_value_expression
+boolean_value_expression
+    : boolean_term {
+      
+    }
+    | boolean_value_expression OR boolean_term {
+      
+    }
+    | boolean_value_expression XOR boolean_term {
+      
+    }
+    ;
+
+boolean_term
+    : boolean_factor {
+      
+    }
+    | boolean_term AND boolean_factor {
+      
+    }
+    ;
+
+boolean_factor
+    : boolean_test {
+
+    }
+    | NOT boolean_test {
+
+    }
+    ;
+
+boolean_test
+    : boolean_primary {
+
+    }
+    | boolean_primary IS truth_value {
+
+    }
+    | boolean_primary IS NOT truth_value {
+
+    }
+    | boolean_primary EQUALS_OPERATOR truth_value {
+
+    }
+    | boolean_primary NOT_EQUALS_OPERATOR truth_value {
+
+    }
+    ;
+
+truth_value
+    : TRUE {
+
+    }
+    | FALSE {
+
+    }
+    | UNKNOWN {
+
+    }
+    | NULL {
+
+    }
+    ;
+
+boolean_primary
+    : predicate {
+
+    }
+    | boolean_predicand {
+
+    }
+    ;
+
+// TODO Boolean?
+boolean_predicand
+    : parenthesized_Boolean_value_expression {
+
+    }
+    | non_parenthesized_value_expression_primary {
+
+    }
+    ;
+
+parenthesized_Boolean_value_expression
+    : LEFT_PAREN boolean_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+
+// Section_20.4_numeric_value_expression
+numeric_value_expression
+    : term {
+      
+    }
+    | numeric_value_expression PLUS_SIGN term {
+      
+    }
+    | numeric_value_expression MINUS_SIGN term {
+      
+    }
+    ;
+
+term
+    : factor {
+      
+    }
+    | term ASTERISK factor {
+      
+    }
+    | term SOLIDUS factor {
+      
+    }
+    ;
+
+factor
+    : numeric_primary {
+
+    }
+    | sign numeric_primary {
+
+    }
+    ;
+
+numeric_primary
+    : value_expression_primary {
+
+    }
+    | numeric_value_function {
+
+    }
+    ;
+
+
+// Section_20.5_value_expression_primary
+value_expression_primary
+    : parenthesized_value_expression {
+      
+    }
+    | non_parenthesized_value_expression_primary {
+      
+    }
+    ;
+
+parenthesized_value_expression
+    : LEFT_PAREN value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+non_parenthesized_value_expression_primary
+    : property_reference {
+      
+    }
+    | binding_variable {
+      
+    }
+    | parameter_value_specification {
+      
+    }
+    | unsigned_value_specification {
+      
+    }
+    | aggregate_function {
+      
+    }
+    | collection_value_constructor {
+      
+    }
+    | value_query_expression {
+      
+    }
+    | case_expression {
+      
+    }
+    | cast_specification {
+      
+    }
+    | element_id_function {
+      
+    }
+    ;
+
+
+// Section_20.6_numeric_value_function
+numeric_value_function
+    : length_expression {
+      
+    }
+    | absolute_value_expression {
+      
+    }
+    | modulus_expression {
+      
+    }
+    | trigonometric_function {
+      
+    }
+    | general_logarithm_function {
+      
+    }
+    | common_logarithm {
+      
+    }
+    | natural_logarithm {
+      
+    }
+    | exponential_function {
+      
+    }
+    | power_function {
+      
+    }
+    | square_root {
+      
+    }
+    | floor_function {
+      
+    }
+    | ceiling_function {
+      
+    }
+    | inDegree_function {
+      
+    }
+    | outDegree_function {
+      
+    }
+    ;
+
+length_expression
+    : char_length_expression {
+      
+    }
+    | byte_length_expression {
+      
+    }
+    | path_length_expression {
+      
+    }
+    ;
+
+char_length_expression
+    : CHARACTER_LENGTH LEFT_PAREN character_string_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+byte_length_expression
+    : BYTE_LENGTH LEFT_PAREN string_value_expression RIGHT_PAREN {
+
+    }
+    | OCTET_LENGTH LEFT_PAREN string_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+path_length_expression
+    : LENGTH LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
+    ;
+
+absolute_value_expression
+    : ABS LEFT_PAREN numeric_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+modulus_expression
+    : MOD LEFT_PAREN numeric_value_expression_dividend COMMA numeric_value_expression_divisor RIGHT_PAREN {
+
+    }
+    ;
+
+numeric_value_expression_dividend
+    : numeric_value_expression {
+
+    }
+    ;
+
+numeric_value_expression_divisor
+    : numeric_value_expression {
+
+    }
+    ;
+
+trigonometric_function
+    : trigonometric_function_name LEFT_PAREN numeric_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+trigonometric_function_name
+    : SIN | COS | TAN | COT | SINH | COSH | TANH | ASIN | ACOS | ATAN | DEGREES | RADIANS {
+
+    }
+    ;
+
+general_logarithm_function
+    : LOG LEFT_PAREN general_logarithm_base COMMA general_logarithm_argument RIGHT_PAREN {
+
+    }
+    ;
+
+general_logarithm_base
+    : numeric_value_expression {
+
+    }
+    ;
+
+general_logarithm_argument
+    : numeric_value_expression {
+
+    }
+    ;
+
+common_logarithm
+    : LOG10 LEFT_PAREN numeric_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+natural_logarithm
+    : LN LEFT_PAREN numeric_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+exponential_function
+    : EXP LEFT_PAREN numeric_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+power_function
+    : POWER LEFT_PAREN numeric_value_expression_base COMMA numeric_value_expression_exponent RIGHT_PAREN {
+
+    }
+    ;
+
+numeric_value_expression_base
+    : numeric_value_expression {
+
+    }
+    ;
+
+numeric_value_expression_exponent
+    : numeric_value_expression {
+
+    }
+    ;
+
+square_root
+    : SQRT LEFT_PAREN numeric_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+floor_function
+    : FLOOR LEFT_PAREN numeric_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+ceiling_function
+    : CEIL LEFT_PAREN numeric_value_expression RIGHT_PAREN {
+
+    }
+    | CEILING LEFT_PAREN numeric_value_expression RIGHT_PAREN {
+      
+    }
+    ;
+
+inDegree_function
+    : inDegree LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
+    ;
+
+outDegree_function
+    : outDegree LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
     ;
 
 
 
-// Section 20.24 <map value constructor>
-<map value constructor>
-    : <map value constructor by enumeration>
+// Section_20.7_string_value_expression
+string_value_expression
+    : character_string_value_expression {
+
+    }
+    | byte_string_value_expression {
+
+    }
     ;
 
-<map value constructor by enumeration>
-    : MAP LEFT_BRACE <map element list> RIGHT_BRACE
+character_string_value_expression
+    : character_string_concatenation {
+      
+    }
+    | character_string_factor {
+      
+    }
     ;
 
-<map element list>
-    : <map element> [ { COMMA <map element> }... ]
+character_string_concatenation
+    : character_string_value_expression CONCATENATION_OPERATOR character_string_factor {
+
+    }
     ;
 
-<map element>
-    : <map key> <map value>
+character_string_factor
+    : character_string_primary {
+
+    }
     ;
 
-<map key>
-    : value_expression COLON
+character_string_primary
+    : value_expression_primary {
+
+    }
+    | string_value_function {
+
+    }
     ;
 
-<map value>
-    : value_expression
+byte_string_value_expression
+    : byte_string_concatenation {
+      
+    }
+    | byte_string_factor {
+      
+    }
     ;
 
-
-
-// Section 20.25 <record value constructor>
-<record value constructor>
-    : <record value constructor by enumeration>
-    | UNIT
+byte_string_factor
+    : byte_string_primary {
+      
+    }
     ;
 
-<record value constructor by enumeration>
-    : [ RECORD ] LEFT_BRACE <field list> RIGHT_BRACE
+byte_string_primary
+    : value_expression_primary {
+      
+    }
+    | string_value_function {
+      
+    }
     ;
 
-<field list>
-    : <field> [ { COMMA <field> }... ]
-    ;
-
-<field>
-    : <field name> <field value>
-    ;
-
-<field value>
-    : value_expression
-    ;
-
-
-
-// Section 20.26 <property reference>
-<property reference>
-    : <graph element primary> <period> <property name>
-    ;
-
-
-
-// Section 20.27 <value query expression>
-<value query expression>
-    : VALUE nested_query_specification
+byte_string_concatenation
+    : byte_string_value_expression CONCATENATION_OPERATOR byte_string_factor {
+      
+    }
     ;
 
 
-// Section 20.28 <case expression>
-<case expression>
-    : <case abbreviation>
-    | <case specification>
+// Section_20.8_string_value_function
+string_value_function
+    : character_string_function {
+      
+    }
+    | byte_string_function {
+      
+    }
     ;
 
-<case abbreviation>
-    : NULLIF <left paren> value_expression COMMA value_expression <right paren>
-    | COALESCE <left paren> value_expression { COMMA value_expression }... <right paren>
+character_string_function
+    : substring_function {
+      
+    }
+    | fold {
+      
+    }
+    | trim_function {
+      
+    }
+    | normalize_function {
+      
+    }
     ;
 
-<case specification>
-    : <simple case>
-    | <searched case>
+substring_function
+    : SUBSTRING LEFT_PAREN character_string_value_expression COMMA start_position RIGHT_PAREN {
+      
+    }
+    | SUBSTRING LEFT_PAREN character_string_value_expression COMMA start_position COMMA string_length RIGHT_PAREN {
+      
+    }
+    | LEFT LEFT_PAREN character_string_value_expression COMMA string_length RIGHT_PAREN {
+      
+    }
+    | RIGHT LEFT_PAREN character_string_value_expression COMMA string_length RIGHT_PAREN {
+      
+    }
+    ;
+
+fold
+    : UPPER LEFT_PAREN character_string_value_expression RIGHT_PAREN {
+
+    }
+    | toUpper LEFT_PAREN character_string_value_expression RIGHT_PAREN {
+      
+    }
+    | LOWER LEFT_PAREN character_string_value_expression RIGHT_PAREN {
+      
+    }
+    | toLower LEFT_PAREN character_string_value_expression RIGHT_PAREN {
+      
+    }
+    ;
+
+trim_function
+    : TRIM LEFT_PAREN trim_source RIGHT_PAREN {
+
+    }
+    | TRIM LEFT_PAREN trim_source COMMA trim_specification RIGHT_PAREN {
+
+    }
+    | TRIM LEFT_PAREN trim_source COMMA trim_specification trim_character_string RIGHT_PAREN {
+
+    }
+    | lTrim LEFT_PAREN trim_source RIGHT_PAREN {
+
+    }
+    | rTrim LEFT_PAREN trim_source RIGHT_PAREN {
+
+    }
+    ;
+
+trim_source
+    : character_string_value_expression {
+
+    }
+    ;
+
+trim_specification
+    : LEADING {
+      
+    }
+    | TRAILING {
+      
+    }
+    | BOTH {
+      
+    }
+    ;
+
+trim_character_string
+    : character_string_value_expression {
+      
+    }
+    ;
+
+normalize_function
+    : NORMALIZE LEFT_PAREN character_string_value_expression RIGHT_PAREN {
+      
+    }
+    | NORMALIZE LEFT_PAREN character_string_value_expression COMMA normal_form RIGHT_PAREN {
+      
+    }
+    ;
+
+normal_form
+    : NFC {
+
+    }
+    | NFD {
+
+    }
+    | NFKC {
+
+    }
+    | NFKD {
+
+    }
+    ;
+
+byte_string_function
+    : byte_substring_function {
+      
+    }
+    | byte_string_trim_function {
+      
+    }
+    ;
+
+byte_substring_function
+    : SUBSTRING LEFT_PAREN byte_string_value_expression COMMA start_position RIGHT_PAREN {
+
+    }
+    | SUBSTRING LEFT_PAREN byte_string_value_expression COMMA start_position COMMA string_length RIGHT_PAREN {
+      
+    }
+    | LEFT LEFT_PAREN byte_string_value_expression COMMA string_length RIGHT_PAREN {
+
+    }
+    | RIGHT LEFT_PAREN byte_string_value_expression COMMA string_length RIGHT_PAREN {
+
+    }
+    ;
+
+byte_string_trim_function
+    : TRIM LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
+
+    }
+    | TRIM LEFT_PAREN byte_string_trim_source COMMA trim_specification RIGHT_PAREN {
+      
+    }
+    | TRIM LEFT_PAREN byte_string_trim_source COMMA trim_specification trim_byte_string RIGHT_PAREN {
+      
+    }
+    | lTrim LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
+
+    }
+    | rTrim LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
+
+    }
+    ;
+
+byte_string_trim_source
+    : byte_string_value_expression {
+
+    }
+    ;
+
+trim_byte_string
+    : byte_string_value_expression {
+
+    }
+    ;
+
+start_position
+    : numeric_value_expression {
+
+    }
+    ;
+
+string_length
+    : numeric_value_expression {
+
+    }
+    ;
+
+
+// Section_20.9_datetime_value_expression
+datetime_value_expression
+    : datetime_term {
+
+    }
+    | duration_value_expression PLUS_SIGN datetime_term {
+
+    }
+    | datetime_value_expression PLUS_SIGN duration_term {
+
+    }
+    | datetime_value_expression MINUS_SIGN duration_term {
+
+    }
     ;
     
-<simple case>
-    : CASE <case operand> <simple when clause>... [ <else clause> ] END
+datetime_term
+    : datetime_factor {
+
+    }
     ;
 
-<searched case>
-    : CASE <searched when clause>... [ <else clause> ] END
+datetime_factor
+    : datetime_primary {
+
+    }
     ;
 
-<simple when clause>
-    : WHEN <when operand list> THEN <result>
-    ;
+datetime_primary
+    : value_expression_primary {
 
-<searched when clause>
-    : WHEN <search condition> THEN <result>
-    ;
+    }
+    | datetime_value_function {
 
-<else clause>
-    : ELSE <result>
-    ;
-
-<case operand>
-    : <non-parenthesized value expression primary>
-    | <element reference>
-    ;
-
-<when operand list>
-    : <when operand> [ { COMMA <when operand> }... ]
-    ;
-
-<when operand>
-    : <non-parenthesized value expression primary>
-    | <comparison predicate part 2>
-    | <null predicate part 2>
-    | <directed predicate part 2>
-    | <labeled predicate part 2>
-    | <source predicate part 2>
-    | <destination predicate part 2>
-    ;
-
-<result>
-    : <result expression>
-    | NULL
-    ;
-
-<result expression>
-    : value_expression
+    }
     ;
 
 
 
-// Section 20.29 <cast specification>
-<cast specification>
-    : CAST <left paren> <cast operand> AS <cast target> <right paren>
+// Section_20.10_datetime_value_function
+datetime_value_function
+    : date_function {
+      
+    }
+    | time_function {
+      
+    }
+    | datetime_function {
+      
+    }
+    | local_time_function {
+      
+    }
+    | local_datetime_function {
+      
+    }
     ;
 
-<cast operand>
-    : value_expression
-    | <null literal>
+date_function
+    : CURRENT_DATE {
+      
+    }
+    | DATE LEFT_PAREN RIGHT_PAREN {
+      
+    }
+    | DATE LEFT_PAREN date_function_parameters RIGHT_PAREN {
+      
+    }
     ;
 
-<cast target>
-    : <predefined type>
+time_function
+    : CURRENT_TIME {
+
+    }
+    | TIME LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | TIME LEFT_PAREN time_function_parameters RIGHT_PAREN {
+
+    }
+    ;
+
+local_time_function
+    : LOCALTIME {
+
+    }
+    | LOCALTIME LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | LOCALTIME LEFT_PAREN time_function_parameters RIGHT_PAREN {
+      
+    }
+    ;
+
+datetime_function
+    : CURRENT_TIMESTAMP {
+
+    }
+    | DATETIME LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | DATETIME LEFT_PAREN datetime_function_parameters RIGHT_PAREN {
+      
+    }
+    ;
+
+local_datetime_function
+    : LOCALTIMESTAMP {
+
+    }
+    | LOCALDATETIME LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | LOCALDATETIME LEFT_PAREN datetime_function_parameters RIGHT_PAREN {
+
+    }
+    ;
+
+date_function_parameters
+    : date_string {
+
+    }
+    | map_value_constructor {
+      
+    }
+    ;
+
+time_function_parameters
+    : time_string {
+      
+    }
+    | map_value_constructor {
+      
+    }
+    ;
+
+datetime_function_parameters
+    : datetime_string {
+      
+    }
+    | map_value_constructor {
+      
+    }
     ;
 
 
 
-// Section 20.30 <element_id function>
-<element_id function>
-    : ELEMENT_ID <left paren> <element reference> <right paren>
+// Section_20.11_duration_value_expression
+duration_value_expression
+    : duration_term {
+
+    }
+    | duration_value_expression_1 PLUS_SIGN duration_term_1 {
+
+    }
+    | duration_value_expression_1 MINUS_SIGN duration_term_1 {
+
+    }
+    | LEFT_PAREN datetime_value_expression MINUS_SIGN datetime_term RIGHT_PAREN {
+
+    }
+    ;
+
+duration_term
+    : duration_factor {
+
+    }
+    | duration_term_2 ASTERISK factor {
+
+    }
+    | duration_term_2 SOLIDUS factor {
+
+    }
+    | term ASTERISK duration_factor {
+
+    }
+    ;
+
+duration_factor
+    : duration_primary {
+
+    }
+    | sign duration_primary {
+
+    }
+    ;
+
+duration_primary
+    : value_expression_primary {
+
+    }
+    | duration_value_function {
+
+    }
+    ;
+
+duration_value_expression_1
+    : duration_value_expression {
+
+    }
+    ;
+
+duration_term_1
+    : duration_term {
+
+    }
+    ;
+
+duration_term_2
+    : duration_term {
+
+    }
+    ;
+
+
+// Section_20.12_duration_value_function
+duration_value_function
+    : duration_function {
+
+    }
+    | duration_absolute_value_function {
+
+    }
+    ;
+
+duration_function
+    : DURATION LEFT_PAREN duration_function_parameters RIGHT_PAREN {
+
+    }
+    ;
+
+duration_function_parameters
+    : duration_string {
+
+    }
+    | map_value_constructor {
+
+    }
+    ;
+
+duration_absolute_value_function
+    : ABS LEFT_PAREN duration_value_expression RIGHT_PAREN {
+
+    }
     ;
 
 
 
-// Section 21.1 <literal>
-<literal>
-    : <signed numeric literal>
-    | <general literal>
+// Section_20.13_graph_element_value expression
+graph_element_value_expression
+    : graph_element_primary {
+
+    }
     ;
 
-<general literal>
-    : <predefined type literal>
-    | <list literal>
-    | <set literal>
-    | <multiset literal>
-    | <ordered set literal>
-    | <map literal>
-    | <record literal>
+graph_element_primary
+    : graph_element_function {
+
+    }
+    | value_expression_primary {
+
+    }
     ;
 
-// The following rule is modified to
-/* <predefined type literal>
-    : <boolean literal>
-    | <character string literal>
-    | <byte string literal>
-    | <temporal literal>
-    | <duration literal>
-    | <null literal>
+// Section_20.14_graph_element_function
+graph_element_function
+    : start_node_function {
+
+    }
+    | end_node_function {
+
+    }
+    ;
+
+start_node_function
+    : startNode LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
+    ;
+
+end_node_function
+    : endNode LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
+    ;
+
+// Section_20.15_collection_value_constructor
+collection_value_constructor
+    : list_value_constructor {
+      
+    }
+    | multiset_value_constructor {
+      
+    }
+    | set_value_constructor {
+      
+    }
+    | ordered_set_value_constructor {
+      
+    }
+    | map_value_constructor {
+      
+    }
+    | record_value_constructor {
+      
+    }
+    ;
+
+
+// Section_20.16_list_value_expression
+list_value_expression
+    : list_concatenation {
+      
+    }
+    | list_primary {
+      
+    }
+    ;
+
+list_concatenation
+    : list_value_expression_1 CONCATENATION_OPERATOR list_primary {
+      
+    }
+    ;
+
+list_value_expression_1
+    : list_value_expression {
+      
+    }
+    ;
+
+list_primary
+    : list_value_function {
+      
+    }
+    | value_expression_primary {
+      
+    }
+    ;
+
+
+// Section_20.17_list_value_function
+list_value_function
+    : tail_list_function {
+      
+    }
+    | trim_list_function {
+      
+    }
+    ;
+
+tail_list_function
+    : tail LEFT_PAREN list_value_expression RIGHT_PAREN {
+      
+    }
+    ;
+
+trim_list_function
+    : TRIM LEFT_PAREN list_value_expression COMMA numeric_value_expression RIGHT_PAREN {
+      
+    }
+    ;
+
+
+
+// Section_20.18_list_value_constructor
+list_value_constructor
+    : list_value_constructor_by_enumeration {
+      
+    }
+    ;
+
+list_value_constructor_by_enumeration
+    : list_value_type_name LEFT_BRACKET list_element_list RIGHT_BRACKET {
+      
+    }
+    ;
+
+list_element_list
+    : list_element {
+    
+    } list_element_list COMMA list_element {
+
+    }
+    ;
+
+list_element
+    : value_expression {
+
+    }
+    ;
+
+
+
+// Section_20.19_multiset_value_expression
+multiset_value_expression
+    : multiset_term {
+
+    }
+    | multiset_value_expression MULTISET UNION opt_all_or_distinct multiset_term {
+
+    }
+    | multiset_value_expression MULTISET EXCEPT opt_all_or_distinct multiset_term {
+
+    }
+    ;
+
+// TODO
+opt_all_or_distinct
+    : %empty {
+
+    }
+    | all_or_distinct {
+
+    }
+    ;
+
+all_or_distinct
+    : ALL {
+
+    }
+    | DISTINCT {
+
+    }
+    ;
+
+multiset_term
+    : multiset_primary {
+
+    }
+    | multiset_term MULTISET_INTERSECT opt_all_or_distinct multiset_primary {
+
+    }
+    ;
+
+multiset_primary
+    : multiset_value_function {
+
+    }
+    | value_expression_primary {
+
+    }
+    ;
+
+
+
+// Section_20.20_multiset_value_function
+multiset_value_function
+    : multiset_set_function {
+      
+    }
+    ;
+
+multiset_set_function
+    : SET LEFT_PAREN multiset_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+
+// Section_20.21_multiset_value_constructor
+multiset_value_constructor
+    : multiset_value_constructor_by_enumeration {
+
+    }
+    ;
+
+multiset_value_constructor_by_enumeration
+    : MULTISET LEFT_BRACE multiset_element_list RIGHT_BRACE {
+
+    }
+    ;
+
+multiset_element_list
+    : multiset_element {
+    
+    }
+    | multiset_element_list COMMA multiset_element {
+
+    }
+    ;
+
+multiset_element
+    : value_expression {
+
+    }
+    ;
+
+
+
+// Section_20.22_set_value_constructor
+set_value_constructor
+    : set_value_constructor_by_enumeration {
+
+    }
+    ;
+
+set_value_constructor_by_enumeration
+    : SET LEFT_BRACE set_element_list RIGHT_BRACE {
+
+    }
+    ;
+
+set_element_list
+    : set_element {
+    
+    }
+    | set_element_list COMMA set_element {
+
+    }
+    ;
+
+set_element
+    : value_expression {
+
+    }
+    ;
+
+
+// Section_20.23_ordered_set_value constructor
+ordered_set_value_constructor
+    : ordered_set_value_constructor_by_enumeration {
+
+    }
+    ;
+
+ordered_set_value_constructor_by_enumeration
+    : ORDERED SET LEFT_BRACE ordered_set_element_list RIGHT_BRACE {
+
+    }
+    | ORDERED SET LEFT_BRACKET ordered_set_element_list RIGHT_BRACKET {
+
+    }
+    }
+    ;
+
+ordered_set_element_list
+    : ordered_set_element {
+    
+    }
+    | ordered_set_element_list COMMA ordered_set_element {
+
+    }
+    ;
+
+ordered_set_element
+    : value_expression {
+
+    }
+    ;
+
+
+
+// Section_20.24_map_value_constructor
+map_value_constructor
+    : map_value_constructor_by_enumeration {
+
+    }
+    ;
+
+map_value_constructor_by_enumeration
+    : MAP LEFT_BRACE map_element_list RIGHT_BRACE {
+
+    }
+    ;
+
+map_element_list
+    : map_element {
+    
+    }
+    | map_element_list COMMA map_element {
+
+    }
+    ;
+
+map_element
+    : map_key map_value {
+
+    }
+    ;
+
+map_key
+    : value_expression COLON {
+
+    }
+    ;
+
+map_value
+    : value_expression {
+
+    }
+    ;
+
+
+
+// Section_20.25_record_value_constructor
+record_value_constructor
+    : record_value_constructor_by_enumeration {
+
+    }
+    | UNIT {
+
+    }
+    ;
+
+record_value_constructor_by enumeration
+    : LEFT_BRACE field_list RIGHT_BRACE {
+
+    }
+    | RECORD LEFT_BRACE field_list RIGHT_BRACE {
+      
+    }
+    ;
+
+field_list
+    : field {
+    
+    }
+    | field_list COMMA field {
+
+    }
+    ;
+
+field
+    : field_name field_value {
+
+    }
+    ;
+
+field_value
+    : value_expression {
+
+    }
+    ;
+
+
+
+// Section_20.26_property_reference
+property_reference
+    : graph_element_primary PERIOD property_name {
+
+    }
+    ;
+
+
+
+// Section_20.27_value_query_expression
+value_query_expression
+    : VALUE nested_query_specification {
+
+    }
+    ;
+
+
+// Section_20.28_case_expression
+case_expression
+    : case_abbreviation {
+
+    }
+    | case_specification {
+
+    }
+    ;
+
+// TODO
+case_abbreviation
+    : NULLIF LEFT_PAREN value_expression COMMA value_expression RIGHT_PAREN {
+
+    }
+    | COALESCE LEFT_PAREN value_expression_list RIGHT_PAREN {
+
+    }
+    ;
+  
+value_expression_list
+    : value_expression {
+
+    }
+    | value_expression_list COMMA value_expression {
+
+    }
+    ;
+
+case_specification
+    : simple_case {
+
+    }
+    | searched_case {
+
+    }
+    ;
+    
+simple_case
+    : CASE case_operand simple_when_clause_list opt_else_clause END {
+
+    }
+    ;
+
+simple_when_clause_list
+    : simple_when_clause {
+
+    }
+    | simple_when_clause_list simple_when_clause {
+
+    }
+    ;
+
+opt_else_clause
+    : %empty {
+
+    }
+    | else_clause {
+
+    }
+    ;
+
+searched_case
+    : CASE searched_when_clause_list opt_else_clause END {
+
+    }
+    ;
+
+searched_when_clause_list
+    : searched_when_clause {
+
+    }
+    | searched_when_clause_list searched_when_clause {
+
+    }
+    ;
+
+simple_when_clause
+    : WHEN when_operand_list THEN result {
+
+    }
+    ;
+
+searched_when_clause
+    : WHEN search_condition THEN result {
+
+    }
+    ;
+
+else_clause
+    : ELSE result {
+
+    }
+    ;
+
+case_operand
+    : non_parenthesized_value_expression_primary {
+
+    }
+    | element_reference {
+
+    }
+    ;
+
+when_operand_list
+    : when_operand {
+    
+    }
+    | when_operand_list COMMA when_operand {
+
+    }
+    ;
+
+when_operand
+    : non_parenthesized_value_expression_primary {
+
+    }
+    | comparison_predicate_part_2 {
+      
+    }
+    | null_predicate_part_2 {
+      
+    }
+    | directed_predicate_part_2 {
+      
+    }
+    | labeled_predicate_part_2 {
+      
+    }
+    | source_predicate_part_2 {
+      
+    }
+    | destination_predicate_part_2 {
+      
+    }
+    ;
+
+result
+    : result_expression {
+      
+    }
+    | NULL {
+      
+    }
+    ;
+
+result_expression
+    : value_expression {
+      
+    }
+    ;
+
+
+
+// Section_20.29_cast_specification
+cast_specification
+    : CAST LEFT_PAREN cast_operand AS cast_target RIGHT_PAREN {
+      
+    }
+    ;
+
+cast_operand
+    : value_expression {
+      
+    }
+    | null_literal {
+      
+    }
+    ;
+
+cast_target
+    : predefined_type {
+      
+    }
+    ;
+
+
+
+// Section_20.30_element_id_function
+element_id_function
+    : ELEMENT_ID LEFT_PAREN element_reference RIGHT_PAREN {
+      
+    }
+    ;
+
+
+
+// Section_21.1_literal
+literal
+    : signed_numeric_literal {
+      
+    }
+    | general_literal {
+      
+    }
+    ;
+
+general_literal
+    : predefined_type_literal {
+      
+    }
+    | list_literal {
+      
+    }
+    | set_literal {
+      
+    }
+    | multiset_literal {
+      
+    }
+    | ordered_set_literal {
+      
+    }
+    | map_literal {
+      
+    }
+    | record_literal {
+      
+    }
+    ;
+
+// The_following_rule_is modified_to
+/* predefined_type_literal
+    : boolean_literal
+    | character_string_literal
+    | byte_string_literal
+    | temporal_literal
+    | duration_literal
+    | null_literal
     ; */
 
-<predefined type literal>
-    : <boolean literal>
-    | <unbroken character string literal>
-    | <character string literal>
-    | <byte string literal>
-    | <temporal literal>
-    | <duration literal>
-    | <null literal>
+predefined_type_literal
+    : boolean_literal {
+      
+    }
+    | unbroken_character_string_literal {
+      
+    }
+    | character_string_literal {
+      
+    }
+    | byte_string_literal {
+      
+    }
+    | temporal_literal {
+      
+    }
+    | duration_literal {
+      
+    }
+    | null_literal {
+      
+    }
     ;
 
-<unsigned literal>
-    : <unsigned numeric literal>
-    | <general literal>
+unsigned_literal
+    : unsigned_numeric_literal {
+      
+    }
+    | general_literal {
+      
+    }
     ;
 
-<boolean literal>
-    : TRUE | FALSE | UNKNOWN
+boolean_literal
+    : TRUE {
+    
+    }
+    | FALSE {
+    
+    }
+    | UNKNOWN {
+    
+    }
+    }
     ;
 
-/* <character string literal>
-    : <single quoted character sequence>
-    | <double quoted character sequence>
+/* character_string_literal
+    : single_quoted_character_sequence
+    | double_quoted_character_sequence
     ; */
 
-/* <unbroken character string literal>
-    : <unbroken single quoted character sequence>
-    | <unbroken double quoted character sequence>
+/* unbroken_character_string_literal
+    : unbroken_single_quoted_character sequence
+    | unbroken_double_quoted_character sequence
     ; */
 
-/* <single quoted character sequence>
-    : <unbroken single quoted character sequence> [ { <separator> <unbroken single quoted character sequence> }... ]
+/* single_quoted_character_sequence
+    : unbroken_single_quoted_character sequence [ { separator__unbroken_single_quoted character_sequence }... ]
     ;
 
-<double quoted character sequence>
-    : <unbroken double quoted character sequence> [ { <separator> <unbroken double quoted character sequence> }... ]
+double_quoted_character_sequence
+    : unbroken_double_quoted_character sequence [ { separator__unbroken_double_quoted character_sequence }... ]
     ; */
 
-/* <unbroken single quoted character sequence>
-    : <quote> [ <single quoted character representation>... ] <quote>
+/* unbroken_single_quoted_character sequence
+    : quote [ single_quoted_character_representation_... ] quote
     ;
 
-<unbroken double quoted character sequence>
-    : <double quote> [ <double quoted character representation>... ] <double quote>
+unbroken_double_quoted_character sequence
+    : double_quote [ double_quoted_character_representation_... ] double_quote
     ; */
 
-<unbroken accent quoted character sequence>
-    : <grave accent> [ <accent quoted character representation>... ] <grave accent>
+/* unbroken_accent_quoted_character_sequence
+    : grave_accent [ accent_quoted_character_representation_... ] grave_accent
+    ; */
+/* 
+single_quoted_character_representation
+    : character_representation
+    ; */
+
+/* !! See_the_Syntax_Rules.
+double_quoted_character_representation
+    : character_representation
+!! See_the_Syntax_Rules.
+
+accent_quoted_character_representation
+    : character_representation
+    ; */
+
+!! See_the_Syntax_Rules.
+character_representation
+    : string_literal_character
+    | escaped_character
     ;
 
-<single quoted character representation>
-    : <character representation>
-    ;
-
-!! See the Syntax Rules.
-<double quoted character representation>
-    : <character representation>
-!! See the Syntax Rules.
-
-<accent quoted character representation>
-    : <character representation>
-    ;
-
-!! See the Syntax Rules.
-<character representation>
-    : <string literal character>
-    | <escaped character>
-    ;
-
-<string literal character>
+string_literal_character
     :
-    !! See the Syntax Rules.
+    !! See_the_Syntax_Rules.
 
-<escaped character>
-    : <escaped reverse solidus>
-    | <escaped quote>
-    | <escaped double quote>
-    | <escaped tab>
-    | <escaped backspace>
-    | <escaped newline>
-    | <escaped carriage return>
-    | <escaped form feed>
-    | <unicode escape value>
+escaped_character
+    : escaped_reverse_SOLIDUS
+    | escaped_quote
+    | escaped_double_quote
+    | escaped_tab
+    | escaped_backspace
+    | escaped_newline
+    | escaped_carriage_return
+    | escaped_form_feed
+    | unicode_escape_value
 
-<escaped reverse solidus>
-    : <reverse solidus> <reverse solidus>
+escaped_reverse_SOLIDUS
+    : reverse_SOLIDUS__reverse_SOLIDUS
     ;
 
-<escaped quote>
-    : <reverse solidus> <quote>
+escaped_quote
+    : reverse_SOLIDUS__quote
     ;
 
-<escaped double quote>
-    : <reverse solidus> <double quote>
+escaped_double_quote
+    : reverse_SOLIDUS__double_quote
     ;
 
-<escaped tab>
-    : <reverse solidus> t
+escaped_tab
+    : reverse_SOLIDUS__t
     ;
 
-<escaped backspace>
-    : <reverse solidus> b
+escaped_backspace
+    : reverse_SOLIDUS__b
 
-<escaped newline>
-    : <reverse solidus> n
+escaped_newline
+    : reverse_SOLIDUS__n
 
-<escaped carriage return>
-    : <reverse solidus> r
+escaped_carriage_return
+    : reverse_SOLIDUS__r
 
-<escaped form feed>
-    : <reverse solidus> f
+escaped_form_feed
+    : reverse_SOLIDUS__f
     ;
 
-<unicode escape value>
-    : <unicode 4 digit escape value>
-    | <unicode 6 digit escape value>
+unicode_escape_value
+    : unicode_4_digit_escape value
+    | unicode_6_digit_escape value
     ;
 
-<unicode 4 digit escape value>
-    : <reverse solidus> u <hex digit> <hex digit> <hex digit> <hex digit>
+unicode_4_digit_escape value
+    : reverse_SOLIDUS__u_hex digit__hex_digit__hex digit__hex_digit
     ;
 
-<unicode 6 digit escape value>
-    : <reverse solidus> U <hex digit> <hex digit> <hex digit> <hex digit> <hex digit> <hex digit>
+unicode_6_digit_escape value
+    : reverse_SOLIDUS__U_hex digit__hex_digit__hex digit__hex_digit__hex digit__hex_digit
     ;
 
-<byte string literal>
-    : X <quote> [ <space>... ] [ { <hex digit> [ <space>... ] <hex digit> [ <space>... ] }... ] <quote> [ { <separator> <quote> [ <space>... ] [ { <hex digit> [ <space>... ] <hex digit> [ <space>... ] }... ] <quote> }... ]
+/* byte_string_literal
+    : X_quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote [ { separator__quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote }... ]
+    ; */
+
+numeric_literal
+    : signed_numeric_literal
+    | unsigned_numeric_literal
     ;
 
-<numeric literal>
-    : <signed numeric literal>
-    | <unsigned numeric literal>
+signed_numeric_literal
+    : unsigned_numeric_literal {
+
+    }
+    | sign unsigned_numeric_literal {
+
+    }
     ;
 
-<signed numeric literal>
-    : [ <sign> ] <unsigned numeric literal>
+/* unsigned_numeric_literal
+    : exact_numeric_literal {
+
+    }
+    | approximate_numeric_literal {
+
+    }
     ;
 
-<unsigned numeric literal>
-    : <exact numeric literal>
-    | <approximate numeric literal>
+exact_numeric_literal
+    : unsigned_integer {
+      
+    }
+    | unsigned_decimal_integer [ PERIOD [ unsigned_decimal_integer ] ]
+    | PERIOD__unsigned_decimal_integer
+    ; */
+
+sign
+    : PLUS_SIGN {
+
+    }
+    | MINUS_SIGN {
+
+    }
     ;
 
-<exact numeric literal>
-    : <unsigned integer>
-    | <unsigned decimal integer> [ <period> [ <unsigned decimal integer> ] ]
-    | <period> <unsigned decimal integer>
+unsigned_integer
+    : unsigned_decimal_integer {
+
+    }
+    | unsigned_hexadecimal_integer {
+
+    }
+    | unsigned_octal_integer {
+
+    }
+    | unsigned_binary_integer {
+
+    }
     ;
 
-<sign>
-    : <plus sign>
-    | <minus sign>
+unsigned_decimal_integer
+    : digit [ { [ underscore ] digit }... ]
     ;
 
-<unsigned integer>
-    : <unsigned decimal integer>
-    | <unsigned hexadecimal integer>
-    | <unsigned octal integer>
-    | <unsigned binary integer>
+unsigned_hexadecimal_integer
+    : 0x { [ underscore ] hex_digit }...
     ;
 
-<unsigned decimal integer>
-    : <digit> [ { [ <underscore> ] <digit> }... ]
+unsigned_octal_integer
+    : 0o { [ underscore ] octal_digit }...
     ;
 
-<unsigned hexadecimal integer>
-    : 0x { [ <underscore> ] <hex digit> }...
+unsigned_binary_integer
+    : 0b { [ underscore ] binary_digit }...
     ;
 
-<unsigned octal integer>
-    : 0o { [ <underscore> ] <octal digit> }...
+signed_decimal_integer
+    : [ sign ] unsigned_decimal_integer
     ;
 
-<unsigned binary integer>
-    : 0b { [ <underscore> ] <binary digit> }...
-    ;
-
-<signed decimal integer>
-    : [ <sign> ] <unsigned decimal integer>
-    ;
-
-<approximate numeric literal>
+approximate_numeric_literal
     :
-    <mantissa> E <exponent>
+    mantissa__E_exponent
     ;
 
-<mantissa>
-    : <exact numeric literal>
+mantissa
+    : exact_numeric_literal
     ;
 
-<exponent>
-    : <signed decimal integer>
+exponent
+    : signed_decimal_integer
     ;
 
-<temporal literal>
-    : <date literal>
-    | <time literal>
-    | <datetime literal>
+temporal_literal
+    : date_literal
+    | time_literal
+    | datetime_literal
     ;
 
-<date literal>
-    : DATE <date string>
+date_literal
+    : DATE_date_string
     ;
 
-<time literal>
-    : TIME <time string>
+time_literal
+    : TIME_time_string
     ;
 
-<datetime literal>
-    : { DATETIME | TIMESTAMP } <datetime string>
+datetime_literal
+    : { DATETIME | TIMESTAMP } datetime_string
     ;
 
-<date string>
-    : <unbroken character string literal>
+date_string
+    : unbroken_character_string_literal
     ;
 
-<time string>
-    : <unbroken character string literal>
+time_string
+    : unbroken_character_string_literal
     ;
 
-<datetime string>
-    : <unbroken character string literal>
+datetime_string
+    : unbroken_character_string_literal
     ;
 
-<duration literal>
-    : DURATION <duration string>
-    | <SQL-interval literal>
+duration_literal
+    : DURATION_duration_string
+    | SQL_interval_literal
     ;
 
-<duration string>
-    : <unbroken character string literal>
+duration_string
+    : unbroken_character_string_literal
     ;
 
-<SQL-interval literal>
+SQL_interval_literal
     :
-  !! See the Syntax Rules.
+  !! See_the_Syntax_Rules.
 
-<null literal>
+null_literal
     : NULL
     ;
 
-<list literal>
-    : <list value constructor by enumeration>
+list_literal
+    : list_value_constructor_by enumeration
     ;
 
-<set literal>
-    : <set value constructor by enumeration>
+set_literal
+    : set_value_constructor_by enumeration
     ;
 
-<multiset literal>
-    : <multiset value constructor by enumeration>
+multiset_literal
+    : multiset_value_constructor_by enumeration
     ;
 
-<ordered set literal>
-    : <ordered set value constructor by enumeration>
+ordered_set_literal
+    : ordered_set_value_constructor by_enumeration
     ;
 
-<map literal>
-    : <map value constructor by enumeration>
+map_literal
+    : map_value_constructor_by enumeration
     ;
 
-<record literal>
-    : <record value constructor by enumeration>
+record_literal
+    : record_value_constructor_by enumeration
     ;
 
 
-// Section 21.2 <value type>
-<value type>
+// Section_21.2_value_type
+value_type
     : ANY
-    | <predefined type>
-    | <graph element type>
-    | <collection type>
-    | <map value type>
+    | predefined_type
+    | graph_element_type
+    | collection_type
+    | map_value_type
     | record_value_type
     | graph_type_expression
     | binding_table_type_expression
@@ -4296,64 +6981,67 @@ GQL-083 .
     ;
 
 of_value_type
-    : [ of_type_prefix ] <value type>
+    : opt_of_type_prefix value_type
     ;
 
 of_type_prefix
-    : <double colon> | OF
+    : DOUBLE_COLON
+    | OF {
+
+    }
     ;
 
-<predefined type>
-    : <boolean type>
-    | <character string type>
-    | <byte string type>
-    | <numeric type>
-    | <temporal type>
+predefined_type
+    : boolean_type
+    | character_string_type
+    | byte_string_type
+    | numeric_type
+    | temporal_type
     ;
 
-<boolean type>
+boolean_type
     : BOOL | BOOLEAN
     ;
 
-<character string type>
-    : { STRING | VARCHAR } [ <left paren> <max length> <right paren> ]
+character_string_type
+    : { STRING | VARCHAR } [ LEFT_PAREN_max_length RIGHT_PAREN ]
     ;
 
-<byte string type>
-    : BYTES [ <left paren> [ <min length> COMMA ] <max length> <right paren> ]
-    | BINARY [ <fixed length> ]
-    | VARBINARY [ <max length> ]
+byte_string_type
+    : BYTES [ LEFT_PAREN [ min_length__COMMA ] max_length__RIGHT_PAREN ]
+    | BINARY [ fixed_length ]
+    | VARBINARY [ max_length ]
     ;
 
-<min length>
-    : <unsigned decimal integer>
+min_length
+    : unsigned_decimal_integer
     ;
 
-<max length>
-    : <unsigned decimal integer>
+max_length
+    : unsigned_decimal_integer
     ;
 
-<fixed length>
-    : <unsigned decimal integer>
+fixed_length
+    : unsigned_decimal_integer
     ;
 
-<numeric type>
-    : <exact numeric type>
-    | <approximate numeric type>
+numeric_type
+    : exact_numeric_type
+    | approximate_numeric_type
     ;
 
-<exact numeric type>
-    : <binary exact numeric type>
-    | <decimal exact numeric type>
+exact_numeric_type
+    : binary_exact_numeric_type
+    | decimal_exact_numeric_type
     ;
 
-<binary exact numeric type>
+binary_exact_numeric_type
     :
-    <binary exact signed numeric type>
-    | <binary exact unsigned numeric type>
+    binary_exact_signed_numeric_type
+    | binary_exact_unsigned_numeric_type
     ;
 
-<binary exact signed numeric type>
+binary_exact_signed_numeric_type
     : INT8
     | INT16
     | INT32
@@ -4361,235 +7049,437 @@ of_type_prefix
     | INT128
     | INT256
     | SMALLINT
-    | INT [ <left paren> <precision> <right paren> ]
-    | BIGINT
-    | [ SIGNED ] <verbose binary exact numeric type>
+    | INT {
+    
+    }
+    | INT LEFT_PAREN precision RIGHT_PAREN {
+      
+    }
+    | BIGINT {
+
+    }
+    | verbose_binary_exact_numeric_type {
+
+    }
+    | SIGNED verbose_binary_exact_numeric_type {
+
+    }
     ;
 
-<binary exact unsigned numeric type>
-    : UINT8
-    | UINT16
-    | UINT32
-    | UINT64
-    | UINT128
-    | UINT256
-    | UINT [ <left paren> <precision> <right paren> ]
-    | UNSIGNED <verbose binary exact numeric type>
+binary_exact_unsigned_numeric_type
+    : UINT8 {
+
+    }
+    | UINT16 {
+
+    }
+    | UINT32 {
+
+    }
+    | UINT64 {
+
+    }
+    | UINT128 {
+
+    }
+    | UINT256 {
+
+    }
+    | UINT {
+    
+    }
+    | UINT LEFT_PAREN precision RIGHT_PAREN {
+
+    }
+    | UNSIGNED verbose_binary_exact_numeric_type {
+
+    }
     ;
 
-<verbose binary exact numeric type>
-    : INTEGER8
-    | INTEGER16
-    | INTEGER32
-    | INTEGER64
-    | INTEGER128
-    | INTEGER256
-    | INTEGER [ <left paren> <precision> <right paren> ]
+verbose_binary_exact_numeric_type
+    : INTEGER8 {
+
+    }
+    | INTEGER16 {
+
+    }
+    | INTEGER32 {
+
+    }
+    | INTEGER64 {
+
+    }
+    | INTEGER128 {
+
+    }
+    | INTEGER256 {
+
+    }
+    | INTEGER {
+    
+    }
+    | INTEGER LEFT_PAREN precision RIGHT_PAREN {
+
+    }
     ;
 
-<decimal exact numeric type>
-    : { DECIMAL | DEC } <left paren> <precision> [ COMMA <scale> ] <right paren>
+decimal_exact_numeric_type
+    : decimal_synonym LEFT_PAREN precision RIGHT_PAREN {
+
+    }
+    | decimal_synonym LEFT_PAREN precision COMMA scale RIGHT_PAREN {
+
+    }
     ;
 
-<precision>
-    : <unsigned decimal integer>
+decimal_synonym
+    : DECIMAL {
+
+    }
+    | DEC {
+
+    }
     ;
 
-<scale>
-    : <unsigned decimal integer>
+precision
+    : unsigned_decimal_integer {
+
+    }
     ;
 
-<approximate numeric type>
-    : FLOAT16
-    | FLOAT32
-    | FLOAT64
-    | FLOAT128
-    | FLOAT128
-    | FLOAT [ <left paren> <precision> [ COMMA <scale> ] <right paren> ]
-    | REAL
-    | DOUBLE [ PRECISION ]
+scale
+    : unsigned_decimal_integer {
+
+    }
     ;
 
-<temporal type>
-    : DATETIME
-    | LOCALDATETIME
-    | DATE
-    | TIME
-    | LOCALTIME
-    | DURATION
+approximate_numeric_type
+    : FLOAT16 {
+      
+    }
+    | FLOAT32 {
+      
+    }
+    | FLOAT64 {
+      
+    }
+    | FLOAT128 {
+
+    }
+    | FLOAT256 {
+
+    }
+    | FLOAT {
+    
+    }
+    | FLOAT LEFT_PAREN precision RIGHT_PAREN {
+
+    }
+    | FLOAT LEFT_PAREN precision COMMA scala RIGHT_PAREN {
+
+    }
+    | REAL {
+
+    }
+    | DOUBLE {
+    
+    }
+    | DOUBLE PRECISION {
+
+    }
     ;
 
-<graph element type>
-    : NODE
-    | VERTEX
-    | EDGE
-    | RELATIONSHIP
+temporal_type
+    : DATETIME {
+
+    }
+    | LOCALDATETIME {
+      
+    }
+    | DATE {
+      
+    }
+    | TIME {
+      
+    }
+    | LOCALTIME {
+      
+    }
+    | DURATION {
+      
+    }
     ;
 
-<collection type>
-    : <list value type>
-    | <multiset value type>
-    | <set value type>
-    | <ordered set value type>
+graph_element_type
+    : NODE {
+      
+    }
+    | VERTEX {
+      
+    }
+    | EDGE {
+      
+    }
+    | RELATIONSHIP {
+      
+    }
     ;
 
-<list value type>
-    : <value type> <list value type name>
+collection_type
+    : list_value_type {
+      
+    }
+    | multiset_value_type {
+      
+    }
+    | set_value_type {
+      
+    }
+    | ordered_set_value_type {
+      
+    }
     ;
 
-<list value type name>
-    : LIST
-    | ARRAY
+list_value_type
+    : value_type list_value_type_name {
+
+    }
     ;
 
-<multiset value type>
-    : <value type> MULTISET
+list_value_type_name
+    : LIST {
+
+    }
+    | ARRAY {
+      
+    }
     ;
 
-<set value type>
-    : <value type> SET
+multiset_value_type
+    : value_type__MULTISET
     ;
 
-<ordered set value type>
-    : <value type> ORDERED SET
+set_value_type
+    : value_type__SET
     ;
 
-<map value type>
-    : MAP <left angle bracket> <map key type> COMMA <value type> <right angle bracket>
+ordered_set_value_type
+    : value_type ORDERED SET {
+
+    }
     ;
 
-<map key type>
-    : <predefined type>
+map_value_type
+    : MAP LEFT_ANGLE_BRACKET map_key_type COMMA value_type RIGHT_ANGLE_BRACKET {
+
+    }
+    ;
+
+map_key_type
+    : predefined_type {
+
+    }
     ;
 
 record_value_type
-    : [ RECORD ] LEFT_BRACE [ <field type list> ] RIGHT_BRACE
+    : LEFT_BRACE opt_field_type_list RIGHT_BRACE {
+
+    }
+    | RECORD LEFT_BRACE opt_field_type_list RIGHT_BRACE {
+      
+    }
     ;
 
-<field type list>
-    : <field type> [ { COMMA <field type> }... ]
+opt_field_type_list
+    : %empty {
+
+    }
+    | field_type_list {
+
+    }
+    ;
+  
+field_type_list
+    : field_type {
+    
+    }
+    | field_type_list COMMA field_type {
+
+    }
     ;
 
-<field type>
-    : <field name> [ of_type_prefix ] <value type>
+field_type
+    : field_name opt_of_type_prefix value_type {
+
+    }
     ;
 
 
 
-// Section 21.3 Names and identifiers
-<object name>
-    : <identifier>
+// Section_21.3_Names_and_identifiers
+object_name
+    : IDENTIFIER {
+
+    }
     ;
 
-<schema name>
-    : <identifier>
+schema_name
+    : IDENTIFIER {
+
+    }
     ;
 
-<graph name>
-    : <identifier>
+graph_name
+    : IDENTIFIER {
+
+    }
     ;
 
-<element type name>
-    : <type name>
+element_type_name
+    : type_name {
+      
+    }
     ;
 
-<graph type name>
-    : <identifier>
+graph_type_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<type name>
-    : <identifier>
+type_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<binding table name>
-    : <identifier>
+binding_table_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<value name>
-    : <identifier>
+value_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<procedure name>
-    : <identifier>
+procedure_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<query name>
-    : <identifier>
+query_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<function name>
-    : <identifier>
+function_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<label name>
-    : <identifier>
+label_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<property name>
-    : <identifier>
+property_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<field name>
-    : <identifier>
+field_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-<path pattern name>
-    : <identifier>
+path_pattern_name
+    : IDENTIFIER {
+      
+    }
     ;
 
-/* <PARAMETER_NAME>
-    : <dollar sign> <separated identifier>
+/* PARAMETER_NAME
+    : dollar_sign__separated_identifier
     ; */
 
-<element variable>
-    : <variable name>
+element_variable
+    : variable_name {
+      
+    }
     ;
 
-<path variable>
-    : <variable name>
+path_variable
+    : variable_name {
+      
+    }
     ;
 
-<subpath variable>
-    : <variable name>
+subpath_variable
+    : variable_name {
+      
+    }
     ;
 
 static_variable_name
-    : <variable name>
+    : variable_name {
+      
+    }
     ;
 
 binding_variable_name
-    : <variable name>
+    : variable_name {
+      
+    }
     ;
 
-<variable name>
-    : <regular identifier>
+variable_name
+    : regular_identifier {
+      
+    }
     ;
 
-/* <identifier>
-    : <regular identifier>
-    | <delimited identifier>
+/* IDENTIFIER
+    : regular_identifier
+    | delimited_identifier
     ;
 
-<separated identifier>
-    : <extended identifier>
-    | <delimited identifier>
+separated_identifier
+    : extended_identifier
+    | delimited_identifier
     ; */
 
 edge_synonym
-    : EDGE
-    | RELATIONSHIP
+    : EDGE {
+      
+    }
+    | RELATIONSHIP {
+      
+    }
     ;
 
 node_synonym
-    : NODE
-    | VERTEX
+    : NODE {
+      
+    }
+    | VERTEX {
+      
+    }
     ;
 
 BINDING_TABLE
     : TABLE {
 
     }
-    | BINDING TABLE {
+    | BINDING_TABLE {
 
     }
     ;
@@ -4598,17 +7488,30 @@ PROPERTY_GRAPH
     : GRAPH {
 
     }
-    | PROPERTY GRAPH {
+    | PROPERTY_GRAPH {
 
     }
     ;
 
-// moved from gql.ll
-<greater than operator>
+IF_EXISTS
+    : IF EXISTS {
+
+    }
+    ;
+
+IF_NOT_EXISTS
+    : IF NOT EXISTS {
+
+    }
+    ;
+
+
+// moved_from_gql.ll
+GREATER_THAN_OPERATOR
     : RIGHT_ANGLE_BRACKET
     ;
 
-<less than operator>
+LESS_THAN_OPERATOR
     : LEFT_ANGLE_BRACKET
     ;
 
