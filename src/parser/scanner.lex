@@ -1,9 +1,8 @@
 %option c++
 %option yyclass="GraphScanner"
 %option nodefault noyywrap
-%option never-interactive
+%option 8bit never-interactive
 %option yylineno
-%option case-insensitive
 
 %{
 #include "parser/GQLParser.h"
@@ -15,504 +14,744 @@
     yylloc->step();                     \
     yylloc->columns(yyleng);
 
-static constexpr size_t MAX_STRING = 4096;
+#define NG_RESERVED_KEYWORD(a, b) {a, TokenType::TOK_##b},
+#define NG_UNRESERVED_KEYWORD(a, b) {a, TokenType::TOK_##b},
 
-%}
+const std::unordered_map<std::string, TokenType> kCaseSensitiveKeywords {
+/* reserved keyword */
+// case-sensitive reserved keyword
+NG_RESERVED_KEYWORD("endNode", endNode)
+NG_RESERVED_KEYWORD("inDegree", inDegree)
+NG_RESERVED_KEYWORD("lTrim", lTrim)
+NG_RESERVED_KEYWORD("outDegree", outDegree)
+NG_RESERVED_KEYWORD("percentileCont", percentileCont)
+NG_RESERVED_KEYWORD("percentileDist", percentileDist)
+NG_RESERVED_KEYWORD("rTrim", rTrim)
+NG_RESERVED_KEYWORD("startNode", startNode)
+NG_RESERVED_KEYWORD("stDev", stDev)
+NG_RESERVED_KEYWORD("stDevP", stDevP)
+NG_RESERVED_KEYWORD("tail", tail)
+NG_RESERVED_KEYWORD("toLower", toLower)
+NG_RESERVED_KEYWORD("toUpper", toUpper)
+};
 
-%x DQ_STR
-%x SQ_STR
-%x LB_STR
-%x COMMENT
+const std::unordered_map<std::string, TokenType> kCaseInsensitiveKeywords {
+// case-insensitive reserved keyword
+NG_RESERVED_KEYWORD("ABS", ABS)
+NG_RESERVED_KEYWORD("ACOS", ACOS)
+NG_RESERVED_KEYWORD("ADD", ADD)
+NG_RESERVED_KEYWORD("AGGREGATE", AGGREGATE)
+NG_RESERVED_KEYWORD("ALIAS", ALIAS)
+NG_RESERVED_KEYWORD("ALL", ALL)
+NG_RESERVED_KEYWORD("ALL_DIFFERENT", ALL_DIFFERENT)
+NG_RESERVED_KEYWORD("AND", AND)
+NG_RESERVED_KEYWORD("ANY", ANY)
+NG_RESERVED_KEYWORD("ARRAY", ARRAY)
+NG_RESERVED_KEYWORD("AS", AS)
+NG_RESERVED_KEYWORD("ASC", ASC)
+NG_RESERVED_KEYWORD("ASCENDING", ASCENDING)
+NG_RESERVED_KEYWORD("ASIN", ASIN)
+NG_RESERVED_KEYWORD("AT", AT)
+NG_RESERVED_KEYWORD("ATAN", ATAN)
+NG_RESERVED_KEYWORD("AVG", AVG)
+NG_RESERVED_KEYWORD("BINARY", BINARY)
+NG_RESERVED_KEYWORD("BIGINT", BIGINT)
+NG_RESERVED_KEYWORD("BOOL", BOOL)
+NG_RESERVED_KEYWORD("BOOLEAN", BOOLEAN)
+NG_RESERVED_KEYWORD("BOTH", BOTH)
+NG_RESERVED_KEYWORD("BY", BY)
+NG_RESERVED_KEYWORD("BYTE_LENGTH", BYTE_LENGTH)
+NG_RESERVED_KEYWORD("BYTES", BYTES)
+NG_RESERVED_KEYWORD("CALL", CALL)
+NG_RESERVED_KEYWORD("CASE", CASE)
+NG_RESERVED_KEYWORD("CAST", CAST)
+NG_RESERVED_KEYWORD("CATALOG", CATALOG)
+NG_RESERVED_KEYWORD("CEIL", CEIL)
+NG_RESERVED_KEYWORD("CEILING", CEILING)
+NG_RESERVED_KEYWORD("CHARACTER", CHARACTER)
+NG_RESERVED_KEYWORD("CHARACTER_LENGTH", CHARACTER_LENGTH)
+NG_RESERVED_KEYWORD("CLEAR", CLEAR)
+NG_RESERVED_KEYWORD("CLONE", CLONE)
+NG_RESERVED_KEYWORD("CLOSE", CLOSE)
+NG_RESERVED_KEYWORD("COALESCE", COALESCE)
+NG_RESERVED_KEYWORD("COLLECT", COLLECT)
+NG_RESERVED_KEYWORD("COMMIT", COMMIT)
+NG_RESERVED_KEYWORD("CONSTRAINT", CONSTRAINT)
+NG_RESERVED_KEYWORD("CONSTANT", CONSTANT)
+NG_RESERVED_KEYWORD("CONSTRUCT", CONSTRUCT)
+NG_RESERVED_KEYWORD("COPY", COPY)
+NG_RESERVED_KEYWORD("COS", COS)
+NG_RESERVED_KEYWORD("COSH", COSH)
+NG_RESERVED_KEYWORD("COST", COST)
+NG_RESERVED_KEYWORD("COT", COT)
+NG_RESERVED_KEYWORD("COUNT", COUNT)
+NG_RESERVED_KEYWORD("CURRENT_DATE", CURRENT_DATE)
+NG_RESERVED_KEYWORD("CURRENT_GRAPH", CURRENT_GRAPH)
+NG_RESERVED_KEYWORD("CURRENT_PROPERTY_GRAPH", CURRENT_PROPERTY_GRAPH)
+NG_RESERVED_KEYWORD("CURRENT_ROLE", CURRENT_ROLE)
+NG_RESERVED_KEYWORD("CURRENT_SCHEMA", CURRENT_SCHEMA)
+NG_RESERVED_KEYWORD("CURRENT_TIME", CURRENT_TIME)
+NG_RESERVED_KEYWORD("CURRENT_TIMESTAMP", CURRENT_TIMESTAMP)
+NG_RESERVED_KEYWORD("CURRENT_USER", CURRENT_USER)
+NG_RESERVED_KEYWORD("CREATE", CREATE)
+NG_RESERVED_KEYWORD("DATA", DATA)
+NG_RESERVED_KEYWORD("DATE", DATE)
+NG_RESERVED_KEYWORD("DATETIME", DATETIME)
+NG_RESERVED_KEYWORD("DEC", DEC)
+NG_RESERVED_KEYWORD("DECIMAL", DECIMAL)
+NG_RESERVED_KEYWORD("DEFAULT", DEFAULT)
+NG_RESERVED_KEYWORD("DEGREES", DEGREES)
+NG_RESERVED_KEYWORD("DELETE", DELETE)
+NG_RESERVED_KEYWORD("DETACH", DETACH)
+NG_RESERVED_KEYWORD("DESC", DESC)
+NG_RESERVED_KEYWORD("DESCENDING", DESCENDING)
+NG_RESERVED_KEYWORD("DIRECTORIES", DIRECTORIES)
+NG_RESERVED_KEYWORD("DIRECTORY", DIRECTORY)
+NG_RESERVED_KEYWORD("DISTINCT", DISTINCT)
+NG_RESERVED_KEYWORD("DO", DO)
+NG_RESERVED_KEYWORD("DOUBLE", DOUBLE)
+NG_RESERVED_KEYWORD("DROP", DROP)
+NG_RESERVED_KEYWORD("DURATION", DURATION)
+NG_RESERVED_KEYWORD("ELEMENT_ID", ELEMENT_ID)
+NG_RESERVED_KEYWORD("ELSE", ELSE)
+NG_RESERVED_KEYWORD("END", END)
+NG_RESERVED_KEYWORD("ENDS", ENDS)
+NG_RESERVED_KEYWORD("EMPTY_BINDING_TABLE", EMPTY_BINDING_TABLE)
+NG_RESERVED_KEYWORD("EMPTY_GRAPH", EMPTY_GRAPH)
+NG_RESERVED_KEYWORD("EMPTY_PROPERTY_GRAPH", EMPTY_PROPERTY_GRAPH)
+NG_RESERVED_KEYWORD("EMPTY_TABLE", EMPTY_TABLE)
+NG_RESERVED_KEYWORD("EXCEPT", EXCEPT)
+NG_RESERVED_KEYWORD("EXISTS", EXISTS)
+NG_RESERVED_KEYWORD("EXISTING", EXISTING)
+NG_RESERVED_KEYWORD("EXP", EXP)
+NG_RESERVED_KEYWORD("EXPLAIN", EXPLAIN)
+NG_RESERVED_KEYWORD("FALSE", FALSE)
+NG_RESERVED_KEYWORD("FILTER", FILTER)
+NG_RESERVED_KEYWORD("FLOAT", FLOAT)
+NG_RESERVED_KEYWORD("FLOAT16", FLOAT16)
+NG_RESERVED_KEYWORD("FLOAT32", FLOAT32)
+NG_RESERVED_KEYWORD("FLOAT64", FLOAT64)
+NG_RESERVED_KEYWORD("FLOAT128", FLOAT128)
+NG_RESERVED_KEYWORD("FLOAT256", FLOAT256)
+NG_RESERVED_KEYWORD("FLOOR", FLOOR)
+NG_RESERVED_KEYWORD("FOR", FOR)
+NG_RESERVED_KEYWORD("FROM", FROM)
+NG_RESERVED_KEYWORD("FUNCTION", FUNCTION)
+NG_RESERVED_KEYWORD("FUNCTIONS", FUNCTIONS)
+NG_RESERVED_KEYWORD("GQLSTATUS", GQLSTATUS)
+NG_RESERVED_KEYWORD("GRANT", GRANT)
+NG_RESERVED_KEYWORD("GROUP", GROUP)
+NG_RESERVED_KEYWORD("HAVING", HAVING)
+NG_RESERVED_KEYWORD("HOME_GRAPH", HOME_GRAPH)
+NG_RESERVED_KEYWORD("HOME_PROPERTY_GRAPH", HOME_PROPERTY_GRAPH)
+NG_RESERVED_KEYWORD("HOME_SCHEMA", HOME_SCHEMA)
+NG_RESERVED_KEYWORD("IN", IN)
+NG_RESERVED_KEYWORD("INSERT", INSERT)
+NG_RESERVED_KEYWORD("INT", INT)
+NG_RESERVED_KEYWORD("INTEGER", INTEGER)
+NG_RESERVED_KEYWORD("INT8", INT8)
+NG_RESERVED_KEYWORD("INTEGER8", INTEGER8)
+NG_RESERVED_KEYWORD("INT16", INT16)
+NG_RESERVED_KEYWORD("INTEGER16", INTEGER16)
+NG_RESERVED_KEYWORD("INT32", INT32)
+NG_RESERVED_KEYWORD("INTEGER32", INTEGER32)
+NG_RESERVED_KEYWORD("INT64", INT64)
+NG_RESERVED_KEYWORD("INTEGER64", INTEGER64)
+NG_RESERVED_KEYWORD("INT128", INT128)
+NG_RESERVED_KEYWORD("INTEGER128", INTEGER128)
+NG_RESERVED_KEYWORD("INT256", INT256)
+NG_RESERVED_KEYWORD("INTEGER256", INTEGER256)
+NG_RESERVED_KEYWORD("INTERSECT", INTERSECT)
+NG_RESERVED_KEYWORD("IF", IF)
+NG_RESERVED_KEYWORD("IS", IS)
+NG_RESERVED_KEYWORD("KEEP", KEEP)
+NG_RESERVED_KEYWORD("LEADING", LEADING)
+NG_RESERVED_KEYWORD("LEFT", LEFT)
+NG_RESERVED_KEYWORD("LENGTH", LENGTH)
+NG_RESERVED_KEYWORD("LET", LET)
+NG_RESERVED_KEYWORD("LIKE", LIKE)
+NG_RESERVED_KEYWORD("LIKE_REGEX", LIKE_REGEX)
+NG_RESERVED_KEYWORD("LIMIT", LIMIT)
+NG_RESERVED_KEYWORD("LIST", LIST)
+NG_RESERVED_KEYWORD("LN", LN)
+NG_RESERVED_KEYWORD("LOCALDATETIME", LOCALDATETIME)
+NG_RESERVED_KEYWORD("LOCALTIME", LOCALTIME)
+NG_RESERVED_KEYWORD("LOCALTIMESTAMP", LOCALTIMESTAMP)
+NG_RESERVED_KEYWORD("LOG", LOG)
+NG_RESERVED_KEYWORD("LOG10", LOG10)
+NG_RESERVED_KEYWORD("LOWER", LOWER)
+NG_RESERVED_KEYWORD("MANDATORY", MANDATORY)
+NG_RESERVED_KEYWORD("MAP", MAP)
+NG_RESERVED_KEYWORD("MATCH", MATCH)
+NG_RESERVED_KEYWORD("MERGE", MERGE)
+NG_RESERVED_KEYWORD("MAX", MAX)
+NG_RESERVED_KEYWORD("MIN", MIN)
+NG_RESERVED_KEYWORD("MOD", MOD)
+NG_RESERVED_KEYWORD("MULTI", MULTI)
+NG_RESERVED_KEYWORD("MULTIPLE", MULTIPLE)
+NG_RESERVED_KEYWORD("MULTISET", MULTISET)
+NG_RESERVED_KEYWORD("NEW", NEW)
+NG_RESERVED_KEYWORD("NOT", NOT)
+NG_RESERVED_KEYWORD("NORMALIZE", NORMALIZE)
+NG_RESERVED_KEYWORD("NOTHING", NOTHING)
+NG_RESERVED_KEYWORD("NULL", NULL)
+NG_RESERVED_KEYWORD("NULLS", NULLS)
+NG_RESERVED_KEYWORD("NULLIF", NULLIF)
+NG_RESERVED_KEYWORD("NUMERIC", NUMERIC)
+NG_RESERVED_KEYWORD("OCCURRENCES_REGEX", OCCURRENCES_REGEX)
+NG_RESERVED_KEYWORD("OCTET_LENGTH", OCTET_LENGTH)
+NG_RESERVED_KEYWORD("OF", OF)
+NG_RESERVED_KEYWORD("OFFSET", OFFSET)
+NG_RESERVED_KEYWORD("ON", ON)
+NG_RESERVED_KEYWORD("OPTIONAL", OPTIONAL)
+NG_RESERVED_KEYWORD("OR", OR)
+NG_RESERVED_KEYWORD("ORDER", ORDER)
+NG_RESERVED_KEYWORD("ORDERED", ORDERED)
+NG_RESERVED_KEYWORD("OTHERWISE", OTHERWISE)
+NG_RESERVED_KEYWORD("PARAMETER", PARAMETER)
+NG_RESERVED_KEYWORD("PATH", PATH)
+NG_RESERVED_KEYWORD("PATHS", PATHS)
+NG_RESERVED_KEYWORD("PARTITION", PARTITION)
+NG_RESERVED_KEYWORD("POSITION_REGEX", POSITION_REGEX)
+NG_RESERVED_KEYWORD("POWER", POWER)
+NG_RESERVED_KEYWORD("PRECISION", PRECISION)
+NG_RESERVED_KEYWORD("PROCEDURE", PROCEDURE)
+NG_RESERVED_KEYWORD("PROCEDURES", PROCEDURES)
+NG_RESERVED_KEYWORD("PRODUCT", PRODUCT)
+NG_RESERVED_KEYWORD("PROFILE", PROFILE)
+NG_RESERVED_KEYWORD("PROJECT", PROJECT)
+NG_RESERVED_KEYWORD("QUERIES", QUERIES)
+NG_RESERVED_KEYWORD("QUERY", QUERY)
+NG_RESERVED_KEYWORD("RADIANS", RADIANS)
+NG_RESERVED_KEYWORD("REAL", REAL)
+NG_RESERVED_KEYWORD("RECORD", RECORD)
+NG_RESERVED_KEYWORD("RECORDS", RECORDS)
+NG_RESERVED_KEYWORD("REFERENCE", REFERENCE)
+NG_RESERVED_KEYWORD("REMOVE", REMOVE)
+NG_RESERVED_KEYWORD("RENAME", RENAME)
+NG_RESERVED_KEYWORD("REPLACE", REPLACE)
+NG_RESERVED_KEYWORD("REQUIRE", REQUIRE)
+NG_RESERVED_KEYWORD("RESET", RESET)
+NG_RESERVED_KEYWORD("RESULT", RESULT)
+NG_RESERVED_KEYWORD("RETURN", RETURN)
+NG_RESERVED_KEYWORD("REVOKE", REVOKE)
+NG_RESERVED_KEYWORD("RIGHT", RIGHT)
+NG_RESERVED_KEYWORD("ROLLBACK", ROLLBACK)
+NG_RESERVED_KEYWORD("SAME", SAME)
+NG_RESERVED_KEYWORD("SCALAR", SCALAR)
+NG_RESERVED_KEYWORD("SCHEMA", SCHEMA)
+NG_RESERVED_KEYWORD("SCHEMAS", SCHEMAS)
+NG_RESERVED_KEYWORD("SCHEMATA", SCHEMATA)
+NG_RESERVED_KEYWORD("SELECT", SELECT)
+NG_RESERVED_KEYWORD("SESSION", SESSION)
+NG_RESERVED_KEYWORD("SET", SET)
+NG_RESERVED_KEYWORD("SKIP", SKIP)
+NG_RESERVED_KEYWORD("SIGNED", SIGNED)
+NG_RESERVED_KEYWORD("SIN", SIN)
+NG_RESERVED_KEYWORD("SINGLE", SINGLE)
+NG_RESERVED_KEYWORD("SINH", SINH)
+NG_RESERVED_KEYWORD("SMALLINT", SMALLINT)
+NG_RESERVED_KEYWORD("SQRT", SQRT)
+NG_RESERVED_KEYWORD("START", START)
+NG_RESERVED_KEYWORD("STARTS", STARTS)
+NG_RESERVED_KEYWORD("STRING", STRING)
+NG_RESERVED_KEYWORD("SUBSTRING", SUBSTRING)
+NG_RESERVED_KEYWORD("SUBSTRING_REGEX", SUBSTRING_REGEX)
+NG_RESERVED_KEYWORD("SUM", SUM)
+NG_RESERVED_KEYWORD("TAN", TAN)
+NG_RESERVED_KEYWORD("TANH", TANH)
+NG_RESERVED_KEYWORD("THEN", THEN)
+NG_RESERVED_KEYWORD("TIME", TIME)
+NG_RESERVED_KEYWORD("TIMESTAMP", TIMESTAMP)
+NG_RESERVED_KEYWORD("TRAILING", TRAILING)
+NG_RESERVED_KEYWORD("TRANSLATE_REGEX", TRANSLATE_REGEX)
+NG_RESERVED_KEYWORD("TRIM", TRIM)
+NG_RESERVED_KEYWORD("TRUE", TRUE)
+NG_RESERVED_KEYWORD("TRUNCATE", TRUNCATE)
+NG_RESERVED_KEYWORD("UINT", UINT)
+NG_RESERVED_KEYWORD("UINT8", UINT8)
+NG_RESERVED_KEYWORD("UINT16", UINT16)
+NG_RESERVED_KEYWORD("UINT32", UINT32)
+NG_RESERVED_KEYWORD("UINT64", UINT64)
+NG_RESERVED_KEYWORD("UINT128", UINT128)
+NG_RESERVED_KEYWORD("UINT256", UINT256)
+NG_RESERVED_KEYWORD("UNION", UNION)
+NG_RESERVED_KEYWORD("UNIT", UNIT)
+NG_RESERVED_KEYWORD("UNIT_BINDING_TABLE", UNIT_BINDING_TABLE)
+NG_RESERVED_KEYWORD("UNIT_TABLE", UNIT_TABLE)
+NG_RESERVED_KEYWORD("UNIQUE", UNIQUE)
+NG_RESERVED_KEYWORD("UNNEST", UNNEST)
+NG_RESERVED_KEYWORD("UNKNOWN", UNKNOWN)
+NG_RESERVED_KEYWORD("UNSIGNED", UNSIGNED)
+NG_RESERVED_KEYWORD("UNWIND", UNWIND)
+NG_RESERVED_KEYWORD("UPPER", UPPER)
+NG_RESERVED_KEYWORD("USE", USE)
+NG_RESERVED_KEYWORD("VALUE", VALUE)
+NG_RESERVED_KEYWORD("VALUES", VALUES)
+NG_RESERVED_KEYWORD("VARBINARY", VARBINARY)
+NG_RESERVED_KEYWORD("VARCHAR", VARCHAR)
+NG_RESERVED_KEYWORD("WHEN", WHEN)
+NG_RESERVED_KEYWORD("WHERE", WHERE)
+NG_RESERVED_KEYWORD("WITH", WITH)
+NG_RESERVED_KEYWORD("WITHOUT", WITHOUT)
+NG_RESERVED_KEYWORD("XOR", XOR)
+NG_RESERVED_KEYWORD("YIELD", YIELD)
+NG_RESERVED_KEYWORD("ZERO", ZERO)
+/* unreserved keyword */
+// case-insensitive non-reserved keyword
+NG_UNRESERVED_KEYWORD("ACYCLIC", ACYCLIC)
+NG_UNRESERVED_KEYWORD("BINDING", BINDING)
+NG_UNRESERVED_KEYWORD("CLASS_ORIGIN", CLASS_ORIGIN)
+NG_UNRESERVED_KEYWORD("COMMAND_FUNCTION", COMMAND_FUNCTION)
+NG_UNRESERVED_KEYWORD("COMMAND_FUNCTION_CODE", COMMAND_FUNCTION_CODE)
+NG_UNRESERVED_KEYWORD("CONDITION_NUMBER", CONDITION_NUMBER)
+NG_UNRESERVED_KEYWORD("CONNECTING", CONNECTING)
+NG_UNRESERVED_KEYWORD("DESTINATION", DESTINATION)
+NG_UNRESERVED_KEYWORD("DIRECTED", DIRECTED)
+NG_UNRESERVED_KEYWORD("EDGE", EDGE)
+NG_UNRESERVED_KEYWORD("EDGES", EDGES)
+NG_UNRESERVED_KEYWORD("FINAL", FINAL)
+NG_UNRESERVED_KEYWORD("FIRST", FIRST)
+NG_UNRESERVED_KEYWORD("GRAPH", GRAPH)
+NG_UNRESERVED_KEYWORD("GRAPHS", GRAPHS)
+NG_UNRESERVED_KEYWORD("GROUPS", GROUPS)
+NG_UNRESERVED_KEYWORD("INDEX", INDEX)
+NG_UNRESERVED_KEYWORD("LAST", LAST)
+NG_UNRESERVED_KEYWORD("LABEL", LABEL)
+NG_UNRESERVED_KEYWORD("LABELED", LABELED)
+NG_UNRESERVED_KEYWORD("LABELS", LABELS)
+NG_UNRESERVED_KEYWORD("MESSAGE_TEXT", MESSAGE_TEXT)
+NG_UNRESERVED_KEYWORD("MORE", MORE)
+NG_UNRESERVED_KEYWORD("MUTABLE", MUTABLE)
+NG_UNRESERVED_KEYWORD("NFC", NFC)
+NG_UNRESERVED_KEYWORD("NFD", NFD)
+NG_UNRESERVED_KEYWORD("NFKC", NFKC)
+NG_UNRESERVED_KEYWORD("NFKD", NFKD)
+NG_UNRESERVED_KEYWORD("NODE", NODE)
+NG_UNRESERVED_KEYWORD("NODES", NODES)
+NG_UNRESERVED_KEYWORD("NORMALIZED", NORMALIZED)
+NG_UNRESERVED_KEYWORD("NUMBER", NUMBER)
+NG_UNRESERVED_KEYWORD("ONLY", ONLY)
+NG_UNRESERVED_KEYWORD("ORDINALITY", ORDINALITY)
+NG_UNRESERVED_KEYWORD("PATTERN", PATTERN)
+NG_UNRESERVED_KEYWORD("PATTERNS", PATTERNS)
+NG_UNRESERVED_KEYWORD("PROPERTY", PROPERTY)
+NG_UNRESERVED_KEYWORD("PROPERTIES", PROPERTIES)
+NG_UNRESERVED_KEYWORD("READ", READ)
+NG_UNRESERVED_KEYWORD("RELATIONSHIP", RELATIONSHIP)
+NG_UNRESERVED_KEYWORD("RELATIONSHIPS", RELATIONSHIPS)
+NG_UNRESERVED_KEYWORD("RETURNED_GQLSTATUS", RETURNED_GQLSTATUS)
+NG_UNRESERVED_KEYWORD("SHORTEST", SHORTEST)
+NG_UNRESERVED_KEYWORD("SIMPLE", SIMPLE)
+NG_UNRESERVED_KEYWORD("SOURCE", SOURCE)
+NG_UNRESERVED_KEYWORD("SUBCLASS_ORIGIN", SUBCLASS_ORIGIN)
+NG_UNRESERVED_KEYWORD("TABLE", TABLE)
+NG_UNRESERVED_KEYWORD("TABLES", TABLES)
+NG_UNRESERVED_KEYWORD("TIES", TIES)
+NG_UNRESERVED_KEYWORD("TO", TO)
+NG_UNRESERVED_KEYWORD("TRAIL", TRAIL)
+NG_UNRESERVED_KEYWORD("TRANSACTION", TRANSACTION)
+NG_UNRESERVED_KEYWORD("TYPE", TYPE)
+NG_UNRESERVED_KEYWORD("TYPES", TYPES)
+NG_UNRESERVED_KEYWORD("UNDIRECTED", UNDIRECTED)
+NG_UNRESERVED_KEYWORD("VERTEX", VERTEX)
+NG_UNRESERVED_KEYWORD("VERTICES", VERTICES)
+NG_UNRESERVED_KEYWORD("WALK", WALK)
+NG_UNRESERVED_KEYWORD("WRITE", WRITE)
+NG_UNRESERVED_KEYWORD("ZONE", ZONE)
+};
+
+// Check against the keyword list.
+const ScanKeyword& keywordLookup(const std::unordered_map<std::string, TokenType> keywords, const std::string& text, bool caseSensitivity) {
+  static const int kMaxKeywordBytes = 4096;
+  char word[kMaxKeywordBytes];
+  size_t word_bytes = strlen(s);
+
+  if (caseSensitivity) {
+    // PostgreQL Note: Apply an ASCII-only downcasing.  We must not use tolower() since it may
+    // produce the wrong translation in some locales (eg, Turkish).
+    for (int i = 0; i < word_bytes; i++) {
+      char ch = s[i];
+      if (ch >= 'A' && ch <= 'Z') {
+        ch += 'a' - 'A';
+      }
+      word[i] = ch;
+    }
+    word[word_bytes] = '\0';
+  }
+
+  auto iter = keywords.find(word);
+  if (iter != keywords.end()) {
+    return iter->second;
+  }
+  return kInvalidKeyword;
+}
+
+const ScanKeyword& keywordLookup(const char* s, size_t length) {
+  std::string text(s, length);
+  const ScanKeyword &keyword = keywordLookup(kCaseSensitiveKeywords, text, true);
+  if (keyword.isValid()) {
+    return keyword;
+  }
+  return keywordLookup(kCaseInsensitiveKeywords, text, false);
+}
+
+}%
 
 
+/* delimiter token */
+/* GQL special character */
+space " "
+ampersand "&"
+asterisk "*"
+circumflex "^"
+colon ":"
+comma ","
+dollar_sign "$"
+double_quote "\""
+equals_operator "="
+exclamation_mark "!"
+right_angle_bracket ">"
+grave_accent "`"
+left_brace "{"
+left_bracket "["
+left_paren "("
+left_angle_bracket "<"
+minus_sign "-"
+percent "%"
+period "."
+plus_sign "+"
+question_mark "?"
+quote "'"
+reverse_solidus "\\"
+right_brace "}"
+right_bracket "]"
+right_paren ")"
+semicolon ";"
+solidus "/"
+tilde "~"
+underscore "_"
+vertical_bar "|"
 
-NOT_IN                      (NOT{blanks}IN)
-NOT_CONTAINS                (NOT{blanks}CONTAINS)
-STARTS_WITH                 (STARTS{blanks}WITH)
-NOT_STARTS_WITH             (NOT{blanks}STARTS{blanks}WITH)
-ENDS_WITH                   (ENDS{blanks}WITH)
-NOT_ENDS_WITH               (NOT{blanks}ENDS{blanks}WITH)
-IS_NULL                     (IS{blanks}NULL)
-IS_NOT_NULL                 (IS{blanks}NOT{blanks}NULL)
-IS_EMPTY                    (IS{blanks}EMPTY)
-IS_NOT_EMPTY                (IS{blanks}NOT{blanks}EMPTY)
+bracket_right_arrow "]->"
+bracket_tilde_right_arrow "]~>"
+concatenation_operator "||"
+double_colon "::"
+double_minus_sign "--"
+double_period ".."
+double_solidus "//"
+greater_than_or_equals_operator ">="
+left_arrow "<-"
+left_arrow_tilde "<~"
+left_arrow_bracket "<-["
+left_arrow_tilde_bracket "<~["
+left_minus_right "<->"
+left_minus_slash "<-/"
+left_tilde_slash "<~/"
+less_than_or_equals_operator "<="
+minus_left_bracket "-["
+minus_slash "-/"
+not_equals_operator "<>"
+right_arrow "->"
+right_bracket_minus "]-"
+right_bracket_tilde "]~"
+slash_minus "/-"
+slash_minus_right "/->"
+slash_tilde "/~"
+slash_tilde_right "/~>"
+tilde_left_bracket "~["
+tilde_right_arrow "~>"
+tilde_slash "~/"
 
-blanks                      ([ \t\n]+)
+multiset_alternation_operator "|+|"
 
-DEC                         ([0-9])
-EXP                         ([eE][-+]?[0-9]+)
-HEX                         ([0-9a-fA-F])
-OCT                         ([0-7])
-IP_OCTET                    ([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])
+bracketed_comment_introducer "/*"
+bracketed_comment_terminator "*/"
+non_bracketed_comment_terminator [^{bracketed_comment_terminator}]
 
-U                           [\x80-\xbf]
-U2                          [\xc2-\xdf]
-U3                          [\xe0-\xee]
-U4                          [\xf0-\xf4]
-CHINESE                     {U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
-CN_EN                       {CHINESE}|[a-zA-Z]
-CN_EN_NUM                   {CHINESE}|[_a-zA-Z0-9]
-LABEL                       {CN_EN}{CN_EN_NUM}*
+/* doubled_grave_accent "``"
+escaped_grave_accent {reverse_solidus}{grave_accent}|{doubled_grave_accent} */
 
-U3_FULL_WIDTH               [\xe0-\xef]
-CHINESE_FULL_WIDTH          {U2}{U}|{U3_FULL_WIDTH}{U}{U}|{U4}{U}{U}{U}
-CN_EN_FULL_WIDTH            {CHINESE_FULL_WIDTH}|[a-zA-Z]
-CN_EN_NUM_FULL_WIDTH        {CHINESE_FULL_WIDTH}|[_a-zA-Z0-9 ]
-LABEL_FULL_WIDTH            {CN_EN_FULL_WIDTH}{CN_EN_NUM_FULL_WIDTH}*
+
+/* refer to https://www.fileformat.info/info/unicode/category/Nd/list.htm */
+other_digit
+digit [0-9]|other_digit
+hex_digit [0-9A-Fa-f]
+octal_digit [0-7]
+binary_digit [01]
+unsigned_decimal_integer {digit}({underscore}?{digit})*
+unsigned_hexadecimal_integer "0x"({underscore}?{hex_digit})*
+unsigned_octal_integer "0o"{underscore?{octal_digit}}*
+unsigned_binary_integer "0b"{underscore?{binary_digit}}*
+unsigned_integer {unsigned_decimal_integer}|{unsigned_hexadecimal_integer}|{unsigned_octal_integer}|{unsigned_binary_integer}
+exact_numeric_literal {unsigned_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
+sign {plus_sign}|{minus_sign}
+signed_decimal_integer {sign}?{unsigned_decimal_integer}
+mantissa {exact_numeric_literal}
+exponent {signed_decimal_integer}
+approximate_numeric_literal {mantissa}[Ee]exponent
+
+unsigned_numeric_literal {exact_numeric_literal}|{approximate_numeric_literal}
+byte_string_literal [Xx]{quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote}({separator}{quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote})*
+
+
+identifier_start [A-Za-z\200-\377_]
+identifier_extend [A-Za-z\200-\377_0-9\$]
+regular_identifier {identifier_start}{identifier_extend}*
+extended_identifier {identifier_extend}*
+identifier {regular_identifier}|{delimited_identifier}
+
+simple_comment_introducer {double_solidus}|{double_minus_sign}
+simple_comment {simple_comment_introducer}{simple_comment_character}*{newline}
+bracketed_comment {bracketed_comment_introducer}{non_bracketed_comment_terminator}*{bracketed_comment_terminator}
+comment {simple_comment}|{bracketed_comment}
+
+single_quoted_character_representation
+double_quoted_character_representation
+accent_quoted_character_representation
+unbroken_single_quoted_character_sequence {quote}{single_quoted_character_representation}*{quote}
+unbroken_double_quoted_character_sequence {double_quote}{double_quoted_character_representation}*{double_quote}
+unbroken_accent_quoted_character_sequence {grave_accent}{accent_quoted_character_representation}*{grave_accent}
+single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
+double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
+delimited_identifier {double_quoted_character_sequence}|{unbroken_accent_quoted_character_sequence}
+
+whitespace [\t\n\v\f\r]+
+newline [\n|\r|\n\r]
+separator ({comment}|{whitespace})*
+
+separated_identifier {extended_identifier}|{delimited_identifier}
+parameter_name \${separated_identifier}
+
+unbroken_character_string_literal {unbroken_single_quoted_character_sequence|unbroken_double_quoted_character_sequence}
+character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
+
 
 %%
 
- /* Reserved keyword */
-"GO"                        { return TokenType::KW_GO; }
-"AS"                        { return TokenType::KW_AS; }
-"TO"                        { return TokenType::KW_TO; }
-"OR"                        { return TokenType::KW_OR; }
-"AND"                       { return TokenType::KW_AND; }
-"XOR"                       { return TokenType::KW_XOR; }
-"USE"                       { return TokenType::KW_USE; }
-"SET"                       { return TokenType::KW_SET; }
-"LIST"                      { return TokenType::KW_LIST; }
-"MAP"                       { return TokenType::KW_MAP; }
-"FROM"                      { return TokenType::KW_FROM; }
-"WHERE"                     { return TokenType::KW_WHERE; }
-"MATCH"                     { return TokenType::KW_MATCH; }
-"INSERT"                    { return TokenType::KW_INSERT; }
-"YIELD"                     { return TokenType::KW_YIELD; }
-"RETURN"                    { return TokenType::KW_RETURN; }
-"DESCRIBE"                  { return TokenType::KW_DESCRIBE; }
-"DESC"                      { return TokenType::KW_DESC; }
-"VERTEX"                    { return TokenType::KW_VERTEX; }
-"VERTICES"                  { return TokenType::KW_VERTICES; }
-"EDGE"                      { return TokenType::KW_EDGE; }
-"EDGES"                     { return TokenType::KW_EDGES; }
-"UPDATE"                    { return TokenType::KW_UPDATE; }
-"UPSERT"                    { return TokenType::KW_UPSERT; }
-"WHEN"                      { return TokenType::KW_WHEN; }
-"DELETE"                    { return TokenType::KW_DELETE; }
-"FIND"                      { return TokenType::KW_FIND; }
-"PATH"                      { return TokenType::KW_PATH; }
-"LOOKUP"                    { return TokenType::KW_LOOKUP; }
-"ALTER"                     { return TokenType::KW_ALTER; }
-"STEPS"                     { return TokenType::KW_STEPS; }
-"STEP"                      { return TokenType::KW_STEPS; }
-"OVER"                      { return TokenType::KW_OVER; }
-"UPTO"                      { return TokenType::KW_UPTO; }
-"REVERSELY"                 { return TokenType::KW_REVERSELY; }
-"INDEX"                     { return TokenType::KW_INDEX; }
-"INDEXES"                   { return TokenType::KW_INDEXES; }
-"REBUILD"                   { return TokenType::KW_REBUILD; }
-"BOOL"                      { return TokenType::KW_BOOL; }
-"INT8"                      { return TokenType::KW_INT8; }
-"INT16"                     { return TokenType::KW_INT16; }
-"INT32"                     { return TokenType::KW_INT32; }
-"INT64"                     { return TokenType::KW_INT64; }
-"INT"                       { return TokenType::KW_INT; }
-"FLOAT"                     { return TokenType::KW_FLOAT; }
-"DOUBLE"                    { return TokenType::KW_DOUBLE; }
-"STRING"                    { return TokenType::KW_STRING; }
-"FIXED_STRING"              { return TokenType::KW_FIXED_STRING; }
-"TIMESTAMP"                 { return TokenType::KW_TIMESTAMP; }
-"DATE"                      { return TokenType::KW_DATE; }
-"TIME"                      { return TokenType::KW_TIME; }
-"DATETIME"                  { return TokenType::KW_DATETIME; }
-"TAG"                       { return TokenType::KW_TAG; }
-"TAGS"                      { return TokenType::KW_TAGS; }
-"UNION"                     { return TokenType::KW_UNION; }
-"INTERSECT"                 { return TokenType::KW_INTERSECT; }
-"MINUS"                     { return TokenType::KW_MINUS; }
-"NO"                        { return TokenType::KW_NO; }
-"OVERWRITE"                 { return TokenType::KW_OVERWRITE; }
-"SHOW"                      { return TokenType::KW_SHOW; }
-"ADD"                       { return TokenType::KW_ADD; }
-"CREATE"                    { return TokenType::KW_CREATE;}
-"DROP"                      { return TokenType::KW_DROP; }
-"REMOVE"                    { return TokenType::KW_REMOVE; }
-"IF"                        { return TokenType::KW_IF; }
-"NOT"                       { return TokenType::KW_NOT; }
-"EXISTS"                    { return TokenType::KW_EXISTS; }
-"IGNORE_EXISTED_INDEX"      { return TokenType::KW_IGNORE_EXISTED_INDEX; }
-"WITH"                      { return TokenType::KW_WITH; }
-"CHANGE"                    { return TokenType::KW_CHANGE; }
-"GRANT"                     { return TokenType::KW_GRANT; }
-"REVOKE"                    { return TokenType::KW_REVOKE; }
-"ON"                        { return TokenType::KW_ON; }
-"BY"                        { return TokenType::KW_BY; }
-"IN"                        { return TokenType::KW_IN; }
-{NOT_IN}                    { return TokenType::KW_NOT_IN; }
-"DOWNLOAD"                  { return TokenType::KW_DOWNLOAD; }
-"GET"                       { return TokenType::KW_GET; }
-"OF"                        { return TokenType::KW_OF; }
-"ORDER"                     { return TokenType::KW_ORDER; }
-"INGEST"                    { return TokenType::KW_INGEST; }
-"COMPACT"                   { return TokenType::KW_COMPACT; }
-"FLUSH"                     { return TokenType::KW_FLUSH; }
-"SUBMIT"                    { return TokenType::KW_SUBMIT; }
-"ASC"                       { return TokenType::KW_ASC; }
-"ASCENDING"                 { return TokenType::KW_ASCENDING; }
-"DESCENDING"                { return TokenType::KW_DESCENDING; }
-"DISTINCT"                  { return TokenType::KW_DISTINCT; }
-"FETCH"                     { return TokenType::KW_FETCH; }
-"PROP"                      { return TokenType::KW_PROP; }
-"BALANCE"                   { return TokenType::KW_BALANCE; }
-"STOP"                      { return TokenType::KW_STOP; }
-"LIMIT"                     { return TokenType::KW_LIMIT; }
-"OFFSET"                    { return TokenType::KW_OFFSET; }
-"IS"                        { return TokenType::KW_IS; }
-"NULL"                      { return TokenType::KW_NULL; }
-"RECOVER"                   { return TokenType::KW_RECOVER; }
-"EXPLAIN"                   { return TokenType::KW_EXPLAIN; }
-"PROFILE"                   { return TokenType::KW_PROFILE; }
-"FORMAT"                    { return TokenType::KW_FORMAT; }
-"CASE"                      { return TokenType::KW_CASE; }
-"ACROSS"                    { return TokenType::KW_ACROSS; }
+{space} {
+  return TokenType::SPACE;
+}
+{ampersand} {
+  return TokenType::AMPERSAND;
+}
+{asterisk} {
+  return TokenType::ASTERISK;
+}
+{circumflex} {
+  return TokenType::CIRCUMFLEX;
+}
+{colon} {
+  return TokenType::COLON;
+}
+{comma} {
+  return TokenType::COMMA;
+}
+{dollar_sign} {
+  return TokenType::DOLLAR_SIGN;
+}
+{double_quote} {
+  return TokenType::DOUBLE_QUOTE;
+}
+{equals_operator} {
+  return TokenType::EQUALS_OPERATOR;
+}
+{exclamation_mark} {
+  return TokenType::EXCLAMATION_MARK;
+}
+{right_angle_bracket} {
+  return TokenType::RIGHT_ANGLE_BRACKET;
+}
+{grave_accent} {
+  return TokenType::GRAVE_ACCENT;
+}
+{left_brace} {
+  return TokenType::LEFT_BRACE;
+}
+{left_bracket} {
+  return TokenType::LEFT_BRACKET;
+}
+{left_paren} {
+  return TokenType::LEFT_PAREN;
+}
+{left_angle_bracket} {
+  return TokenType::LEFT_ANGLE_BRACKET;
+}
+{minus_sign} {
+  return TokenType::MINUS_SIGN;
+}
+{percent} {
+  return TokenType::PERCENT;
+}
+{period} {
+  return TokenType::PERIOD;
+}
+{plus_sign} {
+  return TokenType::PLUS_SIGN;
+}
+{question_mark} {
+  return TokenType::QUESTION_MARK;
+}
+{quote} {
+  return TokenType::QUOTE;
+}
+{reverse_solidus} {
+  return TokenType::REVERSE_SOLIDUS;
+}
+{right_brace} {
+  return TokenType::RIGHT_BRACE;
+}
+{right_bracket} {
+  return TokenType::RIGHT_BRACKET;
+}
+{right_paren} {
+  return TokenType::RIGHT_PAREN;
+}
+{semicolon} {
+  return TokenType::SEMICOLON;
+}
+{solidus} {
+  return TokenType::SOLIDUS;
+}
+{tilde} {
+  return TokenType::TILDE;
+}
+{underscore} {
+  return TokenType::UNDERSCORE;
+}
+{vertical_bar} {
+  return TokenType::VERTICAL_BAR;
+}
+{bracket_right_arrow} {
+  return TokenType::BRACKET_RIGHT_ARROW;
+}
+{bracket_tilde_right_arrow} {
+  return TokenType::BRACKET_TILDE_RIGHT_ARROW;
+}
+{concatenation_operator} {
+  return TokenType::CONCATENATION_OPERATOR;
+}
+{double_colon} {
+  return TokenType::DOUBLE_COLON;
+}
+{double_minus_sign} {
+  return TokenType::DOUBLE_MINUS_SIGN;
+}
+{double_period} {
+  return TokenType::DOUBLE_PERIOD;
+}
+{double_solidus} {
+  return TokenType::DOUBLE_SOLIDUS;
+}
+{greater_than_or_equals_operator} {
+  return TokenType::GREATER_THAN_OR_EQUALS_OPERATOR;
+}
+{left_arrow} {
+  return TokenType::LEFT_ARROW;
+}
+{left_arrow_tilde} {
+  return TokenType::LEFT_ARROW_TILDE;
+}
+{left_arrow_bracket} {
+  return TokenType::LEFT_ARROW_BRACKET;
+}
+{left_arrow_tilde_bracket} {
+  return TokenType::LEFT_ARROW_TILDE_BRACKET;
+}
+{left_minus_right} {
+  return TokenType::LEFT_MINUS_RIGHT;
+}
+{left_minus_slash} {
+  return TokenType::LEFT_MINUS_SLASH;
+}
+{left_tilde_slash} {
+  return TokenType::LEFT_TILDE_SLASH;
+}
+{less_than_or_equals_operator} {
+  return TokenType::LESS_THAN_OR_EQUALS_OPERATOR;
+}
+{minus_left_bracket} {
+  return TokenType::MINUS_LEFT_BRACKET;
+}
+{minus_slash} {
+  return TokenType::MINUS_SLASH;
+}
+{not_equals_operator} {
+  return TokenType::NOT_EQUALS_OPERATOR;
+}
+{right_arrow} {
+  return TokenType::RIGHT_ARROW;
+}
+{right_bracket_minus} {
+  return TokenType::RIGHT_BRACKET_MINUS;
+}
+{right_bracket_tilde} {
+  return TokenType::RIGHT_BRACKET_TILDE;
+}
+{slash_minus} {
+  return TokenType::SLASH_MINUS;
+}
+{slash_minus_right} {
+  return TokenType::SLASH_MINUS_RIGHT;
+}
+{slash_tilde} {
+  return TokenType::SLASH_TILDE;
+}
+{slash_tilde_right} {
+  return TokenType::SLASH_TILDE_RIGHT;
+}
+{tilde_left_bracket} {
+  return TokenType::TILDE_LEFT_BRACKET;
+}
+{tilde_right_arrow} {
+  return TokenType::TILDE_RIGHT_ARROW;
+}
+{tilde_slash} {
+  return TokenType::TILDE_SLASH;
+}
 
- /**
-  * TODO(dutor) Manage the dynamic allocated objects with an object pool,
-  *     so that we ease the operations such as expression rewriting, associating
-  *     the original text for an unreserved keywords, etc.
-  *
-  */
- /* Unreserved keyword */
-"HOST"                      { return TokenType::KW_HOST; }
-"HOSTS"                     { return TokenType::KW_HOSTS; }
-"SPACE"                     { return TokenType::KW_SPACE; }
-"SPACES"                    { return TokenType::KW_SPACES; }
-"VALUE"                     { return TokenType::KW_VALUE; }
-"VALUES"                    { return TokenType::KW_VALUES; }
-"USER"                      { return TokenType::KW_USER; }
-"USERS"                     { return TokenType::KW_USERS; }
-"PASSWORD"                  { return TokenType::KW_PASSWORD; }
-"ROLE"                      { return TokenType::KW_ROLE; }
-"ROLES"                     { return TokenType::KW_ROLES; }
-"GOD"                       { return TokenType::KW_GOD; }
-"ADMIN"                     { return TokenType::KW_ADMIN; }
-"DBA"                       { return TokenType::KW_DBA; }
-"GUEST"                     { return TokenType::KW_GUEST; }
-"GROUP"                     { return TokenType::KW_GROUP; }
-"PARTITION_NUM"             { return TokenType::KW_PARTITION_NUM; }
-"REPLICA_FACTOR"            { return TokenType::KW_REPLICA_FACTOR; }
-"VID_TYPE"                  { return TokenType::KW_VID_TYPE; }
-"CHARSET"                   { return TokenType::KW_CHARSET; }
-"COLLATE"                   { return TokenType::KW_COLLATE; }
-"COLLATION"                 { return TokenType::KW_COLLATION; }
-"ATOMIC_EDGE"               { return TokenType::KW_ATOMIC_EDGE; }
-"ALL"                       { return TokenType::KW_ALL; }
-"ANY"                       { return TokenType::KW_ANY; }
-"SINGLE"                    { return TokenType::KW_SINGLE; }
-"NONE"                      { return TokenType::KW_NONE; }
-"REDUCE"                    { return TokenType::KW_REDUCE; }
-"LEADER"                    { return TokenType::KW_LEADER; }
-"UUID"                      { return TokenType::KW_UUID; }
-"DATA"                      { return TokenType::KW_DATA; }
-"SNAPSHOT"                  { return TokenType::KW_SNAPSHOT; }
-"SNAPSHOTS"                 { return TokenType::KW_SNAPSHOTS; }
-"ACCOUNT"                   { return TokenType::KW_ACCOUNT; }
-"JOBS"                      { return TokenType::KW_JOBS; }
-"JOB"                       { return TokenType::KW_JOB; }
-"BIDIRECT"                  { return TokenType::KW_BIDIRECT; }
-"STATS"                     { return TokenType::KW_STATS; }
-"STATUS"                    { return TokenType::KW_STATUS; }
-"FORCE"                     { return TokenType::KW_FORCE; }
-"PART"                      { return TokenType::KW_PART; }
-"PARTS"                     { return TokenType::KW_PARTS; }
-"DEFAULT"                   { return TokenType::KW_DEFAULT; }
-"HDFS"                      { return TokenType::KW_HDFS; }
-"CONFIGS"                   { return TokenType::KW_CONFIGS; }
-"TTL_DURATION"              { return TokenType::KW_TTL_DURATION; }
-"TTL_COL"                   { return TokenType::KW_TTL_COL; }
-"GRAPH"                     { return TokenType::KW_GRAPH; }
-"META"                      { return TokenType::KW_META; }
-"AGENT"                     { return TokenType::KW_AGENT; }
-"STORAGE"                   { return TokenType::KW_STORAGE; }
-"SHORTEST"                  { return TokenType::KW_SHORTEST; }
-"NOLOOP"                    { return TokenType::KW_NOLOOP; }
-"OUT"                       { return TokenType::KW_OUT; }
-"BOTH"                      { return TokenType::KW_BOTH; }
-"SUBGRAPH"                  { return TokenType::KW_SUBGRAPH; }
-"CONTAINS"                  { return TokenType::KW_CONTAINS; }
-{NOT_CONTAINS}              { return TokenType::KW_NOT_CONTAINS; }
-"STARTS"                    { return TokenType::KW_STARTS;}
-{STARTS_WITH}               { return TokenType::KW_STARTS_WITH;}
-{NOT_STARTS_WITH}           { return TokenType::KW_NOT_STARTS_WITH;}
-"ENDS"                      { return TokenType::KW_ENDS;}
-{ENDS_WITH}                 { return TokenType::KW_ENDS_WITH;}
-{NOT_ENDS_WITH}             { return TokenType::KW_NOT_ENDS_WITH;}
-{IS_NULL}                   { return TokenType::KW_IS_NULL;}
-{IS_NOT_NULL}               { return TokenType::KW_IS_NOT_NULL;}
-{IS_EMPTY}                  { return TokenType::KW_IS_EMPTY;}
-{IS_NOT_EMPTY}              { return TokenType::KW_IS_NOT_EMPTY;}
-"UNWIND"                    { return TokenType::KW_UNWIND;}
-"SKIP"                      { return TokenType::KW_SKIP;}
-"OPTIONAL"                  { return TokenType::KW_OPTIONAL;}
-"THEN"                      { return TokenType::KW_THEN; }
-"ELSE"                      { return TokenType::KW_ELSE; }
-"END"                       { return TokenType::KW_END; }
-"GROUPS"                    { return TokenType::KW_GROUPS; }
-"ZONE"                      { return TokenType::KW_ZONE; }
-"ZONES"                     { return TokenType::KW_ZONES; }
-"INTO"                      { return TokenType::KW_INTO; }
-"NEW"                       { return TokenType::KW_NEW; }
-"LISTENER"                  { return TokenType::KW_LISTENER; }
-"ELASTICSEARCH"             { return TokenType::KW_ELASTICSEARCH; }
-"HTTP"                      { return TokenType::KW_HTTP; }
-"HTTPS"                     { return TokenType::KW_HTTPS; }
-"FULLTEXT"                  { return TokenType::KW_FULLTEXT; }
-"AUTO"                      { return TokenType::KW_AUTO; }
-"FUZZY"                     { return TokenType::KW_FUZZY; }
-"PREFIX"                    { return TokenType::KW_PREFIX; }
-"REGEXP"                    { return TokenType::KW_REGEXP; }
-"WILDCARD"                  { return TokenType::KW_WILDCARD; }
-"TEXT"                      { return TokenType::KW_TEXT; }
-"SEARCH"                    { return TokenType::KW_SEARCH; }
-"CLIENTS"                   { return TokenType::KW_CLIENTS; }
-"SIGN"                      { return TokenType::KW_SIGN; }
-"SERVICE"                   { return TokenType::KW_SERVICE; }
-"TEXT_SEARCH"               { return TokenType::KW_TEXT_SEARCH; }
-"RESET"                     { return TokenType::KW_RESET; }
-"PLAN"                      { return TokenType::KW_PLAN; }
-"COMMENT"                   { return TokenType::KW_COMMENT; }
-"S2_MAX_LEVEL"              { return TokenType::KW_S2_MAX_LEVEL; }
-"S2_MAX_CELLS"              { return TokenType::KW_S2_MAX_CELLS; }
-"LOCAL"                     { return TokenType::KW_LOCAL; }
-"SESSIONS"                  { return TokenType::KW_SESSIONS; }
-"SESSION"                   { return TokenType::KW_SESSION; }
-"SAMPLE"                    { return TokenType::KW_SAMPLE; }
-"QUERIES"                   { return TokenType::KW_QUERIES; }
-"QUERY"                     { return TokenType::KW_QUERY; }
-"KILL"                      { return TokenType::KW_KILL; }
-"TOP"                       { return TokenType::KW_TOP; }
-"GEOGRAPHY"                 { return TokenType::KW_GEOGRAPHY; }
-"POINT"                     { return TokenType::KW_POINT; }
-"LINESTRING"                { return TokenType::KW_LINESTRING; }
-"POLYGON"                   { return TokenType::KW_POLYGON; }
-"DURATION"                  { return TokenType::KW_DURATION; }
-"MERGE"                     { return TokenType::KW_MERGE; }
-"RENAME"                    { return TokenType::KW_RENAME; }
-"DIVIDE"                    { return TokenType::KW_DIVIDE; }
+{multiset_alternation_operator} {
+  return TokenType::MULTISET_ALTERNATION_OPERATOR;
+}
 
-"TRUE"                      { yylval->boolval = true; return TokenType::BOOL; }
-"FALSE"                     { yylval->boolval = false; return TokenType::BOOL; }
+{comment}
+{identifier} {
+  /* Check against the keyword lists. */
+  const ScanKeyword &keyword = keywordLookup(yytext, yyleng);
+  if (keyword.isValid()) {
+    yylval->keywordVal = new std::string(yytext, yyleng);
+    return keyword.tokenType_;
+  }
 
-"."                         { return TokenType::DOT; }
-".."                        { return TokenType::DOT_DOT; }
-","                         { return TokenType::COMMA; }
-":"                         { return TokenType::COLON; }
-";"                         { return TokenType::SEMICOLON; }
-"@"                         { return TokenType::AT; }
-"?"                         { return TokenType::QM; }
+  /* Not a keyword. Check if it is a legal unicode identifier. */
+  if (isValidUnicodeIdentifier(yytext, yyleng)) {
+    yylval->identVal = new std::string(yytext, yyleng);
+    return TokenType::IDENTIFIER;
+  }
+  throw GraphParser::syntax_error(*yylloc, "illegal unicode identifier");
+}
+//{extended_identifier}
+{parameter_name} {
+  yylval->paramVal = new std::string(yytext + 1, yyleng - 1);
+  return TokenType::PARAMETER_NAME;
+}
+{unsigned_numeric_literal} {
+  yylval->unsignedNumericLiteral = parseUnsignedNumericLiteral(yytext, yyleng);
+  return TokenType::UNSIGNED_NUMERIC_LITERAL;
+}
+{byte_string_literal} {
+  yylval->byteStringLiteral = parseByteStringLiteral(yytext, yyleng);
+  return TokenType::BYTE_STRING_LITERAL;
+}
+{unbroken_character_string_literal} {
+  yylval->unbrokenCharacterStringLiteral = new std::string(yytext+1, yyleng - 2);
+  return TokenType::UNBROKEN_CHARACTER_STRING_LITERAL;
+}
+{character_string_literal} {
+  yylval->characterStringLiteral = parseCharacterStringLiteral(yytext, yyleng);
+  return TokenType::CHARACTER_STRING_LITERAL;
+}
 
-"+"                         { return TokenType::PLUS; }
-"-"                         { return TokenType::MINUS; }
-"*"                         { return TokenType::STAR; }
-"/"                         { return TokenType::DIV; }
-"%"                         { return TokenType::MOD; }
-"!"                         { return TokenType::NOT; }
-
-"<"                         { return TokenType::LT; }
-"<="                        { return TokenType::LE; }
-">"                         { return TokenType::GT; }
-">="                        { return TokenType::GE; }
-"=="                        { return TokenType::EQ; }
-"!="                        { return TokenType::NE; }
-"<>"                        { return TokenType::NE; }
-"=~"                        { return TokenType::REG; }
-
-"|"                         { return TokenType::PIPE; }
-
-"="                         { return TokenType::ASSIGN; }
-
-"("                         { return TokenType::L_PAREN; }
-")"                         { return TokenType::R_PAREN; }
-"["                         { return TokenType::L_BRACKET; }
-"]"                         { return TokenType::R_BRACKET; }
-"{"                         { return TokenType::L_BRACE; }
-"}"                         { return TokenType::R_BRACE; }
-
-"<-"                        { return TokenType::L_ARROW; }
-"->"                        { return TokenType::R_ARROW; }
-"_id"                       { return TokenType::ID_PROP; }
-"_type"                     { return TokenType::TYPE_PROP; }
-"_src"                      { return TokenType::SRC_ID_PROP; }
-"_dst"                      { return TokenType::DST_ID_PROP; }
-"_rank"                     { return TokenType::RANK_PROP; }
-"$$"                        { return TokenType::DST_REF; }
-"$^"                        { return TokenType::SRC_REF; }
-"$-"                        { return TokenType::INPUT_REF; }
-
-{LABEL}                     {
-                                yylval->strval = new std::string(yytext, yyleng);
-                                if (yylval->strval->size() > MAX_STRING) {
-                                    auto error = "Out of range of the LABEL length, "
-                                                  "the  max length of LABEL is " +
-                                                  std::to_string(MAX_STRING) + ":";
-                                    delete yylval->strval;
-                                    throw GraphParser::syntax_error(*yylloc, error);
-                                }
-                                return TokenType::LABEL;
-                            }
-\`                         { BEGIN(LB_STR); sbufPos_ = 0; }
-<LB_STR>\`                 {
-                                yylval->strval = new std::string(sbuf(), sbufPos_);
-                                BEGIN(INITIAL);
-                                if (yylval->strval->size() > MAX_STRING) {
-                                    auto error = "Out of range of the LABEL length, "
-                                                 "the  max length of LABEL is " +
-                                    std::to_string(MAX_STRING) + ":";
-                                    delete yylval->strval;
-                                    throw GraphParser::syntax_error(*yylloc, error);
-                                }
-                                return TokenType::LABEL;
-                           }
-{IP_OCTET}(\.{IP_OCTET}){3} {
-                                yylval->strval = new std::string(yytext, yyleng);
-                                return TokenType::IPV4;
-                            }
-0[Xx]{HEX}+                 {
-                                return parseHex();
-                            }
-0{OCT}+                     {
-                                return parseOct();
-                            }
-
-{DEC}+\.\.                  {
-                                yyless(yyleng - 2);
-                                yylloc->columns(-2);  // remove the extra counted column number
-                                return parseDecimal();
-                            }
-{DEC}+                      {
-                                return parseDecimal();
-                            }
-
-{DEC}*\.{DEC}+              |
-{DEC}+\.{DEC}*              |
-{DEC}*\.{DEC}*{EXP}         |
-{DEC}+{EXP}                 {
-                                return parseDouble();
-                            }
-
-\${LABEL}                   {
-                                yylval->strval = new std::string(yytext + 1, yyleng - 1);
-                                return TokenType::VARIABLE;
-                            }
-
-
-\"                          { BEGIN(DQ_STR); sbufPos_ = 0; }
-\'                          { BEGIN(SQ_STR); sbufPos_ = 0; }
-<DQ_STR>\"                  {
-                                yylval->strval = new std::string(sbuf(), sbufPos_);
-                                BEGIN(INITIAL);
-                                return TokenType::STRING;
-                            }
-<SQ_STR>\'                  {
-                                yylval->strval = new std::string(sbuf(), sbufPos_);
-                                BEGIN(INITIAL);
-                                return TokenType::STRING;
-                            }
-<DQ_STR,SQ_STR,LB_STR><<EOF>>      {
-                                // Must match '' or ""
-                                throw GraphParser::syntax_error(*yylloc, "Unterminated string: ");
-                            }
-<DQ_STR,SQ_STR,LB_STR>\n           { yyterminate(); }
-<DQ_STR>[^\\\n\"]+          {
-                                makeSpaceForString(yyleng);
-                                ::strncpy(sbuf() + sbufPos_, yytext, yyleng);
-                                sbufPos_ += yyleng;
-                            }
-<SQ_STR>[^\\\n\']+          {
-                                makeSpaceForString(yyleng);
-                                ::strncpy(sbuf() + sbufPos_, yytext, yyleng);
-                                sbufPos_ += yyleng;
-                            }
-<LB_STR>[^\\\n\`]+          {
-                                makeSpaceForString(yyleng);
-                                ::strncpy(sbuf() + sbufPos_, yytext, yyleng);
-                                sbufPos_ += yyleng;
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\{OCT}{1,3} {
-                                if (FLAGS_disable_octal_escape_char) {
-                                    makeSpaceForString(yyleng);
-                                    ::strncpy(sbuf() + sbufPos_, yytext, yyleng);
-                                    sbufPos_ += yyleng;
-                                } else {
-                                    makeSpaceForString(1);
-                                    uint32_t val = 0;
-                                    sscanf(yytext + 1, "%o", &val);
-                                    if (val > 0xFF) {
-                                        yyterminate();
-                                    }
-                                    sbuf()[sbufPos_++] = val;
-                                }
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\{DEC}+ {
-                                if (FLAGS_disable_octal_escape_char) {
-                                    makeSpaceForString(yyleng);
-                                    ::strncpy(sbuf() + sbufPos_, yytext, yyleng);
-                                    sbufPos_ += yyleng;
-                                } else {
-                                    yyterminate();
-                                }
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\[uUxX]{HEX}{4} {
-                                auto encoded = folly::codePointToUtf8(std::strtoul(yytext+2, nullptr, 16));
-                                makeSpaceForString(encoded.size());
-                                ::strncpy(sbuf() + sbufPos_, encoded.data(), encoded.size());
-                                sbufPos_ += encoded.size();
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\n          {
-                                makeSpaceForString(1);
-                                sbuf()[sbufPos_++] = '\n';
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\t          {
-                                makeSpaceForString(1);
-                                sbuf()[sbufPos_++] = '\t';
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\r          {
-                                makeSpaceForString(1);
-                                sbuf()[sbufPos_++] = '\r';
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\b          {
-                                makeSpaceForString(1);
-                                sbuf()[sbufPos_++] = '\b';
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\f          {
-                                makeSpaceForString(1);
-                                sbuf()[sbufPos_++] = '\f';
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\(.|\n)     {
-                                makeSpaceForString(1);
-                                sbuf()[sbufPos_++] = yytext[1];
-                            }
-<DQ_STR,SQ_STR,LB_STR>\\           {
-                                // This rule should have never been matched,
-                                // but without this, it somehow triggers the `nodefault' warning of flex.
-                                yyterminate();
-                            }
-
-[ \r\t]                     { }
-\n                          {
-                                yylineno++;
-                                yylloc->lines(yyleng);
-                            }
-"#".*                       // Skip the annotation
-"//".*                      // Skip the annotation
-"/*"                        { BEGIN(COMMENT); }
-<COMMENT>"*/"               { BEGIN(INITIAL); }
-<COMMENT>([^*]|\n)+|.
-<COMMENT><<EOF>>            {
-                                // Must match /* */
-                                throw GraphParser::syntax_error(*yylloc, "unterminated comment");
-                            }
-\`{LABEL_FULL_WIDTH}\`      {
-                                yylval->strval = new std::string(yytext + 1, yyleng - 2);
-                                if (yylval->strval->size() > MAX_STRING) {
-                                    auto error = "Out of range of the LABEL length, "
-                                                  "the  max length of LABEL is " +
-                                                  std::to_string(MAX_STRING) + ":";
-                                    delete yylval->strval;
-                                    throw GraphParser::syntax_error(*yylloc, error);
-                                }
-                                return TokenType::LABEL;
-                            }
 .                           {
                                 /**
                                  * Any other unmatched byte sequences will get us here,
