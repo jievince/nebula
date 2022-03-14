@@ -1663,6 +1663,15 @@ opt_edge_type_name
     }
     ;
 
+opt_edge_type_filler
+    : %empty {
+
+    }
+    | edge_type_filler {
+
+    }
+    ;
+
 abbreviated_edge_type_pattern
     : abbreviated_edge_type_pattern_pointing_right {
 
@@ -2096,6 +2105,14 @@ insert_statement
     }
     ;
 
+opt_when_clause
+    : %empty {
+
+    }
+    | when_clause {
+
+    }
+    ;
 
 // Section_14.5_merge_statement
 merge_statement
@@ -2469,7 +2486,9 @@ let_statement
 
 // Section_15.7.5_aggregate_statement
 aggregate_statement
-    : AGGREGATE_compact_value_variable_definition_list_where clause
+    : AGGREGATE compact_value_variable_definition_list where_clause {
+
+    }
     ;
 
 
@@ -2528,6 +2547,14 @@ for_ordinality_or_index
     }
     ;
 
+opt_identifier
+    : %empty {
+
+    }
+    | IDENTIFIER {
+
+    }
+    ;
 
 // Section_15.7.7_order_by_and page_statement
 order_by_and_page_statement
@@ -2731,6 +2758,14 @@ opt_order_by_clause
 
     }
     ;
+
+// Section 15.8.4 <project statement>
+project_statement
+    : PROJECT value_expression {
+
+    }
+    ;
+
 
 // Section_16.1_from_graph_clause
 from_graph_clause
@@ -6801,8 +6836,8 @@ general_literal
 // The_following_rule_is modified_to
 /* predefined_type_literal
     : boolean_literal
-    | character_string_literal
-    | byte_string_literal
+    | CHARACTER_STRING_LITERAL
+    | BYTE_STRING_LITERAL
     | temporal_literal
     | duration_literal
     | null_literal
@@ -6812,13 +6847,13 @@ predefined_type_literal
     : boolean_literal {
       
     }
-    | unbroken_character_string_literal {
+    | UNBROKEN_CHARACTER_STRING_LITERAL {
       
     }
-    | character_string_literal {
+    | CHARACTER_STRING_LITERAL {
       
     }
-    | byte_string_literal {
+    | BYTE_STRING_LITERAL {
       
     }
     | temporal_literal {
@@ -6833,7 +6868,7 @@ predefined_type_literal
     ;
 
 unsigned_literal
-    : unsigned_numeric_literal {
+    : UNSIGNED_NUMERIC_LITERAL {
       
     }
     | general_literal {
@@ -6853,12 +6888,12 @@ boolean_literal
     }
     ;
 
-/* character_string_literal
+/* CHARACTER_STRING_LITERAL
     : single_quoted_character_sequence
     | double_quoted_character_sequence
     ; */
 
-/* unbroken_character_string_literal
+/* UNBROKEN_CHARACTER_STRING_LITERAL
     : unbroken_single_quoted_character sequence
     | unbroken_double_quoted_character sequence
     ; */
@@ -6959,22 +6994,22 @@ unicode_6_digit_escape_value
     : reverse_SOLIDUS__U_hex digit__hex_digit__hex digit__hex_digit__hex digit__hex_digit
     ;
 
-/* byte_string_literal
+/* BYTE_STRING_LITERAL
     : X_quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote [ { separator__quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote }... ]
     ; */
 
 numeric_literal
     : signed_numeric_literal
-    | unsigned_numeric_literal
+    | UNSIGNED_NUMERIC_LITERAL
     ;
 
 signed_numeric_literal
-    : opt_sign unsigned_numeric_literal {
+    : opt_sign UNSIGNED_NUMERIC_LITERAL {
 
     }
     ;
 
-/* unsigned_numeric_literal
+/* UNSIGNED_NUMERIC_LITERAL
     : exact_numeric_literal {
 
     }
@@ -7078,19 +7113,19 @@ datetime_literal
     ;
 
 date_string
-    : unbroken_character_string_literal {
+    : UNBROKEN_CHARACTER_STRING_LITERAL {
 
     }
     ;
 
 time_string
-    : unbroken_character_string_literal {
+    : UNBROKEN_CHARACTER_STRING_LITERAL {
 
     }
     ;
 
 datetime_string
-    : unbroken_character_string_literal {
+    : UNBROKEN_CHARACTER_STRING_LITERAL {
 
     }
     ;
@@ -7105,7 +7140,7 @@ duration_literal
     ;
 
 duration_string
-    : unbroken_character_string_literal {
+    : UNBROKEN_CHARACTER_STRING_LITERAL {
 
     }
     ;
@@ -8031,16 +8066,16 @@ LESS_THAN_OPERATOR
     ;
 
 
-//unbroken_character_string_literal {unbroken_single_quoted_character_sequence|unbroken_double_quoted_character_sequence}
+//UNBROKEN_CHARACTER_STRING_LITERAL {unbroken_single_quoted_character_sequence|unbroken_double_quoted_character_sequence}
 
-// date_string {unbroken_character_string_literal}
-// time_string {unbroken_character_string_literal}
-// datetime_string {unbroken_character_string_literal}
-// duration_string {unbroken_character_string_literal}
+// date_string {UNBROKEN_CHARACTER_STRING_LITERAL}
+// time_string {UNBROKEN_CHARACTER_STRING_LITERAL}
+// datetime_string {UNBROKEN_CHARACTER_STRING_LITERAL}
+// duration_string {UNBROKEN_CHARACTER_STRING_LITERAL}
 
 // single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
 // double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
 
-// character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
+// CHARACTER_STRING_LITERAL {single_quoted_character_sequence}|{double_quoted_character_sequence}
 
 %%
