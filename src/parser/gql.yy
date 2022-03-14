@@ -1,3 +1,16 @@
+%language "C++"
+%skeleton "lalr1.cc"
+%no-lines
+%locations
+%define api.namespace { nebula }
+%define api.parser.class { GraphParser }
+%lex-param { nebula::GraphScanner& scanner }
+%parse-param { nebula::GraphScanner& scanner }
+%parse-param { std::string &errmsg }
+%parse-param { nebula::Sentence** sentences }
+%parse-param { nebula::graph::QueryContext* qctx }
+
+
 %start GQL_request
 
 %%
