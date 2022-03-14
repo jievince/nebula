@@ -327,10 +327,7 @@ session_set_parameter_clause
     : session_parameter {
 
     }
-    | session_parameter_flag session_parameter {
-
-    }
-    | session_parameter_flag session_parameter if_not_exists {
+    | session_parameter_flag session_parameter opt_if_not_exists {
 
     }
     ;
@@ -359,10 +356,7 @@ session_remove_command
     : REMOVE parameter {
 
     }
-    | SESSION REMOVE parameter {
-
-    }
-    | SESSION REMOVE parameter if_exists {
+    | SESSION REMOVE parameter opt_if_exists {
 
     }
     ;
@@ -422,9 +416,9 @@ transaction_mode
     : transaction_access_mode {
 
     }
-    | implementation_defined_access_mode {
+    /* | implementation_defined_access_mode {
 
-    }
+    } */
     ;
 
 transaction_access_mode
@@ -436,9 +430,9 @@ transaction_access_mode
     }
     ;
 
-implementation_defined_access_mode
+/* implementation_defined_access_mode
     : !! See_the_Syntax_Rules.
-    ;
+    ; */
 
 
 // Section_8.4_rollback_command
@@ -487,7 +481,7 @@ nested_catalog_modifying_procedure_specification
 
 catalog_modifying_procedure_specification
     : 
-    !! Predicative_production_rule.
+    // !! Predicative_production_rule.
     procedure_body {
 
     }
@@ -501,7 +495,7 @@ nested_data_modifying_procedure_specification
 
 data_modifying_procedure_specification
     :
-    !! Predicative_production_rule.
+    // !! Predicative_production_rule.
     procedure_body {
 
     }
@@ -517,7 +511,7 @@ nested_query_specification
 
 query_specification
     :
-    !! Predicative_production_rule.
+    // !! Predicative_production_rule.
     procedure_body {
 
     }
@@ -533,7 +527,7 @@ nested_function_specification
 
 function_specification
     :
-    !! Predicative_production_rule.
+    // !! Predicative_production_rule.
     procedure_body {
 
     }
@@ -843,16 +837,13 @@ optional_graph_variable_definition
     ;
 
 graph_variable_definition
-    : PROPERTY_GRAP graph_variable of_graph_type graph_initializer {
+    : PROPERTY_GRAPH graph_variable of_graph_type graph_initializer {
       
     }
     ;
 
 graph_parameter_definition
-    : PROPERTY_GRAPH PARAMETER_NAME of_graph_type graph_initializer {
-
-    }
-    | PROPERTY_GRAPH PARAMETER_NAME if_not_exists of_graph_type graph_initializer {
+    : PROPERTY_GRAPH PARAMETER_NAME opt_if_not_exists of_graph_type graph_initializer {
 
     }
     ;
@@ -898,10 +889,7 @@ binding_table_variable_definition
     ;
 
 binding_table_parameter_definition
-    : BINDING_TABLE parameter of_binding_table_type binding_table_initializer {
-
-    }
-    | BINDING_TABLE parameter if_not_exists of_binding_table_type binding_table_initializer {
+    : BINDING_TABLE parameter opt_if_not_exists of_binding_table_type binding_table_initializer {
       
     }
     ;
@@ -1076,19 +1064,13 @@ like_graph_expression
     ;
 
 of_graph_type
-    : graph_type_expression {
-
-    }
-    | of_type_prefix graph_type_expression {
+    : opt_of_type_prefix graph_type_expression {
 
     }
     | like_graph_expression_shorthand {
 
     }
-    | nested_graph_type_specification {
-
-    }
-    | of_type_prefix nested_graph_type_specification {
+    | opt_of_type_prefix nested_graph_type_specification {
       
     }
     ;
@@ -1103,10 +1085,7 @@ like_graph_expression_shorthand
 
 // Section_11.5_binding_table_type_expression
 of_binding_table_type
-    : binding_table_type_expression {
-
-    }
-    | of_type_prefix binding_table_type_expression {
+    : opt_of_type_prefix binding_table_type_expression {
 
     }
     | like_binding_table_shorthand {
@@ -1152,7 +1131,6 @@ statement
     }
     | opt_at_schema_clause query_statement {
 
-    }
     }
     ;
 
@@ -1339,7 +1317,7 @@ primitive_data_transforming_statement
     | filter_statement {
       
     }
-    | order_by_and_page statement {
+    | order_by_and_page_statement {
       
     }
     ;
@@ -1402,7 +1380,7 @@ opt_of_graph_type
     ;
 
 opt_graph_source
-    : %emtpy {
+    : %empty {
 
     }
     | graph_source {
@@ -1521,7 +1499,7 @@ node_type_definition
     ;
 
 opt_node_type_name
-    : %emtpy {
+    : %empty {
 
     }
     | node_type_name {
@@ -1539,7 +1517,7 @@ opt_node_type_filler
     ;
 
 node_type_name
-    : !! Predicative_production_rule.
+    : // !! Predicative_production_rule.
     element_type_name {
 
     }
@@ -1558,14 +1536,14 @@ node_type_filler
     ;
 
 node_type_label_set_definition
-    : !! Predicative_production_rule.
+    : // !! Predicative_production_rule.
     label_set_definition {
 
     }
     ;
 
 node_type_property_type_set_definition
-    : !! Predicative_production_rule.
+    : // !! Predicative_production_rule.
     property_type_set_definition {
 
     }
@@ -1590,7 +1568,7 @@ edge_type_definition
     ;
 
 edge_type_name
-    : !! Predicative_production_rule.
+    : // !! Predicative_production_rule.
     element_type_name {
 
     }
@@ -1609,14 +1587,14 @@ edge_type_filler
     ;
 
 edge_type_label_set_definition
-    : !! Predicative_production_rule.
+    : // !! Predicative_production_rule.
     label_set_definition {
 
     }
     ;
 
 edge_type_property_type_set_definition
-    : !! Predicative_production_rule.
+    : // !! Predicative_production_rule.
     property_type_set_definition {
       
     }
@@ -1677,7 +1655,7 @@ arc_type_filler
     ;
 
 opt_edge_type_name
-    : %epmty {
+    : %empty {
 
     }
     | edge_type_name {
@@ -1686,21 +1664,33 @@ opt_edge_type_name
     ;
 
 abbreviated_edge_type_pattern
-    : abbreviated_edge_type_pattern pointing_right
-    | abbreviated_edge_type_pattern pointing_left
-    | abbreviated_edge_type_pattern any_direction
+    : abbreviated_edge_type_pattern_pointing_right {
+
+    }
+    | abbreviated_edge_type_pattern_pointing_left {
+      
+    }
+    | abbreviated_edge_type_pattern_any_direction {
+      
+    }
     ;
 
-abbreviated_edge_type_pattern pointing_right
-    : source_node_type_reference RIGHT_ARROW__destination_node type_reference
+abbreviated_edge_type_pattern_pointing_right
+    : source_node_type_reference RIGHT_ARROW destination_node_type_reference {
+      
+    }
     ;
 
-abbreviated_edge_type_pattern pointing_left
-    : destination_node_type_reference LEFT_ARROW__source_node type_reference
+abbreviated_edge_type_pattern_pointing_left
+    : destination_node_type_reference LEFT_ARROW source_node_type_reference {
+      
+    }
     ;
 
-abbreviated_edge_type_pattern any_direction
-    : source_node_type_reference TILDE__destination_node_type reference
+abbreviated_edge_type_pattern_any_direction
+    : source_node_type_reference TILDE destination_node_type_reference {
+      
+    }
     ;
 
 source_node_type_reference
@@ -1757,13 +1747,13 @@ endpoint_pair_definition_pointing_right
     }
     ;
 
-endpoint_pair_definition_pointing left
+endpoint_pair_definition_pointing_left
     : LEFT_PAREN destination_node_type_name LEFT_ARROW source_node_type_name RIGHT_PAREN {
 
     }
     ;
 
-endpoint_pair_definition_any direction
+endpoint_pair_definition_any_direction
     : LEFT_PAREN source_node_type_name connector_any_direction destination_node_type_name RIGHT_PAREN {
 
     }
@@ -1780,14 +1770,14 @@ connector_any_direction
     ;
 
 source_node_type_name
-    : !! Predicative_production_rule.
+    : // !! Predicative_production_rule.
     element_type_name {
 
     }
     ;
 
 destination_node_type_name
-    : !! Predicative_production_rule.
+    : // !! Predicative_production_rule.
     element_type_name {
 
     }
@@ -1816,7 +1806,7 @@ property_type_set_definition
     ;
 
 opt_property_type_definition_list
-    : %emtpy {
+    : %empty {
 
     }
     | property_type_definition_list {
@@ -1841,7 +1831,7 @@ property_type_definition
 
 // Section_13.13_drop_graph_type statement
 drop_graph_type_statement
-    : DROP PROPERTY_GRAPH TYPE ; opt_if_exists {
+    : DROP PROPERTY_GRAPH TYPE catalog_graph_type_parent_and_name opt_if_exists {
 
     }
     ;
@@ -2278,7 +2268,7 @@ when_then_linear_query_branch_list
     ;
 
 opt_else_linear_query_branch
-    : %emtpy {
+    : %empty {
 
     }
     | else_linear_query_branch {
@@ -3597,7 +3587,7 @@ simple_path_pattern_list
     ;
 
 simple_path_pattern
-    : !! Predicative_production_rule.
+    : // !! Predicative_production_rule.
     path_pattern_expression {
 
     }
@@ -4074,7 +4064,7 @@ empty_grouping_set
 
 // Section_16.18_order_by_clause
 order_by_clause
-    : ORDER_BY sort_specification_list {
+    : ORDER BY sort_specification_list {
 
     }
     ;
@@ -4270,6 +4260,14 @@ catalog_schema_parent_and_name
     }
     ;
 
+opt_absolute_url_path
+    : %empty {
+
+    }
+    | absolute_url_path {
+
+    }
+    ;
 
 // Section_17.2_Graph_references
 graph_reference
@@ -4580,8 +4578,12 @@ function_resolution_expression
     ;
 
 catalog_function_reference
-    : catalog_function_parent_and name
-    | external_object_reference
+    : catalog_function_parent_and_name {
+
+    }
+    | external_object_reference {
+
+    }
     ;
 
 catalog_function_parent_and_name
@@ -4674,8 +4676,10 @@ parent_object_relative_url_path
 simple_relative_url_path
     : DOUBLE_PERIOD opt_solidus_double_period_list opt_solidus_simple_url_path {
     
-    }                 [ { SOLIDUS__DOUBLE_PERIOD }... ] [ SOLIDUS__simple_url_path ]
-    | simple_url_path
+    }
+    | simple_url_path {
+
+    }
     ;
 
 opt_solidus_double_period_list
@@ -4812,8 +4816,12 @@ external_object_reference
     }
     ;
 
+/* 3) EOU shall either be an absolute-URL character string or an absolute-URL-with-fragment character
+string as specified by URL or it alternatively shall be a URI with a mandatory scheme as specified by
+RFC 3986 and RFC 3978.
+4) EOU shall not conform to the Format for a <catalog url path>. */
 external_object_url
-    : !! See_the_Syntax_Rules.
+    : //!! See_the_Syntax_Rules.
     ;
 
 
@@ -4903,7 +4911,7 @@ comp_op
 
 // Section_19.4_exists_predicate
 exists_predicate
-    : EXISTS LEFT_PAREN_graph_pattern RIGHT_PAREN {
+    : EXISTS LEFT_PAREN graph_pattern RIGHT_PAREN {
 
     }
     | EXISTS nested_query_specification {
@@ -4921,7 +4929,7 @@ null_predicate
     ;
 
 null_predicate_part_2
-    : IS  NULL {
+    : IS NULL {
 
     }
     | IS NOT NULL {
@@ -5008,13 +5016,31 @@ node_reference
 
 // TODO
 source_predicate_part_2
-    : IS [ NOT ] SOURCE [ OF ] edge_reference {
+    : IS SOURCE edge_reference {
+      
+    }
+    | IS SOURCE OF edge_reference {
+      
+    }
+    | IS NOT SOURCE edge_reference {
+      
+    }
+    | IS NOT SOURCE OF edge_reference {
       
     }
     ;
 
 destination_predicate_part_2
-    : IS [ NOT ] DESTINATION [ OF ] edge_reference {
+    : IS DESTINATION edge_reference {
+
+    }
+    | IS DESTINATION OF edge_reference {
+
+    }
+    | IS NOT DESTINATION edge_reference {
+
+    }
+    | IS NOT DESTINATION OF edge_reference {
 
     }
     ;
@@ -5225,6 +5251,12 @@ collection_value_expression
     ;
 
 set_value_expression
+    : value_expression_primary {
+      
+    }
+    ;
+
+ordered_set_value_expression
     : value_expression_primary {
       
     }
@@ -6322,7 +6354,7 @@ multiset_term
     : multiset_primary {
 
     }
-    | multiset_term MULTISET_INTERSECT opt_all_or_distinct multiset_primary {
+    | multiset_term MULTISET INTERSECT opt_all_or_distinct multiset_primary {
 
     }
     ;
@@ -6425,7 +6457,6 @@ ordered_set_value_constructor_by_enumeration
     | ORDERED SET LEFT_BRACKET ordered_set_element_list RIGHT_BRACKET {
 
     }
-    }
     ;
 
 ordered_set_element_list
@@ -6497,7 +6528,7 @@ record_value_constructor
     }
     ;
 
-record_value_constructor_by enumeration
+record_value_constructor_by_enumeration
     : LEFT_BRACE field_list RIGHT_BRACE {
 
     }
@@ -6820,7 +6851,6 @@ boolean_literal
     | UNKNOWN {
     
     }
-    }
     ;
 
 /* character_string_literal
@@ -6866,7 +6896,7 @@ accent_quoted_character_representation
     : character_representation
     ; */
 
-!! See_the_Syntax_Rules.
+// !! See_the_Syntax_Rules.
 character_representation
     : string_literal_character
     | escaped_character
@@ -6874,7 +6904,7 @@ character_representation
 
 string_literal_character
     :
-    !! See_the_Syntax_Rules.
+    // !! See_the_Syntax_Rules.
 
 escaped_character
     : escaped_reverse_SOLIDUS
@@ -6917,15 +6947,15 @@ escaped_form_feed
     ;
 
 unicode_escape_value
-    : unicode_4_digit_escape value
-    | unicode_6_digit_escape value
+    : unicode_4_digit_escape_value
+    | unicode_6_digit_escape_value
     ;
 
-unicode_4_digit_escape value
+unicode_4_digit_escape_value
     : reverse_SOLIDUS__u_hex digit__hex_digit__hex digit__hex_digit
     ;
 
-unicode_6_digit_escape value
+unicode_6_digit_escape_value
     : reverse_SOLIDUS__U_hex digit__hex_digit__hex digit__hex_digit__hex digit__hex_digit
     ;
 
@@ -7648,7 +7678,7 @@ approximate_numeric_type
     | FLOAT LEFT_PAREN precision RIGHT_PAREN {
 
     }
-    | FLOAT LEFT_PAREN precision COMMA scala RIGHT_PAREN {
+    | FLOAT LEFT_PAREN precision COMMA scale RIGHT_PAREN {
 
     }
     | REAL {
@@ -8003,13 +8033,13 @@ LESS_THAN_OPERATOR
 
 //unbroken_character_string_literal {unbroken_single_quoted_character_sequence|unbroken_double_quoted_character_sequence}
 
-date_string {unbroken_character_string_literal}
-time_string {unbroken_character_string_literal}
-datetime_string {unbroken_character_string_literal}
-duration_string {unbroken_character_string_literal}
+// date_string {unbroken_character_string_literal}
+// time_string {unbroken_character_string_literal}
+// datetime_string {unbroken_character_string_literal}
+// duration_string {unbroken_character_string_literal}
 
-single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
-double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
+// single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
+// double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
 
 // character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
 
