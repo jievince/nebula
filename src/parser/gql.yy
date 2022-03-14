@@ -5235,10 +5235,16 @@ term
     ;
 
 factor
-    : numeric_primary {
+    : opt_sign numeric_primary {
 
     }
-    | sign numeric_primary {
+    ;
+
+opt_sign
+    : %empty {
+
+    }
+    | sign {
 
     }
     ;
@@ -5945,10 +5951,7 @@ duration_term
     ;
 
 duration_factor
-    : duration_primary {
-
-    }
-    | sign duration_primary {
+    : opt_sign duration_primary {
 
     }
     ;
@@ -6813,10 +6816,7 @@ numeric_literal
     ;
 
 signed_numeric_literal
-    : unsigned_numeric_literal {
-
-    }
-    | sign unsigned_numeric_literal {
+    : opt_sign unsigned_numeric_literal {
 
     }
     ;
@@ -6879,7 +6879,9 @@ unsigned_binary_integer
     ;
 
 signed_decimal_integer
-    : [ sign ] unsigned_decimal_integer
+    : opt_sign unsigned_decimal_integer {
+
+    }
     ;
 
 approximate_numeric_literal
@@ -6902,153 +6904,501 @@ temporal_literal
     ;
 
 date_literal
-    : DATE_date_string
+    : DATE date_string {
+
+    }
     ;
 
 time_literal
-    : TIME_time_string
+    : TIME time_string {
+      
+    }
     ;
 
 datetime_literal
-    : { DATETIME | TIMESTAMP } datetime_string
+    : DATETIME datetime_string {
+      
+    }
+    | TIMESTAMP datetime_string {
+      
+    }
     ;
 
 date_string
-    : unbroken_character_string_literal
+    : unbroken_character_string_literal {
+
+    }
     ;
 
 time_string
-    : unbroken_character_string_literal
+    : unbroken_character_string_literal {
+
+    }
     ;
 
 datetime_string
-    : unbroken_character_string_literal
+    : unbroken_character_string_literal {
+
+    }
     ;
 
 duration_literal
-    : DURATION_duration_string
-    | SQL_interval_literal
+    : DURATION duration_string {
+
+    }
+    | SQL_interval_literal {
+
+    }
     ;
 
 duration_string
-    : unbroken_character_string_literal
+    : unbroken_character_string_literal {
+
+    }
     ;
 
+// <SQL-interval literal> shall conform to the Syntax Rules of <interval literal> in ISO/IEC 9075-2:202x.
 SQL_interval_literal
-    :
-  !! See_the_Syntax_Rules.
+    : interval_literal {
+
+    }
+    ;
+
+interval_literal
+    : INTERVAL opt_sign interval_string interval_qualifier {
+
+    }
+    ;
+
+interval_string
+    : QUOTE unquoted_interval_string QUOTE {
+
+    }
+    ;
+
+unquoted_interval_string
+    : opt_sign year_month_literal {
+    
+    }
+    | opt_sign day_time_literal {
+
+    }
+    ;
+
+year_month_literal
+    : years_value {
+    
+    }
+    | years_value MINUS_SIGN months_value {
+
+    }
+    | months_value {
+
+    }
+    ;
+  
+day_time_literal
+    : day_time_interval {
+
+    }
+    | time_interval {
+
+    }
+    ;
+
+// TODO space? shift/reduce error
+day_time_interval
+    : days_value {
+    
+    }
+    | days_value space hours_value {
+
+    }
+    | days_value space hours_value COLON minutes_value {
+
+    }
+    | days_value space hours_value COLON minutes_value COLON seconds_value {
+
+    }
+    ;
+
+time_interval
+    : hours_value {
+      
+    }
+    | hours_value COLON minutes_value {
+
+    }
+    | hours_value COLON minutes_value COLON seconds_value {
+
+    }
+    | minutes_value {
+
+    }
+    | minutes_value COLON seconds_value {
+
+    }
+    | seconds_value {
+
+    }
+    ;
+
+years_value
+    : datetime_value {
+
+    }
+    ;
+
+months_value
+    : datetime_value {
+
+    }
+    ;
+
+days_value
+    : datetime_value {
+
+    }
+    ;
+
+hours_value
+    : datetime_value {
+
+    }
+    ;
+
+minutes_value
+    : datetime_value {
+
+    }
+    ;
+
+seconds_value
+    : seconds_integer_value {
+      
+    }
+    | seconds_integer_value PERIOD {
+
+    }
+    | seconds_integer_value PERIOD seconds_fraction {
+
+    }
+    ;
+
+seconds_integer_value
+    : unsigned_integer {
+
+    }
+    ;
+
+seconds_fraction
+    : unsigned_integer {
+
+    }
+    ;
+
+datetime_value
+    : unsigned_integer {
+
+    }
+    ;
+
+
+interval_qualifier
+    : start_field TO end_field {
+
+    }
+    | single_datetime_field {
+
+    }
+    ;
+
+start_field
+    : non_second_primary_datetime_field {
+
+    }
+    | non_second_primary_datetime_field LEFT_PAREN interval_leading_field_precision RIGHT_PAREN {
+
+    }
+    ;
+
+end_field
+    : non_second_primary_datetime_field {
+
+    }
+    | SECOND {
+    
+    }
+    | SECOND LEFT_PAREN interval_fractional_seconds_precision RIGHT_PAREN {
+
+    }
+    ;
+
+single_datetime_field
+    : non_second_primary_datetime_field {
+
+    }
+    | non_second_primary_datetime_field LEFT_PAREN interval_leading_field_precision RIGHT_PAREN {
+
+    }
+    | SECOND {
+    
+    }
+    | SECOND LEFT_PAREN interval_leading_field_precision RIGHT_PAREN {
+
+    }
+    | SECOND LEFT_PAREN interval_leading_field_precision COMMA interval_fractional_seconds_precision RIGHT_PAREN {
+
+    }
+    ;
+
+non_second_primary_datetime_field
+    : YEAR {
+
+    }
+    | MONTH {
+      
+    }
+    | DAY {
+      
+    }
+    | HOUR {
+      
+    }
+    | MINUTE {
+      
+    }
+    ;
+
+interval_leading_field_precision
+    : unsigned_integer {
+
+    }
+    ;
+
+interval_fractional_seconds_precision
+    : unsigned_integer {
+
+    }
+    ;
+
 
 null_literal
-    : NULL
+    : NULL {
+
+    }
     ;
 
 list_literal
-    : list_value_constructor_by enumeration
+    : list_value_constructor_by_enumeration {
+      
+    }
     ;
 
 set_literal
-    : set_value_constructor_by enumeration
+    : set_value_constructor_by_enumeration {
+      
+    }
     ;
 
 multiset_literal
-    : multiset_value_constructor_by enumeration
+    : multiset_value_constructor_by_enumeration {
+      
+    }
     ;
 
 ordered_set_literal
-    : ordered_set_value_constructor by_enumeration
+    : ordered_set_value_constructor_by_enumeration {
+      
+    }
     ;
 
 map_literal
-    : map_value_constructor_by enumeration
+    : map_value_constructor_by_enumeration {
+      
+    }
     ;
 
 record_literal
-    : record_value_constructor_by enumeration
+    : record_value_constructor_by_enumeration {
+      
+    }
     ;
 
 
 // Section_21.2_value_type
 value_type
-    : ANY
-    | predefined_type
-    | graph_element_type
-    | collection_type
-    | map_value_type
-    | record_value_type
-    | graph_type_expression
-    | binding_table_type_expression
-    | NOTHING
+    : ANY {
+      
+    }
+    | predefined_type {
+      
+    }
+    | graph_element_type {
+      
+    }
+    | collection_type {
+      
+    }
+    | map_value_type {
+      
+    }
+    | record_value_type {
+      
+    }
+    | graph_type_expression {
+      
+    }
+    | binding_table_type_expression {
+      
+    }
+    | NOTHING {
+      
+    }
     ;
 
 of_value_type
-    : opt_of_type_prefix value_type
+    : opt_of_type_prefix value_type {
+      
+    }
     ;
 
 of_type_prefix
-    : DOUBLE_COLON
+    : DOUBLE_COLON {
+      
+    }
     | OF {
 
     }
     ;
 
 predefined_type
-    : boolean_type
-    | character_string_type
-    | byte_string_type
-    | numeric_type
-    | temporal_type
+    : boolean_type {
+      
+    }
+    | character_string_type {
+      
+    }
+    | byte_string_type {
+      
+    }
+    | numeric_type {
+      
+    }
+    | temporal_type {
+      
+    }
     ;
 
 boolean_type
-    : BOOL | BOOLEAN
+    : BOOL  {
+      
+    }
+    | BOOLEAN {
+      
+    }
     ;
 
 character_string_type
-    : { STRING | VARCHAR } [ LEFT_PAREN_max_length RIGHT_PAREN ]
+    : character_string_synonym {
+    
+    }
+    | character_string_synonym LEFT_PAREN max_length RIGHT_PAREN {
+
+    }
     ;
 
 byte_string_type
-    : BYTES [ LEFT_PAREN [ min_length__COMMA ] max_length__RIGHT_PAREN ]
-    | BINARY [ fixed_length ]
-    | VARBINARY [ max_length ]
+    : BYTES {
+    
+    }
+    | BYTES  LEFT_PAREN max_length RIGHT_PAREN {
+
+    }
+    | BYTES  LEFT_PAREN min_length COMMA max_length RIGHT_PAREN {
+
+    }
+    | BINARY {
+    
+    }
+    | BINARY fixed_length {
+
+    }
+    | VARBINARY {
+    
+    }
+    | VARBINARY max_length {
+
+    }
     ;
 
 min_length
-    : unsigned_decimal_integer
+    : unsigned_decimal_integer {
+
+    }
     ;
 
 max_length
-    : unsigned_decimal_integer
+    : unsigned_decimal_integer {
+      
+    }
     ;
 
 fixed_length
-    : unsigned_decimal_integer
+    : unsigned_decimal_integer {
+      
+    }
     ;
 
 numeric_type
-    : exact_numeric_type
-    | approximate_numeric_type
+    : exact_numeric_type {
+      
+    }
+    | approximate_numeric_type {
+      
+    }
     ;
 
 exact_numeric_type
-    : binary_exact_numeric_type
-    | decimal_exact_numeric_type
+    : binary_exact_numeric_type {
+      
+    }
+    | decimal_exact_numeric_type {
+      
+    }
     ;
 
 binary_exact_numeric_type
-    :
-    binary_exact_signed_numeric_type
-    | binary_exact_unsigned_numeric_type
+    : binary_exact_signed_numeric_type {
+      
+    }
+    | binary_exact_unsigned_numeric_type {
+      
+    }
     ;
 
 binary_exact_signed_numeric_type
-    : INT8
-    | INT16
-    | INT32
-    | INT64
-    | INT128
-    | INT256
-    | SMALLINT
+    : INT8 {
+      
+    }
+    | INT16 {
+      
+    }
+    | INT32 {
+      
+    }
+    | INT64 {
+      
+    }
+    | INT128 {
+      
+    }
+    | INT256 {
+      
+    }
+    | SMALLINT {
+      
+    }
     | INT {
     
     }
@@ -7212,31 +7562,31 @@ temporal_type
 
 graph_element_type
     : NODE {
-      
+
     }
     | VERTEX {
-      
+
     }
     | EDGE {
-      
+
     }
     | RELATIONSHIP {
-      
+
     }
     ;
 
 collection_type
     : list_value_type {
-      
+
     }
     | multiset_value_type {
-      
+
     }
     | set_value_type {
-      
+
     }
     | ordered_set_value_type {
-      
+
     }
     ;
 
@@ -7256,11 +7606,15 @@ list_value_type_name
     ;
 
 multiset_value_type
-    : value_type__MULTISET
+    : value_type MULTISET {
+      
+    }
     ;
 
 set_value_type
-    : value_type__SET
+    : value_type SET {
+      
+    }
     ;
 
 ordered_set_value_type
@@ -7505,6 +7859,14 @@ IF_NOT_EXISTS
     }
     ;
 
+character_string_synonym
+    : STRING {
+
+    }
+    | VARCHAR {
+
+    }
+    ;
 
 // moved_from_gql.ll
 GREATER_THAN_OPERATOR
