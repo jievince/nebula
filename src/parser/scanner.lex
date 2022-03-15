@@ -14,8 +14,13 @@
     yylloc->step();                     \
     yylloc->columns(yyleng);
 
-#define NG_RESERVED_KEYWORD(a, b) {a, TokenType::TOK_##b},
-#define NG_UNRESERVED_KEYWORD(a, b) {a, TokenType::TOK_##b},
+using Token = nebula::GraphParser::token;
+using TokenType = nebula::GraphParser::token::token_kind_type;
+
+#define NG_RESERVED_KEYWORD(a, b) {a, Token::TOK_##b},
+#define NG_UNRESERVED_KEYWORD(a, b) {a, Token::TOK_##b},
+
+#define NG_RETURN_TOKEN(a) return Token::TOK_##a;
 
 const std::unordered_map<std::string, TokenType> kCaseSensitiveKeywords {
 /* reserved keyword */
@@ -97,6 +102,7 @@ NG_RESERVED_KEYWORD("CREATE", CREATE)
 NG_RESERVED_KEYWORD("DATA", DATA)
 NG_RESERVED_KEYWORD("DATE", DATE)
 NG_RESERVED_KEYWORD("DATETIME", DATETIME)
+NG_RESERVED_KEYWORD("DAY", DAY)  // Newly added for <SQL_interval_literal>
 NG_RESERVED_KEYWORD("DEC", DEC)
 NG_RESERVED_KEYWORD("DECIMAL", DECIMAL)
 NG_RESERVED_KEYWORD("DEFAULT", DEFAULT)
@@ -145,6 +151,7 @@ NG_RESERVED_KEYWORD("HAVING", HAVING)
 NG_RESERVED_KEYWORD("HOME_GRAPH", HOME_GRAPH)
 NG_RESERVED_KEYWORD("HOME_PROPERTY_GRAPH", HOME_PROPERTY_GRAPH)
 NG_RESERVED_KEYWORD("HOME_SCHEMA", HOME_SCHEMA)
+NG_RESERVED_KEYWORD("HOUR", HOUR)  // Newly added for <SQL_interval_literal>
 NG_RESERVED_KEYWORD("IN", IN)
 NG_RESERVED_KEYWORD("INSERT", INSERT)
 NG_RESERVED_KEYWORD("INT", INT)
@@ -155,6 +162,7 @@ NG_RESERVED_KEYWORD("INT16", INT16)
 NG_RESERVED_KEYWORD("INTEGER16", INTEGER16)
 NG_RESERVED_KEYWORD("INT32", INT32)
 NG_RESERVED_KEYWORD("INTEGER32", INTEGER32)
+NG_RESERVED_KEYWORD("INTERVAL", INTERVAL)  // Newly added for <SQL_interval_literal>
 NG_RESERVED_KEYWORD("INT64", INT64)
 NG_RESERVED_KEYWORD("INTEGER64", INTEGER64)
 NG_RESERVED_KEYWORD("INT128", INT128)
@@ -186,7 +194,9 @@ NG_RESERVED_KEYWORD("MATCH", MATCH)
 NG_RESERVED_KEYWORD("MERGE", MERGE)
 NG_RESERVED_KEYWORD("MAX", MAX)
 NG_RESERVED_KEYWORD("MIN", MIN)
+NG_RESERVED_KEYWORD("MINUTE", MINUTE)  // Newly added for <SQL_interval_literal>
 NG_RESERVED_KEYWORD("MOD", MOD)
+NG_RESERVED_KEYWORD("MONTH", MONTH)  // Newly added for <SQL_interval_literal>
 NG_RESERVED_KEYWORD("MULTI", MULTI)
 NG_RESERVED_KEYWORD("MULTIPLE", MULTIPLE)
 NG_RESERVED_KEYWORD("MULTISET", MULTISET)
@@ -242,6 +252,7 @@ NG_RESERVED_KEYWORD("SCALAR", SCALAR)
 NG_RESERVED_KEYWORD("SCHEMA", SCHEMA)
 NG_RESERVED_KEYWORD("SCHEMAS", SCHEMAS)
 NG_RESERVED_KEYWORD("SCHEMATA", SCHEMATA)
+NG_RESERVED_KEYWORD("SECOND", SECOND)  // Newly added for <SQL_interval_literal>
 NG_RESERVED_KEYWORD("SELECT", SELECT)
 NG_RESERVED_KEYWORD("SESSION", SESSION)
 NG_RESERVED_KEYWORD("SET", SET)
@@ -295,6 +306,7 @@ NG_RESERVED_KEYWORD("WHERE", WHERE)
 NG_RESERVED_KEYWORD("WITH", WITH)
 NG_RESERVED_KEYWORD("WITHOUT", WITHOUT)
 NG_RESERVED_KEYWORD("XOR", XOR)
+NG_RESERVED_KEYWORD("YEAR", YEAR)  // Newly added for <SQL_interval_literal>
 NG_RESERVED_KEYWORD("YIELD", YIELD)
 NG_RESERVED_KEYWORD("ZERO", ZERO)
 /* unreserved keyword */
@@ -362,41 +374,28 @@ NG_UNRESERVED_KEYWORD("ZONE", ZONE)
 };
 
 // Check against the keyword list.
-const ScanKeyword& keywordLookup(const std::unordered_map<std::string, TokenType> keywords, const std::string& text, bool caseSensitivity) {
-  static const int kMaxKeywordBytes = 4096;
-  char word[kMaxKeywordBytes];
-  size_t word_bytes = strlen(s);
-
-  if (caseSensitivity) {
-    // PostgreQL Note: Apply an ASCII-only downcasing.  We must not use tolower() since it may
-    // produce the wrong translation in some locales (eg, Turkish).
-    for (int i = 0; i < word_bytes; i++) {
-      char ch = s[i];
-      if (ch >= 'A' && ch <= 'Z') {
-        ch += 'a' - 'A';
-      }
-      word[i] = ch;
-    }
-    word[word_bytes] = '\0';
+bool keywordLookup(const std::unordered_map<std::string, TokenType> &keywords,
+                                         std::string text,
+                                         bool caseSensitivity,
+                                         TokenType& token) {
+  if (!caseSensitivity) {
+    std::transform(
+        text.begin(), text.end(), text.begin(), [](unsigned char c) { return std::toupper(c); });
   }
 
-  auto iter = keywords.find(word);
+  auto iter = keywords.find(text);
   if (iter != keywords.end()) {
-    return iter->second;
+    token = iter->second;
+    return true;
   }
-  return kInvalidKeyword;
+  return false;
 }
 
-const ScanKeyword& keywordLookup(const char* s, size_t length) {
-  std::string text(s, length);
-  const ScanKeyword &keyword = keywordLookup(kCaseSensitiveKeywords, text, true);
-  if (keyword.isValid()) {
-    return keyword;
-  }
-  return keywordLookup(kCaseInsensitiveKeywords, text, false);
+bool keywordLookup(const std::string& text, TokenType& token) {
+  return keywordLookup(kCaseSensitiveKeywords, text, true, token) || keywordLookup(kCaseInsensitiveKeywords, text, false, token);
 }
 
-}%
+%}
 
 
 /* delimiter token */
@@ -469,27 +468,28 @@ bracketed_comment_introducer "/*"
 bracketed_comment_terminator "*/"
 non_bracketed_comment_terminator [^{bracketed_comment_terminator}]
 
-/* doubled_grave_accent "``"
-escaped_grave_accent {reverse_solidus}{grave_accent}|{doubled_grave_accent} */
+/* doubled_grave_accent "``" */
+/* escaped_grave_accent {reverse_solidus}{grave_accent}|{doubled_grave_accent} */
 
 
 /* refer to https://www.fileformat.info/info/unicode/category/Nd/list.htm */
-other_digit
-digit [0-9]|other_digit
+/* other_digit */
+/* digit [0-9]|other_digit */
+digit [0-9]
 hex_digit [0-9A-Fa-f]
 octal_digit [0-7]
 binary_digit [01]
 unsigned_decimal_integer {digit}({underscore}?{digit})*
-unsigned_hexadecimal_integer "0x"({underscore}?{hex_digit})*
-unsigned_octal_integer "0o"{underscore?{octal_digit}}*
-unsigned_binary_integer "0b"{underscore?{binary_digit}}*
+unsigned_hexadecimal_integer 0x({underscore}?{hex_digit})*
+unsigned_octal_integer 0o({underscore}?{octal_digit})*
+unsigned_binary_integer 0b({underscore}?{binary_digit})*
 unsigned_integer {unsigned_decimal_integer}|{unsigned_hexadecimal_integer}|{unsigned_octal_integer}|{unsigned_binary_integer}
 exact_numeric_literal {unsigned_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
 sign {plus_sign}|{minus_sign}
 signed_decimal_integer {sign}?{unsigned_decimal_integer}
 mantissa {exact_numeric_literal}
 exponent {signed_decimal_integer}
-approximate_numeric_literal {mantissa}[Ee]exponent
+approximate_numeric_literal {mantissa}[Ee]{exponent}
 
 unsigned_numeric_literal {exact_numeric_literal}|{approximate_numeric_literal}
 byte_string_literal [Xx]{quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote}({separator}{quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote})*
@@ -499,16 +499,32 @@ identifier_start [A-Za-z\200-\377_]
 identifier_extend [A-Za-z\200-\377_0-9\$]
 regular_identifier {identifier_start}{identifier_extend}*
 extended_identifier {identifier_extend}*
-identifier {regular_identifier}|{delimited_identifier}
+/* identifier {regular_identifier}|{delimited_identifier} */
 
 simple_comment_introducer {double_solidus}|{double_minus_sign}
+simple_comment_character [^{newline}]
 simple_comment {simple_comment_introducer}{simple_comment_character}*{newline}
 bracketed_comment {bracketed_comment_introducer}{non_bracketed_comment_terminator}*{bracketed_comment_terminator}
 comment {simple_comment}|{bracketed_comment}
 
-single_quoted_character_representation
-double_quoted_character_representation
-accent_quoted_character_representation
+
+string_literal_character [^{escaped_character}]
+escaped_reverse_solidus {reverse_solidus}{reverse_solidus}
+escaped_quote {reverse_solidus}{quote}
+escaped_double_quote {reverse_solidus}{double_quote}
+escaped_tab {reverse_solidus}t
+escaped_backspace {reverse_solidus}b
+escaped_newline {reverse_solidus}n
+escaped_carriage_return {reverse_solidus}r
+escaped_form_feed {reverse_solidus}f
+unicode_4_digit_escape_value {reverse_solidus}u{hex_digit}{4}
+unicode_6_digit_escape_value {reverse_solidus}U{hex_digit}{6}
+unicode_escape_value {unicode_4_digit_escape_value}|{unicode_6_digit_escape_value}
+escaped_character {escaped_reverse_solidus}|{escaped_quote}|{escaped_double_quote}|{escaped_tab}|{escaped_backspace}|{escaped_newline}|{escaped_carriage_return}|{escaped_form_feed}|{unicode_escape_value}
+character_representation {string_literal_character}|{escaped_character}
+single_quoted_character_representation {character_representation}
+double_quoted_character_representation {character_representation}
+accent_quoted_character_representation {character_representation}
 unbroken_single_quoted_character_sequence {quote}{single_quoted_character_representation}*{quote}
 unbroken_double_quoted_character_sequence {double_quote}{double_quoted_character_representation}*{double_quote}
 unbroken_accent_quoted_character_sequence {grave_accent}{accent_quoted_character_representation}*{grave_accent}
@@ -517,239 +533,258 @@ double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({se
 delimited_identifier {double_quoted_character_sequence}|{unbroken_accent_quoted_character_sequence}
 
 whitespace [\t\n\v\f\r]+
-newline [\n|\r|\n\r]
+newline [\n\r(\n\r)]
 separator ({comment}|{whitespace})*
 
 separated_identifier {extended_identifier}|{delimited_identifier}
 parameter_name \${separated_identifier}
 
-unbroken_character_string_literal {unbroken_single_quoted_character_sequence|unbroken_double_quoted_character_sequence}
+unbroken_character_string_literal {unbroken_single_quoted_character_sequence}|{unbroken_double_quoted_character_sequence}
 character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
 
 
 %%
 
 {space} {
-  return TokenType::SPACE;
+  NG_RETURN_TOKEN(SPACE);
 }
 {ampersand} {
-  return TokenType::AMPERSAND;
+  NG_RETURN_TOKEN(AMPERSAND);
 }
 {asterisk} {
-  return TokenType::ASTERISK;
+  NG_RETURN_TOKEN(ASTERISK);
 }
 {circumflex} {
-  return TokenType::CIRCUMFLEX;
+  NG_RETURN_TOKEN(CIRCUMFLEX);
 }
 {colon} {
-  return TokenType::COLON;
+  NG_RETURN_TOKEN(COLON);
 }
 {comma} {
-  return TokenType::COMMA;
+  NG_RETURN_TOKEN(COMMA);
 }
 {dollar_sign} {
-  return TokenType::DOLLAR_SIGN;
+  NG_RETURN_TOKEN(DOLLAR_SIGN);
 }
 {double_quote} {
-  return TokenType::DOUBLE_QUOTE;
+  NG_RETURN_TOKEN(DOUBLE_QUOTE);
 }
 {equals_operator} {
-  return TokenType::EQUALS_OPERATOR;
+  NG_RETURN_TOKEN(EQUALS_OPERATOR);
 }
 {exclamation_mark} {
-  return TokenType::EXCLAMATION_MARK;
+  NG_RETURN_TOKEN(EXCLAMATION_MARK);
 }
 {right_angle_bracket} {
-  return TokenType::RIGHT_ANGLE_BRACKET;
+  NG_RETURN_TOKEN(RIGHT_ANGLE_BRACKET);
 }
 {grave_accent} {
-  return TokenType::GRAVE_ACCENT;
+  NG_RETURN_TOKEN(GRAVE_ACCENT);
 }
 {left_brace} {
-  return TokenType::LEFT_BRACE;
+  NG_RETURN_TOKEN(LEFT_BRACE);
 }
 {left_bracket} {
-  return TokenType::LEFT_BRACKET;
+  NG_RETURN_TOKEN(LEFT_BRACKET);
 }
 {left_paren} {
-  return TokenType::LEFT_PAREN;
+  NG_RETURN_TOKEN(LEFT_PAREN);
 }
 {left_angle_bracket} {
-  return TokenType::LEFT_ANGLE_BRACKET;
+  NG_RETURN_TOKEN(LEFT_ANGLE_BRACKET);
 }
 {minus_sign} {
-  return TokenType::MINUS_SIGN;
+  NG_RETURN_TOKEN(MINUS_SIGN);
 }
 {percent} {
-  return TokenType::PERCENT;
+  NG_RETURN_TOKEN(PERCENT);
 }
 {period} {
-  return TokenType::PERIOD;
+  NG_RETURN_TOKEN(PERIOD);
 }
 {plus_sign} {
-  return TokenType::PLUS_SIGN;
+  NG_RETURN_TOKEN(PLUS_SIGN);
 }
 {question_mark} {
-  return TokenType::QUESTION_MARK;
+  NG_RETURN_TOKEN(QUESTION_MARK);
 }
 {quote} {
-  return TokenType::QUOTE;
+  NG_RETURN_TOKEN(QUOTE);
 }
 {reverse_solidus} {
-  return TokenType::REVERSE_SOLIDUS;
+  NG_RETURN_TOKEN(REVERSE_SOLIDUS);
 }
 {right_brace} {
-  return TokenType::RIGHT_BRACE;
+  NG_RETURN_TOKEN(RIGHT_BRACE);
 }
 {right_bracket} {
-  return TokenType::RIGHT_BRACKET;
+  NG_RETURN_TOKEN(RIGHT_BRACKET);
 }
 {right_paren} {
-  return TokenType::RIGHT_PAREN;
+  NG_RETURN_TOKEN(RIGHT_PAREN);
 }
 {semicolon} {
-  return TokenType::SEMICOLON;
+  NG_RETURN_TOKEN(SEMICOLON);
 }
 {solidus} {
-  return TokenType::SOLIDUS;
+  NG_RETURN_TOKEN(SOLIDUS);
 }
 {tilde} {
-  return TokenType::TILDE;
+  NG_RETURN_TOKEN(TILDE);
 }
 {underscore} {
-  return TokenType::UNDERSCORE;
+  NG_RETURN_TOKEN(UNDERSCORE);
 }
 {vertical_bar} {
-  return TokenType::VERTICAL_BAR;
+  NG_RETURN_TOKEN(VERTICAL_BAR);
 }
 {bracket_right_arrow} {
-  return TokenType::BRACKET_RIGHT_ARROW;
+  NG_RETURN_TOKEN(BRACKET_RIGHT_ARROW);
 }
 {bracket_tilde_right_arrow} {
-  return TokenType::BRACKET_TILDE_RIGHT_ARROW;
+  NG_RETURN_TOKEN(BRACKET_TILDE_RIGHT_ARROW);
 }
 {concatenation_operator} {
-  return TokenType::CONCATENATION_OPERATOR;
+  NG_RETURN_TOKEN(CONCATENATION_OPERATOR);
 }
 {double_colon} {
-  return TokenType::DOUBLE_COLON;
+  NG_RETURN_TOKEN(DOUBLE_COLON);
 }
 {double_minus_sign} {
-  return TokenType::DOUBLE_MINUS_SIGN;
+  NG_RETURN_TOKEN(DOUBLE_MINUS_SIGN);
 }
 {double_period} {
-  return TokenType::DOUBLE_PERIOD;
+  NG_RETURN_TOKEN(DOUBLE_PERIOD);
 }
 {double_solidus} {
-  return TokenType::DOUBLE_SOLIDUS;
+  NG_RETURN_TOKEN(DOUBLE_SOLIDUS);
 }
 {greater_than_or_equals_operator} {
-  return TokenType::GREATER_THAN_OR_EQUALS_OPERATOR;
+  NG_RETURN_TOKEN(GREATER_THAN_OR_EQUALS_OPERATOR);
 }
 {left_arrow} {
-  return TokenType::LEFT_ARROW;
+  NG_RETURN_TOKEN(LEFT_ARROW);
 }
 {left_arrow_tilde} {
-  return TokenType::LEFT_ARROW_TILDE;
+  NG_RETURN_TOKEN(LEFT_ARROW_TILDE);
 }
 {left_arrow_bracket} {
-  return TokenType::LEFT_ARROW_BRACKET;
+  NG_RETURN_TOKEN(LEFT_ARROW_BRACKET);
 }
 {left_arrow_tilde_bracket} {
-  return TokenType::LEFT_ARROW_TILDE_BRACKET;
+  NG_RETURN_TOKEN(LEFT_ARROW_TILDE_BRACKET);
 }
 {left_minus_right} {
-  return TokenType::LEFT_MINUS_RIGHT;
+  NG_RETURN_TOKEN(LEFT_MINUS_RIGHT);
 }
 {left_minus_slash} {
-  return TokenType::LEFT_MINUS_SLASH;
+  NG_RETURN_TOKEN(LEFT_MINUS_SLASH);
 }
 {left_tilde_slash} {
-  return TokenType::LEFT_TILDE_SLASH;
+  NG_RETURN_TOKEN(LEFT_TILDE_SLASH);
 }
 {less_than_or_equals_operator} {
-  return TokenType::LESS_THAN_OR_EQUALS_OPERATOR;
+  NG_RETURN_TOKEN(LESS_THAN_OR_EQUALS_OPERATOR);
 }
 {minus_left_bracket} {
-  return TokenType::MINUS_LEFT_BRACKET;
+  NG_RETURN_TOKEN(MINUS_LEFT_BRACKET);
 }
 {minus_slash} {
-  return TokenType::MINUS_SLASH;
+  NG_RETURN_TOKEN(MINUS_SLASH);
 }
 {not_equals_operator} {
-  return TokenType::NOT_EQUALS_OPERATOR;
+  NG_RETURN_TOKEN(NOT_EQUALS_OPERATOR);
 }
 {right_arrow} {
-  return TokenType::RIGHT_ARROW;
+  NG_RETURN_TOKEN(RIGHT_ARROW);
 }
 {right_bracket_minus} {
-  return TokenType::RIGHT_BRACKET_MINUS;
+  NG_RETURN_TOKEN(RIGHT_BRACKET_MINUS);
 }
 {right_bracket_tilde} {
-  return TokenType::RIGHT_BRACKET_TILDE;
+  NG_RETURN_TOKEN(RIGHT_BRACKET_TILDE);
 }
 {slash_minus} {
-  return TokenType::SLASH_MINUS;
+  NG_RETURN_TOKEN(SLASH_MINUS);
 }
 {slash_minus_right} {
-  return TokenType::SLASH_MINUS_RIGHT;
+  NG_RETURN_TOKEN(SLASH_MINUS_RIGHT);
 }
 {slash_tilde} {
-  return TokenType::SLASH_TILDE;
+  NG_RETURN_TOKEN(SLASH_TILDE);
 }
 {slash_tilde_right} {
-  return TokenType::SLASH_TILDE_RIGHT;
+  NG_RETURN_TOKEN(SLASH_TILDE_RIGHT);
 }
 {tilde_left_bracket} {
-  return TokenType::TILDE_LEFT_BRACKET;
+  NG_RETURN_TOKEN(TILDE_LEFT_BRACKET);
 }
 {tilde_right_arrow} {
-  return TokenType::TILDE_RIGHT_ARROW;
+  NG_RETURN_TOKEN(TILDE_RIGHT_ARROW);
 }
 {tilde_slash} {
-  return TokenType::TILDE_SLASH;
+  NG_RETURN_TOKEN(TILDE_SLASH);
 }
 
 {multiset_alternation_operator} {
-  return TokenType::MULTISET_ALTERNATION_OPERATOR;
+  NG_RETURN_TOKEN(MULTISET_ALTERNATION_OPERATOR);
 }
 
-{comment}
-{identifier} {
+{comment} {}
+{regular_identifier} {
   /* Check against the keyword lists. */
-  const ScanKeyword &keyword = keywordLookup(yytext, yyleng);
-  if (keyword.isValid()) {
+  TokenType token;
+  bool found = keywordLookup(std::string(yytext, yyleng), token);
+  if (found) {
     yylval->keywordVal = new std::string(yytext, yyleng);
-    return keyword.tokenType_;
+    return token;
   }
 
   /* Not a keyword. Check if it is a legal unicode identifier. */
   if (isValidUnicodeIdentifier(yytext, yyleng)) {
     yylval->identVal = new std::string(yytext, yyleng);
-    return TokenType::IDENTIFIER;
+    NG_RETURN_TOKEN(REGULAR_IDENTIFIER);
   }
   throw GraphParser::syntax_error(*yylloc, "illegal unicode identifier");
 }
-//{extended_identifier}
+{delimited_identifier} {
+  NG_RETURN_TOKEN(DELIMITED_IDENTIFIER);
+}
 {parameter_name} {
   yylval->paramVal = new std::string(yytext + 1, yyleng - 1);
-  return TokenType::PARAMETER_NAME;
+  NG_RETURN_TOKEN(PARAMETER_NAME);
+}
+{unsigned_decimal_integer} {
+  yylval->unsignedDecimalInteger = parseUnsignedDecimalInteger(yytext, yyleng);
+  NG_RETURN_TOKEN(UNSIGNED_DECIMAL_INTEGER);
+}
+{unsigned_hexadecimal_integer} {
+  yylval->unsignedHexadecimalInteger = parseUnsignedHexadecimalInteger(yytext, yyleng);
+  NG_RETURN_TOKEN(UNSIGNED_HEXADECIMAL_INTEGER);
+}
+{unsigned_octal_integer} {
+  yylval->unsignedOctalInteger = parseUnsignedOctalInteger(yytext, yyleng);
+  NG_RETURN_TOKEN(UNSIGNED_OCTAL_INTEGER);
+}
+{unsigned_binary_integer} {
+  yylval->unsignedBinaryInteger = parseUnsignedBinaryInteger(yytext, yyleng);
+  NG_RETURN_TOKEN(UNSIGNED_BINARY_INTEGER);
 }
 {unsigned_numeric_literal} {
   yylval->unsignedNumericLiteral = parseUnsignedNumericLiteral(yytext, yyleng);
-  return TokenType::UNSIGNED_NUMERIC_LITERAL;
+  NG_RETURN_TOKEN(UNSIGNED_NUMERIC_LITERAL);
 }
 {byte_string_literal} {
   yylval->byteStringLiteral = parseByteStringLiteral(yytext, yyleng);
-  return TokenType::BYTE_STRING_LITERAL;
+  NG_RETURN_TOKEN(BYTE_STRING_LITERAL);
 }
 {unbroken_character_string_literal} {
   yylval->unbrokenCharacterStringLiteral = new std::string(yytext+1, yyleng - 2);
-  return TokenType::UNBROKEN_CHARACTER_STRING_LITERAL;
+  NG_RETURN_TOKEN(UNBROKEN_CHARACTER_STRING_LITERAL);
 }
 {character_string_literal} {
   yylval->characterStringLiteral = parseCharacterStringLiteral(yytext, yyleng);
-  return TokenType::CHARACTER_STRING_LITERAL;
+  NG_RETURN_TOKEN(CHARACTER_STRING_LITERAL);
 }
 
 .                           {

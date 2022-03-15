@@ -10,6 +10,56 @@
 %parse-param { nebula::Sentence** sentences }
 %parse-param { nebula::graph::QueryContext* qctx }
 
+// Define token.
+/* %define api.value.type variant */
+/* %define api.token.constructor */
+%define api.token.prefix {TOK_}
+
+
+%code requires {
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <cstddef>
+#include "parser/ExplainSentence.h"
+#include "parser/SequentialSentences.h"
+#include "interface/gen-cpp2/meta_types.h"
+#include "common/expression/AttributeExpression.h"
+#include "common/expression/LabelAttributeExpression.h"
+#include "common/expression/VariableExpression.h"
+#include "common/expression/CaseExpression.h"
+#include "common/expression/TextSearchExpression.h"
+#include "common/expression/PredicateExpression.h"
+#include "common/expression/ListComprehensionExpression.h"
+#include "common/expression/AggregateExpression.h"
+#include "common/function/FunctionManager.h"
+#include "common/expression/ReduceExpression.h"
+#include "graph/util/ParserUtil.h"
+#include "graph/util/ExpressionUtils.h"
+#include "graph/context/QueryContext.h"
+#include "graph/util/SchemaUtil.h"
+
+namespace nebula {
+
+class GraphScanner;
+
+}
+
+static constexpr size_t MAX_ABS_INTEGER = 9223372036854775808ULL;
+static constexpr size_t kCommentLengthLimit = 256;
+
+}
+
+%code {
+    #include "GraphScanner.h"
+    static int yylex(nebula::GraphParser::semantic_type* yylval,
+                     nebula::GraphParser::location_type *yylloc,
+                     nebula::GraphScanner& scanner);
+
+    void ifOutOfRange(const int64_t input,
+                      const nebula::GraphParser::location_type& loc);
+}
+
 // case-sensitive reserved keyword
 %token  endNode inDegree lTrim outDegree percentileCont percentileDist rTrim
         startNode stDev stDevP tail toLower toUpper
@@ -22,20 +72,20 @@
         CLONE CLOSE COALESCE COLLECT COMMIT CONSTRAINT CONSTANT CONSTRUCT COPY
         COS COSH COST COT COUNT CURRENT_DATE CURRENT_GRAPH CURRENT_PROPERTY_GRAPH
         CURRENT_ROLE CURRENT_SCHEMA CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CREATE
-        DATA DATE DATETIME DEC DECIMAL DEFAULT DEGREES DELETE DETACH DESC
+        DATA DATE DATETIME DAY DEC DECIMAL DEFAULT DEGREES DELETE DETACH DESC
         DESCENDING DIRECTORIES DIRECTORY DISTINCT DO DOUBLE DROP DURATION
         ELEMENT_ID ELSE END ENDS EMPTY_BINDING_TABLE EMPTY_GRAPH
         EMPTY_PROPERTY_GRAPH EMPTY_TABLE EXCEPT EXISTS EXISTING EXP EXPLAIN
         FALSE FILTER FLOAT FLOAT16 FLOAT32 FLOAT64 FLOAT128 FLOAT256
         FLOOR FOR FROM FUNCTION FUNCTIONS
         GQLSTATUS GRANT GROUP
-        HAVING HOME_GRAPH HOME_PROPERTY_GRAPH HOME_SCHEMA
-        IN INSERT INT INTEGER INT8 INTEGER8 INT16 INTEGER16 INT32 INTEGER32
+        HAVING HOME_GRAPH HOME_PROPERTY_GRAPH HOME_SCHEMA HOUR
+        IN INSERT INT INTEGER INT8 INTEGER8 INT16 INTEGER16 INT32 INTEGER32 INTERVAL
         INT64 INTEGER64 INT128 INTEGER128 INT256 INTEGER256 INTERSECT IF IS
         KEEP
         LEADING LEFT LENGTH LET LIKE LIKE_REGEX LIMIT LIST LN
         LOCALDATETIME LOCALTIME LOCALTIMESTAMP LOG LOG10 LOWER
-        MANDATORY MAP MATCH MERGE MAX MIN MOD MULTI MULTIPLE MULTISET
+        MANDATORY MAP MATCH MERGE MAX MIN MINUTE MOD MONTH MULTI MULTIPLE MULTISET
         NEW NOT NORMALIZE NOTHING NULL NULLS NULLIF NUMERIC
         OCCURRENCES_REGEX OCTET_LENGTH OF OFFSET ON OPTIONAL OR ORDER ORDERED OTHERWISE
         PARAMETER PATH PATHS PARTITION POSITION_REGEX POWER PRECISION PROCEDURE
@@ -43,7 +93,7 @@
         QUERIES QUERY
         RADIANS REAL RECORD RECORDS REFERENCE REMOVE RENAME REPLACE REQUIRE
         RESET RESULT RETURN REVOKE RIGHT ROLLBACK
-        SAME SCALAR SCHEMA SCHEMAS SCHEMATA SELECT SESSION SET SKIP SIGNED SIN
+        SAME SCALAR SCHEMA SCHEMAS SCHEMATA SECOND SELECT SESSION SET SKIP SIGNED SIN
         SINGLE SINH SMALLINT SQRT START STARTS STRING SUBSTRING SUBSTRING_REGEX SUM
         TAN TANH THEN TIME TIMESTAMP TRAILING TRANSLATE_REGEX TRIM TRUE TRUNCATE
         UINT UINT8 UINT16 UINT32 UINT64 UINT128 UINT256 UNION UNIT
@@ -51,7 +101,7 @@
         VALUE VALUES VARBINARY VARCHAR
         WHEN WHERE WITH WITHOUT
         XOR
-        YIELD
+        YEAR YIELD
         ZERO
 
 // case-insensitive non-reserved keyword
@@ -105,19 +155,21 @@
         SLASH_MINUS SLASH_MINUS_RIGHT SLASH_TILDE SLASH_TILDE_RIGHT
         TILDE_LEFT_BRACKET TILDE_RIGHT_ARROW TILDE_SLASH
 
-%token IDENTIFIER
+%token REGULAR_IDENTIFIER DELIMITED_IDENTIFIER
 %token PARAMETER_NAME
 %token UNSIGNED_NUMERIC_LITERAL
 %token BYTE_STRING_LITERAL
 %token UNBROKEN_CHARACTER_STRING_LITERAL
-%token CHARACTER_STRING_LITERAL 
+%token CHARACTER_STRING_LITERAL
+%token UNSIGNED_DECIMAL_INTEGER UNSIGNED_HEXADECIMAL_INTEGER UNSIGNED_OCTAL_INTEGER UNSIGNED_BINARY_INTEGER
 
 
 %start GQL_request
 
 %%
 
-// Section_6.1_GQL_request
+/* Chapter 6 GQL-requests */
+// Section 6.1 <GQL-request>
 GQL_request
     : GQL_program {
 
@@ -127,8 +179,7 @@ GQL_request
     }
     ;
 
-
-// Section_6.2_request_parameter_set
+// Section 6.2 <request parameter set>
 request_parameter_set 
     : request_parameter {
 
@@ -144,8 +195,7 @@ request_parameter
     }
     ;
 
-
-// Section_6.3_GQL_program
+// Section 6.3 <GQL-program>
 GQL_program
     : main_activity {
     }
@@ -251,8 +301,7 @@ transaction_activity
     }
     ;
 
-
-// Section_6.4_preamble
+// Section 6.4 <preamble>
 preamble
     : preamble_option {
     }
@@ -277,13 +326,13 @@ preamble_option
     ;
 
 preamble_option_identifier
-    : IDENTIFIER {
+    : identifier {
 
     }
     ;
 
-
-// Section_7.1_session_set_command
+/* Chapter 7 Session management */
+// Section 7.1 <session set command>
 session_set_command
     : SESSION SET session_set_schema_clause {
 
@@ -350,8 +399,7 @@ session_parameter_flag
     }
     ;
 
-
-// Section_7.2_session_remove_command
+// Section 7.2 <session remove command>
 session_remove_command
     : REMOVE parameter {
 
@@ -361,8 +409,7 @@ session_remove_command
     }
     ;
 
-
-// Section_7.3_session_clear_command
+// Section 7.3 <session clear command>
 session_clear_command
     : CLEAR
     | SESSION CLEAR {
@@ -370,8 +417,7 @@ session_clear_command
     }
     ;
 
-
-// Section_7.4_session_close_command
+// Section 7.4 <session close command>
 session_close_command
     : CLOSE
     | SESSION CLOSE {
@@ -379,8 +425,7 @@ session_close_command
     }
     ;
 
-
-// Section_8.1_start_transaction_command
+// Section 8.1 <start transaction command>
 start_transaction_command
     : START TRANSACTION {
 
@@ -390,8 +435,7 @@ start_transaction_command
     }
     ;
 
-
-// Section_8.2_end_transaction_command
+// Section 8.2 <end transaction command>
 end_transaction_command
     : commit_command {
 
@@ -401,8 +445,7 @@ end_transaction_command
     }
     ;
 
-
-// Section_8.3_transaction_characteristics
+// Section 8.3 <transaction_characteristics>
 transaction_characteristics
     : transaction_mode {
 
@@ -435,23 +478,22 @@ transaction_access_mode
     ; */
 
 
-// Section_8.4_rollback_command
+// Section 8.4 <rollback command>
 rollback_command
     : ROLLBACK {
 
     }
     ;
 
-
-// Section_8.5_commit_command
+// Section 8.5 <commit command>
 commit_command
     : COMMIT {
 
     }
     ;
 
-
-// Section_9.1_procedure_specification
+/* Chapter 9 Procedures */
+// Section 9.1 <procedure specification>
 nested_procedure_specification
     : LEFT_BRACE procedure_specification RIGHT_BRACE {
 
@@ -501,8 +543,7 @@ data_modifying_procedure_specification
     }
     ;
 
-
-// Section_9.2_query_specification
+// Section 9.2 <query specification>
 nested_query_specification
     : LEFT_BRACE query_specification RIGHT_BRACE {
 
@@ -517,8 +558,7 @@ query_specification
     }
     ;
 
-
-// Section_9.3_function_specification
+// Section 9.3 <function specification>
 nested_function_specification
     : LEFT_BRACE function_specification RIGHT_BRACE {
 
@@ -533,8 +573,7 @@ function_specification
     }
     ;
 
-
-// Section_9.4_procedure_body
+// Section 9.4 <procedure body>
 procedure_body
     : opt_static_variable_definition_block opt_binding_variable_definition_block statement_block {
 
@@ -595,8 +634,8 @@ then_statement
     }
     ;
 
-
-// Section_10.1_Static_variable_definitions
+/* Chapter 10 Variable and parameter declarations and definitions */
+// Section 10.1 Static variable definitions
 static_variable_definition
     : procedure_variable_definition {
 
@@ -616,8 +655,7 @@ as_or_equals
     }
     ;
 
-
-// Section_10.2_Procedure_variable_definition
+// Section 10.2 Procedure variable definition
 procedure_variable_definition
     : PROCEDURE procedure_variable of_type_signature procedure_initializer {
 
@@ -648,8 +686,7 @@ procedure_initializer
     }
     ;
 
-
-// Section_10.3_Query_variable_definition
+// Section 10.3 Query variable definition
 query_variable_definition
     : QUERY query_variable of_type_signature query_initializer {
 
@@ -676,8 +713,7 @@ query_initializer
     }
     ;
 
-
-// Section_10.4_Function_variable_definition
+// Section 10.4 Function variable definition
 function_variable_definition
     : FUNCTION function_variable of_type_signature function_initializer {
 
@@ -704,8 +740,7 @@ function_initializer
     }
     ;
 
-
-// Section_10.5_Binding_variable_and parameter_declarations_and_definitions
+// Section 10.5 Binding variable and parameter declarations and definitions
 compact_variable_declaration_list
     : compact_variable_declaration {
 
@@ -821,9 +856,7 @@ parameter_definition
     }
     ;
 
-
-
-// Section_10.6_Graph_variable_and parameter_declaration_and_definition
+// Section 10.6 Graph variable and parameter declaration and definition
 graph_variable_declaration
     : PROPERTY_GRAPH graph_variable of_graph_type {
 
@@ -869,9 +902,7 @@ graph_initializer
     }
     ;
 
-
-
-// Section_10.7_Binding_table_variable and_parameter_declaration_and definition
+// Section 10.7 Binding table variable and parameter declaration and definition
 binding_table_variable_declaration
     : BINDING_TABLE binding_table_variable of_binding_table_type
     ;
@@ -915,8 +946,7 @@ binding_table_initializer
     }
     ;
 
-
-// Section_10.8_Value_variable_and parameter_declaration_and_definition
+// Section 10.8 Value variable and parameter declaration and definition
 value_variable_declaration
     : VALUE value_variable {
 
@@ -986,8 +1016,8 @@ value_initializer
     }
     ;
 
-
-// Section_11.2_primary_result_object_expression
+/* Chapter 11 Object expressions */
+// Section 11.2 <primary result object expression>
 primary_result_object_expression
     : graph_expression {
 
@@ -997,9 +1027,7 @@ primary_result_object_expression
     }
     ;
 
-
-
-// Section_11.3_graph_expression
+// Section 11.3 <graph expression>
 graph_expression
     : copy_graph_expression {
 
@@ -1018,9 +1046,7 @@ copy_graph_expression
     }
     ;
 
-
-
-// Section_11.4_graph_type_expression
+// Section 11.4 <graph type expression>
 graph_type_expression
     : copy_graph_type_expression {
 
@@ -1081,9 +1107,7 @@ like_graph_expression_shorthand
     }
     ;
 
-
-
-// Section_11.5_binding_table_type_expression
+// Section 11.5 <binding table type expression>
 of_binding_table_type
     : opt_of_type_prefix binding_table_type_expression {
 
@@ -1120,8 +1144,8 @@ like_binding_table_shorthand
     }
     ;
 
-
-// Section_12.1_statement
+/* Chapter 12 Statements */
+// Section 12.1 <statement>
 statement
     : opt_at_schema_clause catalog_modifying_statement {
 
@@ -1167,9 +1191,7 @@ query_statement
     }
     ;
 
-
-
-// Section_12.2_call_procedure_statement
+// Section 12.2 <call procedure statement>
 call_procedure_statement
     : CALL procedure_call {
 
@@ -1188,8 +1210,7 @@ statement_mode
     }
     ;
 
-
-// Section_12.3_Statement_classes
+// Section 12.3 Statement classes
 simple_catalog_modifying_statement
     : primitive_catalog_modifying_statement {
 
@@ -1322,9 +1343,8 @@ primitive_data_transforming_statement
     }
     ;
 
-
-
-// Section_13.1_linear_catalog_modifying_statement
+/* Chapter 13 Catalog-modifying statements */
+// Section 13.1 <linear catalog-modifying statement>
 linear_catalog_modifying_statement
     : simple_catalog_modifying_statement {
 
@@ -1334,17 +1354,14 @@ linear_catalog_modifying_statement
     }
     ;
 
-
-
-// Section_13.2_create_schema_statement
+// Section 13.2 <create schema statement>
 create_schema_statement
     : CREATE SCHEMA catalog_schema_parent_and_name opt_if_not_exists {
 
     }
     ;
 
-
-// Section_13.3_drop_schema_statement
+// Section 13.3 <drop schema statement>
 drop_schema_statement
     : DROP SCHEMA catalog_schema_parent_and_name opt_if_exists {
       
@@ -1360,7 +1377,7 @@ opt_if_exists
     }
     ;
 
-// Section_13.4_create_graph_statement
+// Section 13.4 <create graph statement>
 create_graph_statement
     : CREATE PROPERTY_GRAPH catalog_graph_parent_and_name opt_if_not_exists opt_of_graph_type opt_graph_source {
 
@@ -1394,8 +1411,7 @@ graph_source
     }
     ;
 
-
-// Section_13.5_graph_specification
+// Section 13.5 <graph specification>
 graph_specification
     : PROPERTY_GRAPH nested_graph_query_specification {
 
@@ -1417,16 +1433,14 @@ nested_ambient_data_modifying_procedure_specification
     }
     ;
 
-
-// Section_13.6_drop_graph_statement
+// Section 13.6 <drop graph statement>
 drop_graph_statement
     : DROP GRAPH catalog_graph_parent_and_name opt_if_exists {
 
     }
     ;
 
-
-// Section_13.7_create_graph_type_statement
+// Section 13.7 <create graph type statement>
 create_graph_type_statement
     : CREATE PROPERTY_GRAPH TYPE opt_if_not_exists graph_type_initializer {
 
@@ -1445,9 +1459,7 @@ graph_type_initializer
     }
     ;
 
-
-
-// Section_13.8_graph_type_specification
+// Section 13.8 <graph type specification>
 graph_type_specification
     : PROPERTY_GRAPH TYPE nested_graph_type_specification {
 
@@ -1484,8 +1496,7 @@ element_type_definition
     }
     ;
 
-
-// Section_13.9_node_type_definition
+// Section 13.9 <node type definition>
 node_type_definition
     : LEFT_PAREN opt_node_type_name opt_node_type_filler RIGHT_PAREN {
 
@@ -1549,9 +1560,7 @@ node_type_property_type_set_definition
     }
     ;
 
-
-
-// Section_13.10_edge_type_definition
+// Section 13.10 <edge type definition>
 edge_type_definition
     : full_edge_type_pattern {
 
@@ -1792,8 +1801,7 @@ destination_node_type_name
     }
     ;
 
-
-// Section_13.11_label_set_definition
+// Section 13.11 <label set definition>
 label_set_definition
     : LABEL label {
 
@@ -1806,8 +1814,7 @@ label_set_definition
     }
     ;
 
-
-// Section_13.12_property_type_set definition
+// Section 13.12 <property type set definition>
 property_type_set_definition
     : LEFT_BRACE opt_property_type_definition_list RIGHT_BRACE {
 
@@ -1837,16 +1844,14 @@ property_type_definition
     }
     ;
 
-
-// Section_13.13_drop_graph_type statement
+// Section 13.13 <drop graph type statement>
 drop_graph_type_statement
     : DROP PROPERTY_GRAPH TYPE catalog_graph_type_parent_and_name opt_if_exists {
 
     }
     ;
 
-
-// Section_13.14_create_procedure_statement
+// Section 13.14 <create procedure statement>
 create_procedure_statement
     : CREATE PROCEDURE catalog_procedure_parent_and_name of_type_signature opt_if_not_exists procedure_initializer {
 
@@ -1856,16 +1861,14 @@ create_procedure_statement
     }
     ;
 
-
-// Section_13.15_drop_procedure_statement
+// Section 13.15 <drop procedure statement>
 drop_procedure_statement
     : DROP PROCEDURE catalog_procedure_parent_and_name opt_if_exists {
 
     }
     ;
 
-
-// Section_13.16_create_query_statement
+// Section 13.16 <create query statement>
 create_query_statement
     : CREATE QUERY catalog_query_parent_and_name of_type_signature opt_if_not_exists query_initializer {
 
@@ -1875,16 +1878,14 @@ create_query_statement
     }
     ;
 
-
-// Section_13.17_drop_query_statement
+// Section 13.17 <drop query statement>
 drop_query_statement
     : DROP QUERY catalog_query_parent_and_name opt_if_exists {
 
     }
     ;
 
-
-// Section_13.18_create_function_statement
+// Section 13.18 <create function statement>
 create_function_statement
     : CREATE FUNCTION catalog_function_parent_and_name of_type_signature opt_if_not_exists function_initializer {
 
@@ -1894,8 +1895,7 @@ create_function_statement
     }
     ;
 
-
-// Section_13.19_drop_function_statement
+// Section 13.19 <drop function statement>
 drop_function_statement
     : DROP FUNCTION catalog_function_parent_and_name opt_if_exists {
 
@@ -1903,15 +1903,15 @@ drop_function_statement
     ;
 
 
-// Section_13.20_call_catalog_modifying_procedure_statement
+// Section 13.20 <call catalog-modifying procedure statement>
 call_catalog_modifying_procedure_statement
     : call_procedure_statement {
 
     }
     ;
 
-
-// Section_14.1_linear_data_modifying_statement
+/* Chapter 14 Data-modifying statements */
+// Section 14.1 <linear data-modifying statement>
 linear_data_modifying_statement
     : focused_linear_data_modifying_statement {
 
@@ -2039,8 +2039,7 @@ ambient_linear_data_modifying_statement
     }
     ;
 
-
-// Section_14.2_conditional_data_modifying_statement
+// Section 14.2 <conditional data-modifying statement>
 conditional_data_modifying_statement
     : when_then_linear_data_modifying_statement_branch_list opt_else_linear_data_modifying_statement_branch {
 
@@ -2086,16 +2085,14 @@ when_clause
     }
     ;
 
-
-// Section_14.3_do_statement
+// Section 14.3 <do statement>
 do_statement
     : DO nested_data_modifying_procedure_specification {
 
     }
     ;
 
-
-// Section_14.4_insert_statement
+// Section 14.4 <insert statement>
 insert_statement
     : INSERT simple_graph_pattern {
 
@@ -2114,16 +2111,14 @@ opt_when_clause
     }
     ;
 
-// Section_14.5_merge_statement
+// Section 14.5 <merge statement>
 merge_statement
     : MERGE simple_graph_pattern {
 
     }
     ;
 
-
-
-// Section_14.6_set_statement
+// Section 14.6 <set statement>
 set_statement
     : SET set_item_list opt_when_clause {
 
@@ -2168,7 +2163,7 @@ set_label_item
     }
     ;
 
-/* TODO
+/* TODO error syntax?
 <label set expression> ::=
 <AMPERSAND> <label>... { <AMPERSAND> <label>... }
 */
@@ -2190,7 +2185,7 @@ label_list
     }
     ;
 
-// Section_14.7_remove_statement
+// Section 14.7 <remove statement>
 remove_statement
     : REMOVE remove_item_list opt_when_clause {
 
@@ -2226,8 +2221,7 @@ remove_label_item
     }
     ;
 
-
-// Section_14.8_delete_statement
+// Section 14.8 <delete statement>
 delete_statement
     : DELETE delete_item_list opt_when_clause {
 
@@ -2252,23 +2246,22 @@ delete_item
     ;
 
 
-// Section_14.9_call_data_modifying_procedure statement
+// Section 14.9 <call data-modifying procedure statement>
 call_data_modifying_procedure_statement
     : call_procedure_statement {
 
     }
     ;
 
-
-// Section_15.1_composite_query_statement
+/* Chapter 15 Query statements */
+// Section 15.1 <composite query statement>
 composite_query_statement
     : composite_query_expression {
 
     }
     ;
 
-
-// Section_15.2_conditional_query_statement
+// Section 15.2 <conditional query statement>
 conditional_query_statement
     : when_then_linear_query_branch_list opt_else_linear_query_branch {
 
@@ -2308,8 +2301,7 @@ else_linear_query_branch
     }
     ;
 
-
-// Section_15.3_composite_query_expression
+// Section 15.3 <composite query expression>
 composite_query_expression
     : composite_query_expression query_conjunction linear_query_expression {
 
@@ -2340,17 +2332,14 @@ set_operator
     }
     ;
 
-
-// Section_15.4_linear_query_expression
+// Section 15.4 <linear query expression>
 linear_query_expression
     : linear_query_statement {
 
     }
     ;
 
-
-
-// Section_15.5_linear_query_statement
+// Section 15.5 <linear query statement>
 linear_query_statement
     : focused_linear_query_statement {
       
@@ -2419,9 +2408,8 @@ simple_query_statement_list
     }
     ;
 
-
-/* Section_15.6_Data_reading_statements */
-// Section_15.6.1_match_statement
+/* Section 15.6 Data-reading statements */
+// Section 15.6.1 <match statement>
 match_statement
     : opt_statement_mode MATCH graph_pattern {
 
@@ -2437,32 +2425,29 @@ opt_statement_mode
     }
     ;
 
-// Section_15.6.2_call_query_statement
+// Section 15.6.2 <call query statement>
 call_query_statement
     : call_procedure_statement {
 
     }
     ;
 
-
-/* Section_15.7_Data_transforming_statements */
-// Section_15.7.1_mandatory_statement
+/* Section 15.7 Data-transforming statements */
+// Section 15.7.1 <mandatory statement>
 mandatory_statement
     : MANDATORY procedure_call {
 
     }
     ;
 
-
-
-// Section_15.7.2_optional_statement
+// Section 15.7.2 <optional statement>
 optional_statement
     : OPTIONAL procedure_call {
 
     }
     ;
 
-// Section_15.7.3_filter_statement
+// Section 15.7.3 <filter statement>
 filter_statement
     : FILTER where_clause {
 
@@ -2472,8 +2457,7 @@ filter_statement
     }
     ;
 
-
-// Section_15.7.4_let_statement
+// Section 15.7.4 <let statement>
 let_statement
     : LET compact_variable_definition_list {
 
@@ -2483,16 +2467,14 @@ let_statement
     }
     ;
 
-
-// Section_15.7.5_aggregate_statement
+// Section 15.7.5 <aggregate statement>
 aggregate_statement
     : AGGREGATE compact_value_variable_definition_list where_clause {
 
     }
     ;
 
-
-// Section_15.7.6_for_statement
+// Section 15.7.6 <for statement>
 for_statement
     : opt_statement_mode FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
 
@@ -2533,7 +2515,7 @@ for_item
     ;
 
 for_item_alias
-    : IDENTIFIER IN {
+    : identifier IN {
 
     }
     ;
@@ -2551,12 +2533,12 @@ opt_identifier
     : %empty {
 
     }
-    | IDENTIFIER {
+    | identifier {
 
     }
     ;
 
-// Section_15.7.7_order_by_and page_statement
+// Section 15.7.7 <order by and page statement>
 order_by_and_page_statement
     : order_by_clause opt_offset_clause opt_limit_clause {
 
@@ -2587,16 +2569,15 @@ opt_limit_clause
     }
     ;
 
-// Section_15.7.8_call_function_statement
+// Section 15.7.8 <call function statement>
 call_function_statement
     : call_procedure_statement {
 
     }
     ;
 
-
-/* Section_15.8_Result_projection_statements */
-// Section_15.8.1_primitive_result_statement
+/* Section 15.8 Result projection statements */
+// Section 15.8.1 <primitive result statement>
 primitive_result_statement
     : return_statement {
     
@@ -2612,8 +2593,7 @@ primitive_result_statement
     }
     ;
 
-
-// Section_15.8.2_return_statement
+// Section 15.8.2 <return statement>
 return_statement
     : RETURN return_statement_body {
 
@@ -2665,13 +2645,12 @@ return_item
     ;
 
 return_item_alias
-    : AS IDENTIFIER {
+    : AS identifier {
 
     }
     ;
 
-
-// Section_15.8.3_select_statement
+// Section 15.8.3 <select statement>
 select_statement
     : SELECT opt_set_quantifier select_item_list select_statement_body opt_where_clause opt_group_by_clause opt_having_clause opt_order_by_clause opt_offset_clause opt_limit_clause {
 
@@ -2697,7 +2676,7 @@ select_item
     ;
 
 select_item_alias
-    : AS IDENTIFIER {
+    : AS identifier {
 
     }
     ;
@@ -2766,32 +2745,29 @@ project_statement
     }
     ;
 
-
-// Section_16.1_from_graph_clause
+/* Chapter 16 Common elements */
+// Section 16.1 <from graph clause>
 from_graph_clause
     : FROM graph_expression {
 
     }
     ;
 
-
-// Section_16.2_use_graph_clause
+// Section 16.2 <use graph clause>
 use_graph_clause
     : USE graph_expression {
 
     }
     ;
 
-
-// Section_16.3_at_schema_clause
+// Section 16.3 <at schema clause>
 at_schema_clause
     : AT schema_reference {
 
     }
     ;
 
-
-// Section_16.4_Named_elements
+// Section 16.4 Named elements
 static_variable
     : static_variable_name {
 
@@ -2816,8 +2792,7 @@ parameter
     }
     ;
 
-
-// Section_16.5_type_signature
+// Section 16.5 <type signature>
 of_type_signature
     : opt_of_type_prefix type_signature {
 
@@ -2935,8 +2910,7 @@ procedure_result_type
     }
     ;
 
-
-// Section_16.6_graph_pattern
+// Section 16.6 <graph pattern>
 graph_pattern
     : path_pattern_list opt_keep_clause opt_graph_pattern_where_clause opt_yield_clause {
 
@@ -3025,8 +2999,7 @@ graph_pattern_where_clause
     }
     ;
 
-
-// Section_16.7_path_pattern_expression
+// Section 16.7 <path pattern expression>
 path_pattern_expression
     : path_term {
 
@@ -3452,8 +3425,7 @@ parenthesized_path_pattern_cost_clause
     }
     ;
 
-
-// Section_16.8_path_pattern_prefix
+// Section 16.8 <path pattern prefix>
 path_pattern_prefix
     : path_mode_prefix {
 
@@ -3604,8 +3576,7 @@ number_of_groups
     }
     ;
 
-
-// Section_16.9_simple_graph_pattern
+// Section 16.9 <simple graph pattern>
 simple_graph_pattern
     : simple_path_pattern_list {
 
@@ -3628,8 +3599,7 @@ simple_path_pattern
     }
     ;
 
-
-// Section_16.10_label_expression
+// Section 16.10 <label expression>
 label_expression
     : label_term {
 
@@ -3702,8 +3672,7 @@ parenthesized_label_expression
     }
     ;
 
-
-// Section_16.11_simplified_path_pattern expression
+// Section 16.11 <simplified path pattern expression>
 simplified_path_pattern_expression
     : simplified_defaulting_left {
 
@@ -3956,16 +3925,14 @@ simplified_primary
     }
     ;
 
-
-// Section_16.12_where_clause
+// Section 16.12 <where clause>
 where_clause
     : WHERE search_condition {
 
     }
     ;
 
-
-// Section_16.13_procedure_call
+// Section 16.13 <procedure call>
 procedure_call
     : inline_procedure_call {
 
@@ -3975,16 +3942,14 @@ procedure_call
     }
     ;
 
-
-// Section_16.14_inline_procedure_call
+// Section 16.14 <inline procedure call>
 inline_procedure_call
     : nested_procedure_specification {
 
     }
     ;
 
-
-// Section_16.15_named_procedure_call
+// Section 16.15 <named procedure call>
 named_procedure_call
     : procedure_reference LEFT_PAREN opt_procedure_argument_list RIGHT_PAREN opt_yield_clause {
 
@@ -4015,8 +3980,7 @@ procedure_argument
     }
     ;
 
-
-// Section_16.16_yield_clause
+// Section 16.16 <yield clause>
 yield_clause
     : YIELD yield_item_list {
 
@@ -4048,7 +4012,7 @@ opt_yield_item_alias
     ;
 
 yield_item_name
-    : IDENTIFIER {
+    : identifier {
 
     }
     ;
@@ -4059,8 +4023,7 @@ yield_item_alias
     }
     ;
 
-
-// Section_16.17_group_by_clause
+// Section 16.17 <group by clause>
 group_by_clause
     : GROUP BY grouping_element_list {
 
@@ -4096,16 +4059,14 @@ empty_grouping_set
     }
     ;
 
-
-// Section_16.18_order_by_clause
+// Section 16.18 <order by clause>
 order_by_clause
     : ORDER BY sort_specification_list {
 
     }
     ;
 
-
-// Section_16.19_aggregate_function
+// Section 16.19 <aggregate function>
 aggregate_function
     : COUNT LEFT_PAREN ASTERISK RIGHT_PAREN {
 
@@ -4190,7 +4151,7 @@ independent_value_expression
     }
     ;
 
-// Section_16.20_sort_specification_list
+// Section 16.20 <sort specification list>
 sort_specification_list
     : sort_specification {
     
@@ -4248,15 +4209,14 @@ null_ordering
     }
     ;
 
-// Section_16.21_limit_clause
+// Section 16.21 <limit clause>
 limit_clause
     : LIMIT unsigned_integer_specification {
 
     }
     ;
 
-
-// Section_16.22_offset_clause
+// Section 16.22 <offset clause>
 offset_clause
     : offset_synonym unsigned_integer_specification {
     
@@ -4272,8 +4232,8 @@ offset_synonym
     }
     ;
 
-
-// Section_17.1_Schema_references
+/* Chapter 17 Object references */
+// Section 17.1 Schema references
 schema_reference
     : predefined_schema_parameter {
     
@@ -4304,7 +4264,7 @@ opt_absolute_url_path
     }
     ;
 
-// Section_17.2_Graph_references
+// Section 17.2 Graph references
 graph_reference
     : graph_resolution_expression {
     
@@ -4357,7 +4317,6 @@ opt_qualified_object_name_period
     }
     ;
 
-
 opt_parent_catalog_object_reference
     : %empty {
 
@@ -4379,9 +4338,7 @@ qualified_graph_name
     }
     ;
 
-
-
-// Section_17.3_Graph_type_references
+// Section 17.3 Graph type references
 graph_type_reference
     : graph_type_resolution_expression {
 
@@ -4434,8 +4391,7 @@ qualified_graph_type_name
     }
     ;
 
-
-// Section_17.4_Binding_table_references
+// Section 17.4 Binding table references
 binding_table_reference
     : binding_table_resolution_expression {
 
@@ -4490,8 +4446,7 @@ qualified_binding_table_name
     }
     ;
 
-
-// Section_17.5_Procedure_references
+// Section 17.5 Procedure references
 procedure_reference
     : procedure_resolution_expression {
 
@@ -4543,9 +4498,7 @@ qualified_procedure_name
     }
     ;
 
-
-
-// Section_17.6_Query_references
+// Section 17.6 Query references
 query_reference
     : query_resolution_expression {
 
@@ -4595,8 +4548,7 @@ qualified_query_name
     }
     ;
 
-
-// Section_17.7_Function_references
+// Section 17.7 Function references
 function_reference
     : function_resolution_expression {
 
@@ -4648,9 +4600,7 @@ qualified_function_name
     }
     ;
 
-
-
-// Section_17.8_catalog_object_reference
+// Section 17.8 <catalog object reference>
 catalog_object_reference
     : catalog_url_path {
 
@@ -4793,13 +4743,12 @@ solidus_url_segment
     ;
 
 url_segment
-    : IDENTIFIER {
+    : identifier {
 
     }
     ;
 
-
-// Section_17.9_qualified_object_name
+// Section 17.9 <qualified object name>
 qualified_object_name
     : qualified_name_prefix object_name {
 
@@ -4836,15 +4785,14 @@ object_name_period
     }
     ;
 
-// Section_17.10_url_path_parameter
+// Section 17.10 <url path parameter>
 url_path_parameter
     : parameter {
 
     }
     ;
 
-
-// Section_17.11_external_object_reference
+// Section 17.11 <external object reference>
 external_object_reference
     : external_object_url {
 
@@ -4856,28 +4804,28 @@ string as specified by URL or it alternatively shall be a URI with a mandatory s
 RFC 3986 and RFC 3978.
 4) EOU shall not conform to the Format for a <catalog url path>. */
 external_object_url
-    : //!! See_the_Syntax_Rules.
+    :   //!! See_the_Syntax_Rules. // TODO
+    OCCURRENCES_REGEX OCTET_LENGTH OPTIONAL {
+
+    }
     ;
 
-
-// Section_17.12_element_reference
+// Section 17.12 <element reference>
 element_reference
     : element_variable {
 
     }
     ;
 
-
-
-// Section_19.1_search_condition
+/* Chapter 19 Predicates */
+// Section 19.1 <search condition>
 search_condition
     : boolean_value_expression {
 
     }
     ;
 
-
-// Section_19.2_predicate
+// Section 19.2 <predicate>
 predicate
     : comparison_predicate {
       
@@ -4908,8 +4856,7 @@ predicate
     }
     ;
 
-
-// Section_19.3_comparison_predicate
+// Section 19.3 <comparison predicate>
 comparison_predicate
     : non_parenthesized_value_expression_primary comparison_predicate_part_2 {
 
@@ -4943,8 +4890,7 @@ comp_op
     }
     ;
 
-
-// Section_19.4_exists_predicate
+// Section 19.4 <exists predicate>
 exists_predicate
     : EXISTS LEFT_PAREN graph_pattern RIGHT_PAREN {
 
@@ -4954,9 +4900,7 @@ exists_predicate
     }
     ;
 
-
-
-// Section_19.5_null_predicate
+// Section 19.5 <null predicate>
 null_predicate
     : value_expression_primary null_predicate_part_2 {
 
@@ -4972,8 +4916,7 @@ null_predicate_part_2
     }
     ;
 
-
-// Section_19.6_normalized_predicate
+// Section 19.6 <normalized predicate>
 normalized_predicate
     : string_value_expression normalized_predicate_part_2 {
 
@@ -4998,7 +4941,7 @@ opt_normal_form
     }
     ;
 
-// Section_19.7_directed_predicate
+// Section 19.7 <directed predicate>
 directed_predicate
     : element_reference directed_predicate_part_2 {
 
@@ -5014,9 +4957,7 @@ directed_predicate_part_2
     }
     ;
 
-
-
-// Section_19.8_labeled_predicate
+// Section 19.8 <labeled predicate>
 labeled_predicate
     : element_reference labeled_predicate_part_2 {
 
@@ -5033,7 +4974,7 @@ labeled_predicate_part_2
     ;
 
 
-// Section_19.9 <source/destination_predicate>
+// Section 19.9 <source/destination_predicate>
 source_or_destination_predicate
     : node_reference source_predicate_part_2 {
       
@@ -5086,18 +5027,16 @@ edge_reference
     }
     ;
 
-
 // TODO, at least 2 elements
-// Section_19.10_all_different_predicate
+// Section 19.10 <all_different predicate>
 all_different_predicate
     : ALL_DIFFERENT LEFT_PAREN element_reference_list RIGHT_PAREN {
 
     }
     ;
 
-
 // TODO, at least 2 elements
-// Section_19.11_same_predicate
+// Section 19.11 <same predicate>
 same_predicate
     : SAME LEFT_PAREN element_reference_list RIGHT_PAREN {
 
@@ -5114,7 +5053,8 @@ element_reference_list
     }
     ;
 
-// Section_20.1_value_specification
+/* Chapter 20 Value expressions */
+// Section 20.1 <value specification>
 value_specification
     : literal {
 
@@ -5217,8 +5157,7 @@ predefined_table_parameter
     }
     ;
 
-
-// Section_20.2_value_expression
+// Section 20.2 <value expression>
 value_expression
     : untyped_value_expression opt_of_value_type {
 
@@ -5309,7 +5248,7 @@ record_value_expression
     }
     ;
 
-// Section_20.3_boolean_value_expression
+// Section 20.3 <boolean value expression>
 boolean_value_expression
     : boolean_term {
       
@@ -5398,8 +5337,7 @@ parenthesized_Boolean_value_expression
     }
     ;
 
-
-// Section_20.4_numeric_value_expression
+// Section 20.4 <numeric value expression>
 numeric_value_expression
     : term {
       
@@ -5448,8 +5386,7 @@ numeric_primary
     }
     ;
 
-
-// Section_20.5_value_expression_primary
+// Section 20.5 <value expression primary>
 value_expression_primary
     : parenthesized_value_expression {
       
@@ -5498,8 +5435,7 @@ non_parenthesized_value_expression_primary
     }
     ;
 
-
-// Section_20.6_numeric_value_function
+// Section 20.6 <numeric value function>
 numeric_value_function
     : length_expression {
       
@@ -5701,9 +5637,7 @@ outDegree_function
     }
     ;
 
-
-
-// Section_20.7_string_value_expression
+// Section 20.7 <string value expression>
 string_value_expression
     : character_string_value_expression {
 
@@ -5773,8 +5707,7 @@ byte_string_concatenation
     }
     ;
 
-
-// Section_20.8_string_value_function
+// Section 20.8 <string value function>
 string_value_function
     : character_string_function {
       
@@ -5961,8 +5894,7 @@ string_length
     }
     ;
 
-
-// Section_20.9_datetime_value_expression
+// Section 20.9 <datetime value expression>
 datetime_value_expression
     : datetime_term {
 
@@ -5999,9 +5931,7 @@ datetime_primary
     }
     ;
 
-
-
-// Section_20.10_datetime_value_function
+// Section 20.10 <datetime value function>
 datetime_value_function
     : date_function {
       
@@ -6107,9 +6037,7 @@ datetime_function_parameters
     }
     ;
 
-
-
-// Section_20.11_duration_value_expression
+// Section 20.11 <duration value expression>
 duration_value_expression
     : duration_term {
 
@@ -6173,8 +6101,7 @@ duration_term_2
     }
     ;
 
-
-// Section_20.12_duration_value_function
+// Section 20.12 <duration value function>
 duration_value_function
     : duration_function {
 
@@ -6205,9 +6132,7 @@ duration_absolute_value_function
     }
     ;
 
-
-
-// Section_20.13_graph_element_value expression
+// Section 20.13 <graph element value expression>
 graph_element_value_expression
     : graph_element_primary {
 
@@ -6223,7 +6148,7 @@ graph_element_primary
     }
     ;
 
-// Section_20.14_graph_element_function
+// Section 20.14 <graph element function>
 graph_element_function
     : start_node_function {
 
@@ -6245,7 +6170,7 @@ end_node_function
     }
     ;
 
-// Section_20.15_collection_value_constructor
+// Section 20.15 <collection value constructor>
 collection_value_constructor
     : list_value_constructor {
       
@@ -6267,8 +6192,7 @@ collection_value_constructor
     }
     ;
 
-
-// Section_20.16_list_value_expression
+// Section 20.16 <list value expression>
 list_value_expression
     : list_concatenation {
       
@@ -6299,8 +6223,7 @@ list_primary
     }
     ;
 
-
-// Section_20.17_list_value_function
+// Section 20.17 <list value function>
 list_value_function
     : tail_list_function {
       
@@ -6322,9 +6245,7 @@ trim_list_function
     }
     ;
 
-
-
-// Section_20.18_list_value_constructor
+// Section 20.18 <list value constructor>
 list_value_constructor
     : list_value_constructor_by_enumeration {
       
@@ -6351,9 +6272,7 @@ list_element
     }
     ;
 
-
-
-// Section_20.19_multiset_value_expression
+// Section 20.19 <multiset value expression>
 multiset_value_expression
     : multiset_term {
 
@@ -6403,9 +6322,7 @@ multiset_primary
     }
     ;
 
-
-
-// Section_20.20_multiset_value_function
+// Section 20.20 <multiset value function>
 multiset_value_function
     : multiset_set_function {
       
@@ -6418,8 +6335,7 @@ multiset_set_function
     }
     ;
 
-
-// Section_20.21_multiset_value_constructor
+// Section 20.21 <multiset value constructor>
 multiset_value_constructor
     : multiset_value_constructor_by_enumeration {
 
@@ -6447,9 +6363,7 @@ multiset_element
     }
     ;
 
-
-
-// Section_20.22_set_value_constructor
+// Section 20.22 <set value constructor>
 set_value_constructor
     : set_value_constructor_by_enumeration {
 
@@ -6477,8 +6391,7 @@ set_element
     }
     ;
 
-
-// Section_20.23_ordered_set_value constructor
+// Section 20.23 <ordered set value constructor>
 ordered_set_value_constructor
     : ordered_set_value_constructor_by_enumeration {
 
@@ -6509,9 +6422,7 @@ ordered_set_element
     }
     ;
 
-
-
-// Section_20.24_map_value_constructor
+// Section 20.24 <map value constructor>
 map_value_constructor
     : map_value_constructor_by_enumeration {
 
@@ -6551,9 +6462,7 @@ map_value
     }
     ;
 
-
-
-// Section_20.25_record_value_constructor
+// Section 20.25 <record value constructor>
 record_value_constructor
     : record_value_constructor_by_enumeration {
 
@@ -6593,26 +6502,21 @@ field_value
     }
     ;
 
-
-
-// Section_20.26_property_reference
+// Section 20.26 <property reference>
 property_reference
     : graph_element_primary PERIOD property_name {
 
     }
     ;
 
-
-
-// Section_20.27_value_query_expression
+// Section 20.27 <value query expression>
 value_query_expression
     : VALUE nested_query_specification {
 
     }
     ;
 
-
-// Section_20.28_case_expression
+// Section 20.28 <case expression>
 case_expression
     : case_abbreviation {
 
@@ -6764,9 +6668,7 @@ result_expression
     }
     ;
 
-
-
-// Section_20.29_cast_specification
+// Section 20.29 <cast specification>
 cast_specification
     : CAST LEFT_PAREN cast_operand AS cast_target RIGHT_PAREN {
       
@@ -6788,18 +6690,15 @@ cast_target
     }
     ;
 
-
-
-// Section_20.30_element_id_function
+// Section 20.30 <element id function>
 element_id_function
     : ELEMENT_ID LEFT_PAREN element_reference RIGHT_PAREN {
       
     }
     ;
 
-
-
-// Section_21.1_literal
+/* Chapter 21 Lexical elements */
+// Section 21.1 <literal>
 literal
     : signed_numeric_literal {
       
@@ -6932,15 +6831,15 @@ accent_quoted_character_representation
     ; */
 
 // !! See_the_Syntax_Rules.
-character_representation
+/* character_representation
     : string_literal_character
     | escaped_character
-    ;
+    ; */
 
-string_literal_character
-    :
+/* string_literal_character
+    : */
     // !! See_the_Syntax_Rules.
-
+/* 
 escaped_character
     : escaped_reverse_SOLIDUS
     | escaped_quote
@@ -6978,10 +6877,10 @@ escaped_carriage_return
     : reverse_SOLIDUS__r
 
 escaped_form_feed
-    : reverse_SOLIDUS__f
-    ;
+    : reverse_SOLIDUS f
+    ; */
 
-unicode_escape_value
+/* unicode_escape_value
     : unicode_4_digit_escape_value
     | unicode_6_digit_escape_value
     ;
@@ -6992,7 +6891,7 @@ unicode_4_digit_escape_value
 
 unicode_6_digit_escape_value
     : reverse_SOLIDUS__U_hex digit__hex_digit__hex digit__hex_digit__hex digit__hex_digit
-    ;
+    ; */
 
 /* BYTE_STRING_LITERAL
     : X_quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote [ { separator__quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote }... ]
@@ -7022,7 +6921,7 @@ exact_numeric_literal
     : unsigned_integer {
       
     }
-    | unsigned_decimal_integer [ PERIOD [ unsigned_decimal_integer ] ]
+    | UNSIGNED_DECIMAL_INTEGER [ PERIOD [ UNSIGNED_DECIMAL_INTEGER ] ]
     | PERIOD__unsigned_decimal_integer
     ; */
 
@@ -7036,59 +6935,65 @@ sign
     ;
 
 unsigned_integer
-    : unsigned_decimal_integer {
+    : UNSIGNED_DECIMAL_INTEGER {
 
     }
-    | unsigned_hexadecimal_integer {
+    | UNSIGNED_HEXADECIMAL_INTEGER {
 
     }
-    | unsigned_octal_integer {
+    | UNSIGNED_OCTAL_INTEGER {
 
     }
-    | unsigned_binary_integer {
+    | UNSIGNED_BINARY_INTEGER {
 
     }
     ;
 
-unsigned_decimal_integer
+/* UNSIGNED_DECIMAL_INTEGER
     : digit [ { [ underscore ] digit }... ]
     ;
 
-unsigned_hexadecimal_integer
+UNSIGNED_HEXADECIMAL_INTEGER
     : 0x { [ underscore ] hex_digit }...
     ;
 
-unsigned_octal_integer
+UNSIGNED_OCTAL_INTEGER
     : 0o { [ underscore ] octal_digit }...
     ;
 
-unsigned_binary_integer
+UNSIGNED_BINARY_INTEGER
     : 0b { [ underscore ] binary_digit }...
-    ;
+    ; */
 
 signed_decimal_integer
-    : opt_sign unsigned_decimal_integer {
+    : opt_sign UNSIGNED_DECIMAL_INTEGER {
 
     }
     ;
 
-approximate_numeric_literal
+/* approximate_numeric_literal
     :
     mantissa__E_exponent
     ;
 
 mantissa
     : exact_numeric_literal
-    ;
+    ; */
 
-exponent
+/* exponent
     : signed_decimal_integer
-    ;
+    ; */
 
 temporal_literal
-    : date_literal
-    | time_literal
-    | datetime_literal
+    : date_literal {
+
+    }
+    | time_literal {
+
+    }
+    | datetime_literal {
+
+    }
     ;
 
 date_literal
@@ -7195,9 +7100,9 @@ day_time_literal
     ;
 
 // TODO space? shift/reduce error
-day_time_interval
+/* day_time_interval
     : days_value {
-    
+
     }
     | days_value space hours_value {
 
@@ -7206,6 +7111,21 @@ day_time_interval
 
     }
     | days_value space hours_value COLON minutes_value COLON seconds_value {
+
+    }
+    ; */
+
+day_time_interval
+    : days_value {
+
+    }
+    | days_value hours_value {
+
+    }
+    | days_value hours_value COLON minutes_value {
+
+    }
+    | days_value hours_value COLON minutes_value COLON seconds_value {
 
     }
     ;
@@ -7413,8 +7333,7 @@ record_literal
     }
     ;
 
-
-// Section_21.2_value_type
+// Section 21.2 <value type>
 value_type
     : ANY {
       
@@ -7488,10 +7407,10 @@ boolean_type
     ;
 
 character_string_type
-    : character_string_synonym {
+    : string_or_varchar {
     
     }
-    | character_string_synonym LEFT_PAREN max_length RIGHT_PAREN {
+    | string_or_varchar LEFT_PAREN max_length RIGHT_PAREN {
 
     }
     ;
@@ -7521,19 +7440,19 @@ byte_string_type
     ;
 
 min_length
-    : unsigned_decimal_integer {
+    : UNSIGNED_DECIMAL_INTEGER {
 
     }
     ;
 
 max_length
-    : unsigned_decimal_integer {
+    : UNSIGNED_DECIMAL_INTEGER {
       
     }
     ;
 
 fixed_length
-    : unsigned_decimal_integer {
+    : UNSIGNED_DECIMAL_INTEGER {
       
     }
     ;
@@ -7670,23 +7589,14 @@ decimal_exact_numeric_type
     }
     ;
 
-decimal_synonym
-    : DECIMAL {
-
-    }
-    | DEC {
-
-    }
-    ;
-
 precision
-    : unsigned_decimal_integer {
+    : UNSIGNED_DECIMAL_INTEGER {
 
     }
     ;
 
 scale
-    : unsigned_decimal_integer {
+    : UNSIGNED_DECIMAL_INTEGER {
 
     }
     ;
@@ -7856,23 +7766,21 @@ field_type
     }
     ;
 
-
-
-// Section_21.3_Names_and_identifiers
+// Section 21.3 Names and identifiers
 object_name
-    : IDENTIFIER {
+    : identifier {
 
     }
     ;
 
 schema_name
-    : IDENTIFIER {
+    : identifier {
 
     }
     ;
 
 graph_name
-    : IDENTIFIER {
+    : identifier {
 
     }
     ;
@@ -7884,67 +7792,67 @@ element_type_name
     ;
 
 graph_type_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 type_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 binding_table_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 value_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 procedure_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 query_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 function_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 label_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 property_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 field_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
 
 path_pattern_name
-    : IDENTIFIER {
+    : identifier {
       
     }
     ;
@@ -7984,17 +7892,22 @@ binding_variable_name
     ;
 
 variable_name
-    : regular_identifier {
+    : REGULAR_IDENTIFIER {
       
     }
     ;
 
-/* IDENTIFIER
-    : regular_identifier
-    | delimited_identifier
+identifier
+    : REGULAR_IDENTIFIER {
+      
+    }
+    | DELIMITED_IDENTIFIER {
+
+    }
     ;
 
-separated_identifier
+
+/* separated_identifier
     : extended_identifier
     | delimited_identifier
     ; */
@@ -8047,11 +7960,20 @@ if_not_exists
     }
     ;
 
-character_string_synonym
+string_or_varchar
     : STRING {
 
     }
     | VARCHAR {
+
+    }
+    ;
+
+decimal_synonym
+    : DECIMAL {
+
+    }
+    | DEC {
 
     }
     ;
@@ -8079,3 +8001,58 @@ LESS_THAN_OPERATOR
 // CHARACTER_STRING_LITERAL {single_quoted_character_sequence}|{double_quoted_character_sequence}
 
 %%
+
+
+void nebula::GraphParser::error(const nebula::GraphParser::location_type& loc,
+                                const std::string &msg) {
+    std::ostringstream os;
+    if (msg.empty()) {
+        os << "syntax error";
+    } else {
+        os << msg;
+    }
+
+    auto *query = scanner.query();
+    if (query == nullptr) {
+        os << " at " << loc;
+        errmsg = os.str();
+        return;
+    }
+
+    auto begin = loc.begin.column > 0 ? loc.begin.column - 1 : 0;
+    if ((loc.end.filename
+        && (!loc.begin.filename
+            || *loc.begin.filename != *loc.end.filename))
+        || loc.begin.line < loc.end.line
+        || begin >= query->size()) {
+        os << " at " << loc;
+    } else if (loc.begin.column < (loc.end.column ? loc.end.column - 1 : 0)) {
+        uint32_t len = loc.end.column - loc.begin.column;
+        if (len > 80) {
+            len = 80;
+        }
+        os << " near `" << query->substr(begin, len) << "'";
+    } else {
+        os << " near `" << query->substr(begin, 8) << "'";
+    }
+
+    errmsg = os.str();
+}
+
+// check the positive integer boundary
+// parameter input accept the INTEGER value
+// which filled as uint64_t
+// so the conversion is expected
+void ifOutOfRange(const int64_t input,
+                  const nebula::GraphParser::location_type& loc) {
+    if ((uint64_t)input >= MAX_ABS_INTEGER) {
+        throw nebula::GraphParser::syntax_error(loc, "Out of range:");
+    }
+}
+
+static int yylex(nebula::GraphParser::semantic_type* yylval,
+                 nebula::GraphParser::location_type *yylloc,
+                 nebula::GraphScanner& scanner) {
+    auto token = scanner.yylex(yylval, yylloc);
+    return token;
+}
