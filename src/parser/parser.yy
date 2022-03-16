@@ -163,6 +163,23 @@ static constexpr size_t kCommentLengthLimit = 256;
 %token CHARACTER_STRING_LITERAL
 %token UNSIGNED_DECIMAL_INTEGER UNSIGNED_HEXADECIMAL_INTEGER UNSIGNED_OCTAL_INTEGER UNSIGNED_BINARY_INTEGER
 
+/* // Precedence: lowest to highest.
+%nonassoc   SET
+%left       UNION EXCEPT
+%left       INTERSECT
+%left       OR
+%left       XOR
+%left       AND
+%right      NOT EXCLAMATION_MARK
+// %nonassoc   IS ISNULL NOTNULL                                // IS sets precedence for IS NULL, etc.
+%left       LEFT_ANGLE_BRACKET RIGHT_ANGLE_BRACKET EQUALS_OPERATOR LESS_THAN_OR_EQUALS_OPERATOR GREATER_THAN_OR_EQUALS_OPERATOR NOT_EQUALS_OPERATOR
+%nonassoc   LIKE
+
+%left   VERTICAL_BAR
+%left   AMPERSAND SOLIDUS PERCENT
+%left   MINUS_SIGN PLUS_SIGN
+%left   ASTERISK  */
+
 
 %start GQL_request
 
@@ -515,11 +532,12 @@ procedure_specification
     }
     ;
 
-nested_catalog_modifying_procedure_specification
+// INACTIVE PARSING RULES
+/* nested_catalog_modifying_procedure_specification
     : LEFT_BRACE catalog_modifying_procedure_specification RIGHT_BRACE {
 
     }
-    ;
+    ; */
 
 catalog_modifying_procedure_specification
     : 
@@ -741,14 +759,15 @@ function_initializer
     ;
 
 // Section 10.5 Binding variable and parameter declarations and definitions
-compact_variable_declaration_list
+// INACTIVE PARSING RULES
+/* compact_variable_declaration_list
     : compact_variable_declaration {
 
     }
     | compact_variable_declaration_list COMMA compact_variable_declaration {
 
     }
-    ;
+    ; */
 
 compact_variable_declaration
     : binding_variable_declaration {
@@ -802,14 +821,15 @@ compact_value_variable_definition
     }
     ;
 
-binding_variable_definition_list
+// INACTIVE PARSING RULES
+/* binding_variable_definition_list
     : binding_variable_definition {
 
     }
     | binding_variable_definition_list COMMA binding_variable_definition {
 
     }
-    ;
+    ; */
 
 binding_variable_definition
     : graph_variable_definition {
@@ -823,16 +843,18 @@ binding_variable_definition
     }
     ;
 
-optional_binding_variable_definition_list
+// INACTIVE PARSING RULES
+/* optional_binding_variable_definition_list
     : optional_binding_variable_definition {
 
     }
     | optional_binding_variable_definition_list COMMA optional_binding_variable_definition {
 
     }
-    ;
+    ; */
 
-optional_binding_variable_definition
+// INACTIVE PARSING RULES
+/* optional_binding_variable_definition
     : optional_graph_variable_definition {
 
     }
@@ -842,7 +864,7 @@ optional_binding_variable_definition
     | optional_value_variable_definition {
 
     }
-    ;
+    ; */
 
 parameter_definition
     : graph_parameter_definition {
@@ -858,25 +880,26 @@ parameter_definition
 
 // Section 10.6 Graph variable and parameter declaration and definition
 graph_variable_declaration
-    : PROPERTY_GRAPH graph_variable of_graph_type {
+    : property_graph_synonym graph_variable of_graph_type {
 
     }
     ;
 
-optional_graph_variable_definition
+// INACTIVE PARSING RULES
+/* optional_graph_variable_definition
     : graph_variable_definition {
 
     }
-    ;
+    ; */
 
 graph_variable_definition
-    : PROPERTY_GRAPH graph_variable of_graph_type graph_initializer {
+    : property_graph_synonym graph_variable of_graph_type graph_initializer {
       
     }
     ;
 
 graph_parameter_definition
-    : PROPERTY_GRAPH PARAMETER_NAME opt_if_not_exists of_graph_type graph_initializer {
+    : property_graph_synonym PARAMETER_NAME opt_if_not_exists of_graph_type graph_initializer {
 
     }
     ;
@@ -904,23 +927,24 @@ graph_initializer
 
 // Section 10.7 Binding table variable and parameter declaration and definition
 binding_table_variable_declaration
-    : BINDING_TABLE binding_table_variable of_binding_table_type
+    : binding_table_synonym binding_table_variable of_binding_table_type
     ;
 
-optional_binding_table_variable_definition
+// INACTIVE PARSING RULES
+/* optional_binding_table_variable_definition
     : binding_table_variable_definition {
 
     }
-    ;
+    ; */
 
 binding_table_variable_definition
-    : BINDING_TABLE binding_table_variable of_binding_table_type binding_table_initializer {
+    : binding_table_synonym binding_table_variable of_binding_table_type binding_table_initializer {
 
     }
     ;
 
 binding_table_parameter_definition
-    : BINDING_TABLE parameter opt_if_not_exists of_binding_table_type binding_table_initializer {
+    : binding_table_synonym parameter opt_if_not_exists of_binding_table_type binding_table_initializer {
       
     }
     ;
@@ -956,11 +980,12 @@ value_variable_declaration
     }
     ;
 
-optional_value_variable_definition
+// INACTIVE PARSING RULES
+/* optional_value_variable_definition
     : value_variable_definition {
 
     }
-    ;
+    ; */
 
 value_variable_definition
     : VALUE value_variable value_initializer {
@@ -1084,7 +1109,7 @@ copy_graph_type_expression
     ;
 
 like_graph_expression
-    : PROPERTY_GRAPH TYPE like_graph_expression_shorthand {
+    : property_graph_synonym TYPE like_graph_expression_shorthand {
 
     }
     ;
@@ -1127,13 +1152,13 @@ binding_table_type_expression
     ;
 
 binding_table_type
-    : BINDING_TABLE record_value_type {
+    : binding_table_synonym record_value_type {
 
     }
     ;
 
 like_binding_table_type
-    : BINDING_TABLE like_binding_table_shorthand {
+    : binding_table_synonym like_binding_table_shorthand {
 
     }
     ;
@@ -1379,10 +1404,10 @@ opt_if_exists
 
 // Section 13.4 <create graph statement>
 create_graph_statement
-    : CREATE PROPERTY_GRAPH catalog_graph_parent_and_name opt_if_not_exists opt_of_graph_type opt_graph_source {
+    : CREATE property_graph_synonym catalog_graph_parent_and_name opt_if_not_exists opt_of_graph_type opt_graph_source {
 
     }
-    | CREATE OR REPLACE PROPERTY_GRAPH catalog_graph_parent_and_name opt_of_graph_type opt_graph_source {
+    | CREATE OR REPLACE property_graph_synonym catalog_graph_parent_and_name opt_of_graph_type opt_graph_source {
 
     }
     ;
@@ -1413,10 +1438,10 @@ graph_source
 
 // Section 13.5 <graph specification>
 graph_specification
-    : PROPERTY_GRAPH nested_graph_query_specification {
+    : property_graph_synonym nested_graph_query_specification {
 
     }
-    | PROPERTY_GRAPH nested_ambient_data_modifying_procedure_specification {
+    | property_graph_synonym nested_ambient_data_modifying_procedure_specification {
 
     }
     ;
@@ -1442,10 +1467,10 @@ drop_graph_statement
 
 // Section 13.7 <create graph type statement>
 create_graph_type_statement
-    : CREATE PROPERTY_GRAPH TYPE opt_if_not_exists graph_type_initializer {
+    : CREATE property_graph_synonym TYPE opt_if_not_exists graph_type_initializer {
 
     }
-    | CREATE OR REPLACE PROPERTY_GRAPH TYPE graph_type_initializer {
+    | CREATE OR REPLACE property_graph_synonym TYPE graph_type_initializer {
 
     }
     ;
@@ -1461,7 +1486,7 @@ graph_type_initializer
 
 // Section 13.8 <graph type specification>
 graph_type_specification
-    : PROPERTY_GRAPH TYPE nested_graph_type_specification {
+    : property_graph_synonym TYPE nested_graph_type_specification {
 
     }
     ;
@@ -1846,7 +1871,7 @@ property_type_definition
 
 // Section 13.13 <drop graph type statement>
 drop_graph_type_statement
-    : DROP PROPERTY_GRAPH TYPE catalog_graph_type_parent_and_name opt_if_exists {
+    : DROP property_graph_synonym TYPE catalog_graph_type_parent_and_name opt_if_exists {
 
     }
     ;
@@ -1989,7 +2014,7 @@ opt_simple_data_accessing_statements
     ;
   
 simple_data_accessing_statements
-    : %empty {
+    : simple_data_accessing_statement {
 
     }
     | simple_data_accessing_statements simple_data_accessing_statement {
@@ -2768,11 +2793,12 @@ at_schema_clause
     ;
 
 // Section 16.4 Named elements
-static_variable
+// INACTIVE PARSING RULES
+/* static_variable
     : static_variable_name {
 
     }
-    ;
+    ; */
 
 binding_variable
     : binding_variable_name {
@@ -2883,14 +2909,15 @@ formal_parameter_definition
     }
     ;
 
-optional_parameter_cardinality
+// INACTIVE PARSING RULES
+/* optional_parameter_cardinality
     : %empty {
     
     }
     | parameter_cardinality {
 
     }
-    ;
+    ; */
 
 parameter_cardinality
     : SINGLE {
@@ -2970,10 +2997,7 @@ opt_path_variable_declaration
     ;
 
 path_variable_declaration
-    : %empty {
-
-    }
-    | path_variable EQUALS_OPERATOR {
+    : path_variable EQUALS_OPERATOR {
 
     }
     ;
@@ -3133,7 +3157,7 @@ opt_element_pattern_cost_clause
     : %empty {
 
     }
-    | opt_element_pattern_cost_clause {
+    | element_pattern_cost_clause {
 
     }
     ;
@@ -4275,7 +4299,7 @@ graph_reference
     ;
 
 graph_resolution_expression
-    : PROPERTY_GRAPH catalog_graph_reference {
+    : property_graph_synonym catalog_graph_reference {
     
     }
     ;
@@ -4349,7 +4373,7 @@ graph_type_reference
     ;
 
 graph_type_resolution_expression
-    : PROPERTY_GRAPH TYPE catalog_graph_type_reference {
+    : property_graph_synonym TYPE catalog_graph_type_reference {
 
     }
     ;
@@ -4402,7 +4426,7 @@ binding_table_reference
     ;
 
 binding_table_resolution_expression
-    : BINDING_TABLE catalog_binding_table_reference {
+    : binding_table_synonym catalog_binding_table_reference {
 
     }
     ;
@@ -5055,14 +5079,15 @@ element_reference_list
 
 /* Chapter 20 Value expressions */
 // Section 20.1 <value specification>
-value_specification
+// INACTIVE PARSING RULES
+/* value_specification
     : literal {
 
     }
     | parameter_value_specification {
 
     }
-    ;
+    ; */
 
 unsigned_value_specification
     : unsigned_literal {
@@ -6261,7 +6286,8 @@ list_value_constructor_by_enumeration
 list_element_list
     : list_element {
     
-    } list_element_list COMMA list_element {
+    }
+    | list_element_list COMMA list_element {
 
     }
     ;
@@ -6897,10 +6923,11 @@ unicode_6_digit_escape_value
     : X_quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote [ { separator__quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote }... ]
     ; */
 
-numeric_literal
+// INACTIVE PARSING RULES
+/* numeric_literal
     : signed_numeric_literal
     | UNSIGNED_NUMERIC_LITERAL
-    ;
+    ; */
 
 signed_numeric_literal
     : opt_sign UNSIGNED_NUMERIC_LITERAL {
@@ -6965,11 +6992,11 @@ UNSIGNED_BINARY_INTEGER
     : 0b { [ underscore ] binary_digit }...
     ; */
 
-signed_decimal_integer
+/* signed_decimal_integer
     : opt_sign UNSIGNED_DECIMAL_INTEGER {
 
     }
-    ;
+    ; */
 
 /* approximate_numeric_literal
     :
@@ -7809,11 +7836,12 @@ binding_table_name
     }
     ;
 
-value_name
+// INACTIVE PARSING RULES
+/* value_name
     : identifier {
       
     }
-    ;
+    ; */
 
 procedure_name
     : identifier {
@@ -7851,11 +7879,12 @@ field_name
     }
     ;
 
-path_pattern_name
+// INACTIVE PARSING RULES
+/* path_pattern_name
     : identifier {
       
     }
-    ;
+    ; */
 
 /* PARAMETER_NAME
     : dollar_sign__separated_identifier
@@ -7930,20 +7959,20 @@ node_synonym
     }
     ;
 
-BINDING_TABLE
+binding_table_synonym
     : TABLE {
 
     }
-    | BINDING_TABLE {
+    | BINDING TABLE {
 
     }
     ;
 
-PROPERTY_GRAPH
+property_graph_synonym
     : GRAPH {
 
     }
-    | PROPERTY_GRAPH {
+    | PROPERTY GRAPH {
 
     }
     ;
