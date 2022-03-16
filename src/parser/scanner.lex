@@ -3,6 +3,8 @@
 %option nodefault noyywrap
 %option 8bit never-interactive
 %option yylineno
+%option warn
+%option debug
 
 %{
 #include "parser/GQLParser.h"
@@ -532,7 +534,7 @@ single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({se
 double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
 delimited_identifier {double_quoted_character_sequence}|{unbroken_accent_quoted_character_sequence}
 
-whitespace [\t\n\v\f\r]+
+whitespace [ \t\n\v\f\r]+
 newline [\n\r(\n\r)]
 separator ({comment}|{whitespace})*
 
@@ -545,9 +547,16 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
 
 %%
 
-{space} {
+%{
+  /* FLEX:  initial code: The following code block is executed every time yylex is called.
+   * Reset the current scanning locations each time yylex is called to match new pattern.
+   */
+  std::cerr << "FLEX: YYTEXT: " << string(yytext, yyleng) << std::endl;
+%}
+
+ /* {space} {
   NG_RETURN_TOKEN(SPACE);
-}
+ } */
 {ampersand} {
   NG_RETURN_TOKEN(AMPERSAND);
 }
@@ -730,60 +739,76 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
   NG_RETURN_TOKEN(MULTISET_ALTERNATION_OPERATOR);
 }
 
+{whitespace} {}
+
 {comment} {}
+
 {regular_identifier} {
   /* Check against the keyword lists. */
   TokenType token;
   bool found = keywordLookup(std::string(yytext, yyleng), token);
   if (found) {
-    yylval->keywordVal = new std::string(yytext, yyleng);
+    std::cerr << "FLEX: regular_identifier, keyword: " << std::string(yytext, yyleng) << std::endl;
+    // yylval->keywordVal = new std::string(yytext, yyleng);
     return token;
   }
 
   /* Not a keyword. Check if it is a legal unicode identifier. */
-  if (isValidUnicodeIdentifier(yytext, yyleng)) {
-    yylval->identVal = new std::string(yytext, yyleng);
+  //if (isValidUnicodeIdentifier(yytext, yyleng)) {
+    // yylval->identVal = new std::string(yytext, yyleng);
+    std::cerr << "FLEX: regular_identifier, normal identifier: " << std::string(yytext, yyleng) << std::endl;
     NG_RETURN_TOKEN(REGULAR_IDENTIFIER);
-  }
+  //}
   throw GraphParser::syntax_error(*yylloc, "illegal unicode identifier");
 }
+
 {delimited_identifier} {
   NG_RETURN_TOKEN(DELIMITED_IDENTIFIER);
 }
+
 {parameter_name} {
-  yylval->paramVal = new std::string(yytext + 1, yyleng - 1);
+  // yylval->paramVal = new std::string(yytext + 1, yyleng - 1);
   NG_RETURN_TOKEN(PARAMETER_NAME);
 }
+
 {unsigned_decimal_integer} {
-  yylval->unsignedDecimalInteger = parseUnsignedDecimalInteger(yytext, yyleng);
+  // yylval->unsignedDecimalInteger = parseUnsignedDecimalInteger(yytext, yyleng);
+  std::cerr << "FLEX: unsigned_decimal_integer" << std::endl;
   NG_RETURN_TOKEN(UNSIGNED_DECIMAL_INTEGER);
 }
+
 {unsigned_hexadecimal_integer} {
-  yylval->unsignedHexadecimalInteger = parseUnsignedHexadecimalInteger(yytext, yyleng);
+  // yylval->unsignedHexadecimalInteger = parseUnsignedHexadecimalInteger(yytext, yyleng);
   NG_RETURN_TOKEN(UNSIGNED_HEXADECIMAL_INTEGER);
 }
+
 {unsigned_octal_integer} {
-  yylval->unsignedOctalInteger = parseUnsignedOctalInteger(yytext, yyleng);
+  // yylval->unsignedOctalInteger = parseUnsignedOctalInteger(yytext, yyleng);
   NG_RETURN_TOKEN(UNSIGNED_OCTAL_INTEGER);
 }
+
 {unsigned_binary_integer} {
-  yylval->unsignedBinaryInteger = parseUnsignedBinaryInteger(yytext, yyleng);
+  // yylval->unsignedBinaryInteger = parseUnsignedBinaryInteger(yytext, yyleng);
   NG_RETURN_TOKEN(UNSIGNED_BINARY_INTEGER);
 }
+
 {unsigned_numeric_literal} {
-  yylval->unsignedNumericLiteral = parseUnsignedNumericLiteral(yytext, yyleng);
+  // yylval->unsignedNumericLiteral = parseUnsignedNumericLiteral(yytext, yyleng);
   NG_RETURN_TOKEN(UNSIGNED_NUMERIC_LITERAL);
 }
+
 {byte_string_literal} {
-  yylval->byteStringLiteral = parseByteStringLiteral(yytext, yyleng);
+  // yylval->byteStringLiteral = parseByteStringLiteral(yytext, yyleng);
   NG_RETURN_TOKEN(BYTE_STRING_LITERAL);
 }
+
 {unbroken_character_string_literal} {
-  yylval->unbrokenCharacterStringLiteral = new std::string(yytext+1, yyleng - 2);
+  // yylval->unbrokenCharacterStringLiteral = new std::string(yytext+1, yyleng - 2);
   NG_RETURN_TOKEN(UNBROKEN_CHARACTER_STRING_LITERAL);
 }
+
 {character_string_literal} {
-  yylval->characterStringLiteral = parseCharacterStringLiteral(yytext, yyleng);
+  // yylval->characterStringLiteral = parseCharacterStringLiteral(yytext, yyleng);
   NG_RETURN_TOKEN(CHARACTER_STRING_LITERAL);
 }
 
@@ -800,6 +825,7 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
                                  * Please note that it is not Flex but Bison to regard illegal
                                  * characters as errors, in such case.
                                  */
+                                std::cerr << "FLEX: . IS MATCHED" << std::endl;
                                 return static_cast<unsigned char>(yytext[0]);
 
                                 /**

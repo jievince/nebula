@@ -10,6 +10,11 @@
 %parse-param { nebula::Sentence** sentences }
 %parse-param { nebula::graph::QueryContext* qctx }
 
+/* Enable run-time traces (yydebug). */
+// Debugging options. These should be deleted after coding is completed.
+%define parse.trace
+%define parse.error verbose
+
 // Define token.
 /* %define api.value.type variant */
 /* %define api.token.constructor */
@@ -189,9 +194,11 @@ static constexpr size_t kCommentLengthLimit = 256;
 // Section 6.1 <GQL-request>
 GQL_request
     : GQL_program {
+      std::cerr << "PARSER: GQL_program -> GQL_request " << std::endl;
 
     }
     | request_parameter_set GQL_program {
+      std::cerr << "PARSER: request_parameter_set GQL_program -> GQL_request" << std::endl;
 
     }
     ;
@@ -215,6 +222,7 @@ request_parameter
 // Section 6.3 <GQL-program>
 GQL_program
     : main_activity {
+      std::cerr << "PARSER: main_activity -> GQL_program " << std::endl;
     }
     | preamble main_activity {
 
@@ -2437,6 +2445,7 @@ simple_query_statement_list
 // Section 15.6.1 <match statement>
 match_statement
     : opt_statement_mode MATCH graph_pattern {
+      std::cerr << "PARSER: opt_statement_mode MATCH graph_pattern -> match_statement " << std::endl;
 
     }
     ;
@@ -2621,6 +2630,7 @@ primitive_result_statement
 // Section 15.8.2 <return statement>
 return_statement
     : RETURN return_statement_body {
+      std::cerr << "PARSER: RETURN return_statement_body -> return_statement " << std::endl;
 
     }
     ;
@@ -2654,10 +2664,11 @@ opt_group_by_clause
 
 return_item_list
     : return_item {
+      std::cerr << "PARSER: return_item -> return_item_list" << std::endl;
     
     }
     | return_item_list COMMA return_item {
-
+      std::cerr << "PARSER: return_item_list COMMA return_item -> return_item_list" << std::endl;
     }
     ;
 

@@ -41,6 +41,10 @@ class GraphScanner : public yyFlexLexer {
     yy_flush_buffer(yy_buffer_stack ? yy_buffer_stack[yy_buffer_stack_top] : nullptr);
   }
 
+  void setDebug(bool b) {
+    yy_flex_debug = b;
+  }
+
   void setQuery(std::string *query) {
     query_ = query;
   }

@@ -49,6 +49,7 @@ class GQLParser {
     pos_ = &buffer_[0];
     end_ = pos_ + buffer_.size();
 
+    scanner_.setDebug(true);
     scanner_.setQuery(&buffer_);
     if (parser_.parse() != 0) {
       pos_ = nullptr;
