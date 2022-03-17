@@ -555,30 +555,30 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
   // std::cerr << "FLEX: YYTEXT: " << string(yytext, yyleng) << std::endl;
 %}
 
- /* {space} {
-  NG_RETURN_TOKEN(SPACE);
- } */
+  /* {space} {
+    NG_RETURN_TOKEN(SPACE);
+  } */
 {ampersand} {
   NG_RETURN_TOKEN(AMPERSAND);
 }
 {asterisk} {
   NG_RETURN_TOKEN(ASTERISK);
 }
-{circumflex} {
-  NG_RETURN_TOKEN(CIRCUMFLEX);
-}
+  /* {circumflex} {
+    NG_RETURN_TOKEN(CIRCUMFLEX);
+  } */
 {colon} {
   NG_RETURN_TOKEN(COLON);
 }
 {comma} {
   NG_RETURN_TOKEN(COMMA);
 }
-{dollar_sign} {
-  NG_RETURN_TOKEN(DOLLAR_SIGN);
-}
-{double_quote} {
-  NG_RETURN_TOKEN(DOUBLE_QUOTE);
-}
+  /* {dollar_sign} {
+    NG_RETURN_TOKEN(DOLLAR_SIGN);
+  } */
+  /* {double_quote} {
+    NG_RETURN_TOKEN(DOUBLE_QUOTE);
+  } */
 {equals_operator} {
   NG_RETURN_TOKEN(EQUALS_OPERATOR);
 }
@@ -588,9 +588,9 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
 {right_angle_bracket} {
   NG_RETURN_TOKEN(RIGHT_ANGLE_BRACKET);
 }
-{grave_accent} {
-  NG_RETURN_TOKEN(GRAVE_ACCENT);
-}
+  /* {grave_accent} {
+    NG_RETURN_TOKEN(GRAVE_ACCENT);
+  } */
 {left_brace} {
   NG_RETURN_TOKEN(LEFT_BRACE);
 }
@@ -621,9 +621,9 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
 {quote} {
   NG_RETURN_TOKEN(QUOTE);
 }
-{reverse_solidus} {
-  NG_RETURN_TOKEN(REVERSE_SOLIDUS);
-}
+  /* {reverse_solidus} {
+    NG_RETURN_TOKEN(REVERSE_SOLIDUS);
+  } */
 {right_brace} {
   NG_RETURN_TOKEN(RIGHT_BRACE);
 }
@@ -633,18 +633,18 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
 {right_paren} {
   NG_RETURN_TOKEN(RIGHT_PAREN);
 }
-{semicolon} {
-  NG_RETURN_TOKEN(SEMICOLON);
-}
+  /* {semicolon} {
+    NG_RETURN_TOKEN(SEMICOLON);
+  } */
 {solidus} {
   NG_RETURN_TOKEN(SOLIDUS);
 }
 {tilde} {
   NG_RETURN_TOKEN(TILDE);
 }
-{underscore} {
-  NG_RETURN_TOKEN(UNDERSCORE);
-}
+  /* {underscore} {
+    NG_RETURN_TOKEN(UNDERSCORE);
+  } */
 {vertical_bar} {
   NG_RETURN_TOKEN(VERTICAL_BAR);
 }
@@ -660,15 +660,15 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
 {double_colon} {
   NG_RETURN_TOKEN(DOUBLE_COLON);
 }
-{double_minus_sign} {
-  NG_RETURN_TOKEN(DOUBLE_MINUS_SIGN);
-}
+  /* {double_minus_sign} {
+    NG_RETURN_TOKEN(DOUBLE_MINUS_SIGN);
+  } */
 {double_period} {
   NG_RETURN_TOKEN(DOUBLE_PERIOD);
 }
-{double_solidus} {
-  NG_RETURN_TOKEN(DOUBLE_SOLIDUS);
-}
+  /* {double_solidus} {
+    NG_RETURN_TOKEN(DOUBLE_SOLIDUS);
+  } */
 {greater_than_or_equals_operator} {
   NG_RETURN_TOKEN(GREATER_THAN_OR_EQUALS_OPERATOR);
 }
