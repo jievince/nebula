@@ -425,7 +425,7 @@ session_parameter_flag
 
 // Section 7.2 <session remove command>
 session_remove_command
-    : REMOVE parameter {
+    : REMOVE parameter opt_if_exists {
 
     }
     | SESSION REMOVE parameter opt_if_exists {
@@ -1252,8 +1252,12 @@ simple_catalog_modifying_statement
     }
     ;
 
+// TODO create_schema_statement and drop_schema_statement are newly added here
 primitive_catalog_modifying_statement
-    : create_graph_statement {
+    : create_schema_statement {
+    
+    }
+    | create_graph_statement {
 
     }
     | create_graph_type_statement {
@@ -1267,6 +1271,9 @@ primitive_catalog_modifying_statement
     }
     | create_function_statement {
       
+    }
+    | drop_schema_statement {
+
     }
     | drop_graph_statement {
       
@@ -1386,6 +1393,7 @@ linear_catalog_modifying_statement
     }
     ;
 
+// TODO This rule seems to have been forgotten by rule primitive_catalog_modifying_statement.
 // Section 13.2 <create schema statement>
 create_schema_statement
     : CREATE SCHEMA catalog_schema_parent_and_name opt_if_not_exists {
@@ -1393,6 +1401,7 @@ create_schema_statement
     }
     ;
 
+// TODO This rule seems to have been forgotten by rule primitive_catalog_modifying_statement.
 // Section 13.3 <drop schema statement>
 drop_schema_statement
     : DROP SCHEMA catalog_schema_parent_and_name opt_if_exists {
@@ -6768,16 +6777,17 @@ general_literal
     }
     ;
 
-// The_following_rule_is modified_to
+// TODO
+// character_string_literal is changed to UNBROKEN_CHARACTER_STRING_LITERAL | CHARACTER_STRING_LITERAL here.
+// The original rule is:
 /* predefined_type_literal
     : boolean_literal
-    | CHARACTER_STRING_LITERAL
-    | BYTE_STRING_LITERAL
+    | character_string_literal
+    | byte_string_literal
     | temporal_literal
     | duration_literal
     | null_literal
     ; */
-
 predefined_type_literal
     : boolean_literal {
       
