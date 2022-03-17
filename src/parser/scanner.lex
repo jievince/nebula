@@ -376,10 +376,10 @@ NG_UNRESERVED_KEYWORD("ZONE", ZONE)
 };
 
 // Check against the keyword list.
-bool keywordLookup(const std::unordered_map<std::string, TokenType> &keywords,
-                                         std::string text,
-                                         bool caseSensitivity,
-                                         TokenType& token) {
+bool keywordLookup(const std::unordered_map<std::string, TokenType>& keywords,
+                   std::string text,
+                   bool caseSensitivity,
+                   TokenType& token) {
   if (!caseSensitivity) {
     std::transform(
         text.begin(), text.end(), text.begin(), [](unsigned char c) { return std::toupper(c); });
@@ -394,7 +394,8 @@ bool keywordLookup(const std::unordered_map<std::string, TokenType> &keywords,
 }
 
 bool keywordLookup(const std::string& text, TokenType& token) {
-  return keywordLookup(kCaseSensitiveKeywords, text, true, token) || keywordLookup(kCaseInsensitiveKeywords, text, false, token);
+  return keywordLookup(kCaseSensitiveKeywords, text, true, token) ||
+         keywordLookup(kCaseInsensitiveKeywords, text, false, token);
 }
 
 %}
