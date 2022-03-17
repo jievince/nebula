@@ -551,7 +551,7 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
   /* FLEX:  initial code: The following code block is executed every time yylex is called.
    * Reset the current scanning locations each time yylex is called to match new pattern.
    */
-  std::cerr << "FLEX: YYTEXT: " << string(yytext, yyleng) << std::endl;
+  // std::cerr << "FLEX: YYTEXT: " << string(yytext, yyleng) << std::endl;
 %}
 
  /* {space} {

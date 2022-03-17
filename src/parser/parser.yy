@@ -10,10 +10,9 @@
 %parse-param { nebula::Sentence** sentences }
 %parse-param { nebula::graph::QueryContext* qctx }
 
-/* Enable run-time traces (yydebug). */
-// Debugging options. These should be deleted after coding is completed.
+// Enable run-time traces (yydebug).
 %define parse.trace
-%define parse.error verbose
+// %define parse.error verbose
 
 // Define token.
 /* %define api.value.type variant */

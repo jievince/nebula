@@ -17,6 +17,7 @@ class GQLParser {
  public:
   explicit GQLParser(nebula::graph::QueryContext *qctx = nullptr)
       : parser_(scanner_, error_, &sentences_, qctx) {
+    parser_.set_debug_level(true);
     // Callback invoked by GraphScanner
     auto readBuffer = [this](char *buf, int maxSize) -> int {
       // Reach the end
