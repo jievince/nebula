@@ -545,6 +545,9 @@ parameter_name \${separated_identifier}
 unbroken_character_string_literal {unbroken_single_quoted_character_sequence}|{unbroken_double_quoted_character_sequence}
 character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
 
+/* special */
+session_set SESSION{separator}SET
+
 
 %%
 
@@ -743,6 +746,10 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
 {whitespace} {}
 
 {comment} {}
+
+{session_set} {
+  NG_RETURN_TOKEN(SESSION_SET);
+}
 
 {regular_identifier} {
   /* Check against the keyword lists. */
