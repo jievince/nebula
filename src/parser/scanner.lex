@@ -546,7 +546,11 @@ unbroken_character_string_literal {unbroken_single_quoted_character_sequence}|{u
 character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
 
 /* special */
-session_set SESSION{separator}SET
+/* session_set SESSION{separator}SET */
+is_source IS{separator}SOURCE
+is_not_source IS{separator}NOT{separator}SOURCE
+is_destination IS{separator}DESTINATION
+is_not_destination IS{separator}NOT{separator}DESTINATION
 
 
 %%
@@ -747,8 +751,20 @@ session_set SESSION{separator}SET
 
 {comment} {}
 
-{session_set} {
+ /* {session_set} {
   NG_RETURN_TOKEN(SESSION_SET);
+ } */
+{is_source} {
+  NG_RETURN_TOKEN(IS_SOURCE);
+}
+{is_not_source} {
+  NG_RETURN_TOKEN(IS_NOT_SOURCE);
+}
+{is_destination} {
+  NG_RETURN_TOKEN(IS_DESTINATION);
+}
+{is_not_destination} {
+  NG_RETURN_TOKEN(IS_NOT_DESTINATION);
 }
 
 {regular_identifier} {

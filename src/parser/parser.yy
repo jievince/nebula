@@ -132,8 +132,9 @@ static constexpr size_t kCommentLengthLimit = 256;
 
 // special
 
-%token  SESSION_SET
-
+/* %token  SESSION_SET */
+%token IS_SOURCE IS_NOT_SOURCE IS_DESTINATION IS_NOT_DESTINATION IS_NULL IS_NOT_NULL IS_NOT IS_DIRECTED IS_NOT_DIRECTED IS_LABELED IS_NOT_LABELED
+%token SESSION_CLEAR SESSION_CLOSE SESSION_REMOVE SESSION_SET
 
 // single char operators
 %token  AMPERSAND ASTERISK
@@ -232,7 +233,10 @@ main_activity
     : session_activity {
 
     }
-    | opt_session_activity transaction_session_activities opt_session_close_command {
+    | transaction_session_activitiy_list opt_session_close_command {
+
+    }
+    | session_activity transaction_session_activitiy_list opt_session_close_command {
 
     }
     | session_close_command {
@@ -258,11 +262,11 @@ opt_session_close_command
     }
     ;
 
-transaction_session_activities
+transaction_session_activitiy_list
     : transaction_session_activity {
 
     }
-    | transaction_session_activities transaction_session_activity {
+    | transaction_session_activitiy_list transaction_session_activity {
 
     }
     ;
@@ -278,7 +282,10 @@ transaction_session_activity
 
 
 session_activity
-    : session_clear_command opt_session_parameter_command_list {
+    : session_clear_command {
+
+    }
+    | session_clear_command session_parameter_command_list {
 
     }
     | session_parameter_command_list {
@@ -313,6 +320,7 @@ session_parameter_command
     }
     ;
 
+// TODO BNF有bug: start_transaction_command procedure_specification 1,2 end_transaction_command可以是一个transcation_activity也可以是两个
 transaction_activity
     : start_transaction_command {
     
@@ -406,7 +414,10 @@ set_time_zone_value
     ;
 
 session_set_parameter_clause
-    : opt_session_parameter_flag session_parameter opt_if_not_exists {
+    : session_parameter opt_if_not_exists {
+
+    }
+    | session_parameter_flag session_parameter opt_if_not_exists {
 
     }
     ;
@@ -440,7 +451,7 @@ session_parameter_flag
 
 // Section 7.2 <session remove command>
 session_remove_command
-    : SESSION REMOVE parameter opt_if_exists {
+    : SESSION_REMOVE parameter opt_if_exists {
 
     }
     /* | REMOVE parameter opt_if_exists {
@@ -451,7 +462,7 @@ session_remove_command
 // Section 7.3 <session clear command>
 session_clear_command
     : CLEAR
-    | SESSION CLEAR {
+    | SESSION_CLEAR {
 
     }
     ;
@@ -459,7 +470,7 @@ session_clear_command
 // Section 7.4 <session close command>
 session_close_command
     : CLOSE
-    | SESSION CLOSE {
+    | SESSION_CLOSE {
 
     }
     ;
@@ -541,6 +552,11 @@ nested_procedure_specification
     }
     ;
 
+/* Rules for the derivation of the procedure signature of a <procedure specification>, a
+<catalog-modifying procedure specification>, a <data-modifying procedure specification>,
+a <query specification>, and a <function specification> from their <procedure body> need
+to be specified. See Possible Problem GQL-021 . */
+// TODO
 procedure_specification
     : catalog_modifying_procedure_specification {
 
@@ -566,7 +582,7 @@ procedure_specification
 catalog_modifying_procedure_specification
     : 
     // !! Predicative production rule.
-    procedure_body {
+    procedure_body stDev {
 
     }
     ;
@@ -580,7 +596,7 @@ nested_data_modifying_procedure_specification
 data_modifying_procedure_specification
     :
     // !! Predicative production rule.
-    procedure_body {
+    procedure_body stDevP {
 
     }
     ;
@@ -595,7 +611,7 @@ nested_query_specification
 query_specification
     :
     // !! Predicative production rule.
-    procedure_body {
+    procedure_body percentileCont {
 
     }
     ;
@@ -610,14 +626,23 @@ nested_function_specification
 function_specification
     :
     // !! Predicative production rule.
-    procedure_body {
+    procedure_body percentileDist {
 
     }
     ;
 
 // Section 9.4 <procedure body>
 procedure_body
-    : opt_static_variable_definition_block opt_binding_variable_definition_block statement_block {
+    : statement_block {
+
+    }
+    | static_variable_definition_block statement_block {
+
+    }
+    | binding_variable_definition_block statement_block {
+
+    }
+    | static_variable_definition_block binding_variable_definition_block statement_block {
 
     }
     ;
@@ -1191,13 +1216,22 @@ like_binding_table_shorthand
 /* Chapter 12 Statements */
 // Section 12.1 <statement>
 statement
-    : opt_at_schema_clause catalog_modifying_statement {
+    : catalog_modifying_statement {
 
     }
-    | opt_at_schema_clause data_modifying_statement {
+    | at_schema_clause catalog_modifying_statement {
 
     }
-    | opt_at_schema_clause query_statement {
+    | data_modifying_statement {
+
+    }
+    | at_schema_clause data_modifying_statement {
+
+    }
+    | query_statement {
+
+    }
+    | at_schema_clause query_statement {
 
     }
     ;
@@ -1237,7 +1271,10 @@ query_statement
 
 // Section 12.2 <call procedure statement>
 call_procedure_statement
-    : opt_statement_mode CALL procedure_call {
+    : CALL procedure_call {
+
+    }
+    | statement_mode CALL procedure_call {
 
     }
     ;
@@ -1564,7 +1601,16 @@ element_type_definition
 
 // Section 13.9 <node type definition>
 node_type_definition
-    : LEFT_PAREN opt_node_type_name opt_node_type_filler RIGHT_PAREN {
+    : LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | LEFT_PAREN node_type_name RIGHT_PAREN {
+
+    }
+    | LEFT_PAREN node_type_name node_type_filler RIGHT_PAREN {
+
+    }
+    | LEFT_PAREN node_type_filler RIGHT_PAREN {
 
     }
     | node_synonym node_type_name node_type_filler {
@@ -1777,20 +1823,28 @@ abbreviated_edge_type_pattern_any_direction
     }
     ;
 
+// TODO source_node_type_name => node_type_name
 source_node_type_reference
-    : LEFT_PAREN source_node_type_name RIGHT_PAREN {
+    : LEFT_PAREN node_type_name RIGHT_PAREN {
 
     }
-    | LEFT_PAREN opt_node_type_filler RIGHT_PAREN {
+    | LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | LEFT_PAREN node_type_filler RIGHT_PAREN {
 
     }
     ;
 
+// TODO destination_node_type_name => node_type_name
 destination_node_type_reference
-    : LEFT_PAREN destination_node_type_name RIGHT_PAREN {
+    : LEFT_PAREN node_type_name RIGHT_PAREN {
 
     }
-    | LEFT_PAREN opt_node_type_filler RIGHT_PAREN {
+    | LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | LEFT_PAREN node_type_filler RIGHT_PAREN {
 
     }
     ;
@@ -1999,23 +2053,26 @@ linear_data_modifying_statement
     ;
 
 focused_linear_data_modifying_statement
-    : use_graph_clause focused_linear_data_modifying_statement_bodies {
+    : use_graph_clause focused_linear_data_modifying_statement_body_list {
 
     }
     ;
 
-focused_linear_data_modifying_statement_bodies
+focused_linear_data_modifying_statement_body_list
     : focused_linear_data_modifying_statement_body {
 
     }
-    | focused_linear_data_modifying_statement_bodies focused_linear_data_modifying_statement_body {
+    | focused_linear_data_modifying_statement_body_list focused_linear_data_modifying_statement_body {
 
     }
     ;
 
 // TODO?
 focused_linear_data_modifying_statement_body
-    : opt_simple_linear_query_statement opt_use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_use_graph_clause_and_simple_data_accessing_statement_list opt_primitive_result_statement {
+    : opt_simple_linear_query_statement opt_use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_use_graph_clause_and_simple_data_accessing_statement_list {
+
+    }
+    | opt_simple_linear_query_statement opt_use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
 
     }
     | nested_data_modifying_procedure_specification {
@@ -2080,19 +2137,19 @@ opt_use_graph_clause_and_simple_data_accessing_statement_list
     : %empty {
 
     }
-    | use_graph_clause_and_simple_data_accessing_statement_list {
+    | opt_use_graph_clause_and_simple_data_accessing_statement_list use_graph_clause simple_data_accessing_statement {
 
     }
     ;
 
-use_graph_clause_and_simple_data_accessing_statement_list
+/* use_graph_clause_and_simple_data_accessing_statement_list
     : use_graph_clause simple_data_accessing_statement {
 
     }
     | use_graph_clause_and_simple_data_accessing_statement_list use_graph_clause simple_data_accessing_statement {
 
     }
-    ;
+    ; */
 
 /* // TODO remove a maybe reduant rule
 use_graph_clause_and_simple_data_accessing_statement
@@ -2111,7 +2168,10 @@ opt_primitive_result_statement
     ;
 
 ambient_linear_data_modifying_statement
-    : opt_simple_linear_query_statement simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
+    : simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
+
+    }
+    | simple_linear_query_statement simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
 
     }
     | nested_data_modifying_procedure_specification {
@@ -2500,7 +2560,10 @@ simple_query_statement_list
 /* Section 15.6 Data-reading statements */
 // Section 15.6.1 <match statement>
 match_statement
-    : opt_statement_mode MATCH graph_pattern {
+    : MATCH graph_pattern {
+
+    }
+    | statement_mode MATCH graph_pattern {
 
     }
     ;
@@ -2556,7 +2619,10 @@ aggregate_statement
 
 // Section 15.7.6 <for statement>
 for_statement
-    : opt_statement_mode FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
+    :FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
+
+    }
+    | statement_mode FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
 
     }
     ;
@@ -4093,6 +4159,7 @@ yield_item_name
     }
     ;
 
+// TODO variable_name? see return_item_alias
 yield_item_alias
     : AS variable_name {
 
@@ -4323,7 +4390,10 @@ schema_reference
     ;
 
 catalog_schema_parent_and_name
-    : opt_absolute_url_path SOLIDUS schema_name {
+    : SOLIDUS schema_name {
+
+    }
+    | absolute_url_path SOLIDUS schema_name {
 
     }
     | url_path_parameter {
@@ -4380,8 +4450,17 @@ catalog_graph_parent_and_name
 
 // TODO
 graph_parent_specification
-    : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
+    : %empty {
     
+    }
+    | parent_catalog_object_reference {
+    
+    }
+    | parent_catalog_object_reference qualified_object_name_and_period {
+
+    }
+    | qualified_object_name_and_period {
+
     }
     ;
 
@@ -4415,7 +4494,10 @@ local_graph_reference
 
 // TODO
 qualified_graph_name
-    : opt_qualified_object_name_and_period graph_name {
+    : graph_name {
+
+    }
+    | qualified_object_name_and_period graph_name {
 
     }
     ;
@@ -4446,7 +4528,10 @@ catalog_graph_type_reference
     ;
 
 catalog_graph_type_parent_and_name
-    : graph_type_parent_specification graph_type_name {
+    : graph_type_name {
+
+    }
+    | graph_type_parent_specification graph_type_name {
 
     }
     | url_path_parameter {
@@ -4454,9 +4539,15 @@ catalog_graph_type_parent_and_name
     }
     ;
 
-// TODO
+// TODO %empty is removed
 graph_type_parent_specification
-    : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
+    : parent_catalog_object_reference {
+    
+    }
+    | parent_catalog_object_reference qualified_object_name_and_period {
+
+    }
+    | qualified_object_name_and_period {
 
     }
     ;
@@ -4469,7 +4560,10 @@ local_graph_type_reference
 
 // TODO REWRITE
 qualified_graph_type_name
-    : opt_qualified_object_name_and_period graph_type_name {
+    : graph_type_name {
+
+    }
+    | qualified_object_name_and_period graph_type_name {
 
     }
     ;
@@ -4524,7 +4618,10 @@ local_binding_table_reference
     ;
 
 qualified_binding_table_name
-    : opt_qualified_object_name_and_period binding_table_name {
+    : binding_table_name {
+
+    }
+    | qualified_object_name_and_period binding_table_name {
 
     }
     ;
@@ -4576,7 +4673,10 @@ local_procedure_reference
     ;
 
 qualified_procedure_name
-    : opt_qualified_object_name_and_period procedure_name {
+    : procedure_name {
+
+    }
+    | qualified_object_name_and_period procedure_name {
 
     }
     ;
@@ -4626,7 +4726,10 @@ local_query_reference
     ;
 
 qualified_query_name
-    : opt_qualified_object_name_and_period query_name {
+    : query_name {
+
+    }
+    | qualified_object_name_and_period query_name {
 
     }
     ;
@@ -4678,7 +4781,10 @@ local_function_reference
     ;
 
 qualified_function_name
-    : opt_qualified_object_name_and_period function_name {
+    : function_name {
+
+    }
+    | qualified_object_name_and_period function_name {
 
     }
     ;
@@ -4962,10 +5068,10 @@ null_predicate
     ;
 
 null_predicate_part_2
-    : IS NULL {
+    : IS_NULL {
 
     }
-    | IS NOT NULL {
+    | IS_NOT_NULL {
 
     }
     ;
@@ -4981,7 +5087,7 @@ normalized_predicate_part_2
     : IS opt_normal_form NORMALIZED {
 
     }
-    | IS NOT opt_normal_form NORMALIZED {
+    | IS_NOT opt_normal_form NORMALIZED {
 
     }
     ;
@@ -5003,10 +5109,10 @@ directed_predicate
     ;
 
 directed_predicate_part_2
-    : IS DIRECTED {
+    : IS_DIRECTED {
 
     }
-    | IS NOT DIRECTED {
+    | IS_NOT_DIRECTED {
 
     }
     ;
@@ -5019,10 +5125,10 @@ labeled_predicate
     ;
 
 labeled_predicate_part_2
-    : IS LABELED label_expression {
+    : IS_LABELED label_expression {
 
     }
-    | IS NOT LABELED label_expression {
+    | IS_NOT_LABELED label_expression {
 
     }
     ;
@@ -5046,10 +5152,10 @@ node_reference
 
 // TODO
 source_predicate_part_2
-    : IS SOURCE opt_of edge_reference {
+    : IS_SOURCE opt_of edge_reference {
       
     }
-    | IS NOT SOURCE opt_of edge_reference {
+    | IS_NOT_SOURCE opt_of edge_reference {
       
     }
     ;
@@ -5064,10 +5170,10 @@ opt_of
     ;
 
 destination_predicate_part_2
-    : IS DESTINATION opt_of edge_reference {
+    : IS_DESTINATION opt_of edge_reference {
 
     }
-    | IS NOT DESTINATION opt_of edge_reference {
+    | IS_NOT_DESTINATION opt_of edge_reference {
 
     }
     ;
@@ -5115,6 +5221,7 @@ element_reference_list
     }
     ; */
 
+// TODO parameter_value_specification seems redudant
 unsigned_value_specification
     : unsigned_literal {
       
@@ -5337,7 +5444,7 @@ boolean_test
     | boolean_primary IS truth_value {
 
     }
-    | boolean_primary IS NOT truth_value {
+    | boolean_primary IS_NOT truth_value {
 
     }
     | boolean_primary EQUALS_OPERATOR truth_value {
@@ -5414,7 +5521,10 @@ term
     ;
 
 factor
-    : opt_sign numeric_primary {
+    : numeric_primary {
+
+    }
+    | sign numeric_primary {
 
     }
     ;
@@ -5460,9 +5570,10 @@ non_parenthesized_value_expression_primary
     | binding_variable {
       
     }
-    | parameter_value_specification {
+    // TODO parameter_value_specification is in unsigned_value_specification
+    /* | parameter_value_specification {
       
-    }
+    } */
     | unsigned_value_specification {
       
     }
@@ -6126,8 +6237,11 @@ duration_term
     ;
 
 duration_factor
-    : opt_sign duration_primary {
+    : duration_primary {
 
+    }
+    | sign duration_primary {
+      
     }
     ;
 
@@ -6767,11 +6881,12 @@ literal
     }
     ;
 
+// TODO conflict: record_literal record_value_constructor...
 general_literal
     : predefined_type_literal {
       
     }
-    | list_literal {
+    /* | list_literal {
       
     }
     | set_literal {
@@ -6788,7 +6903,7 @@ general_literal
     }
     | record_literal {
       
-    }
+    } */
     ;
 
 // TODO
