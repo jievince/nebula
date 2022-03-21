@@ -5703,9 +5703,9 @@ non_parenthesized_value_expression_primary
     | aggregate_function {
       
     }
-    | collection_value_constructor {
+    /* | collection_value_constructor {
       
-    }
+    } */
     | value_query_expression {
       
     }
@@ -6305,7 +6305,7 @@ date_function_parameters
     : date_string {
 
     }
-    | map_value_constructor {
+    | map_literal {
       
     }
     ;
@@ -6314,7 +6314,7 @@ time_function_parameters
     : time_string {
       
     }
-    | map_value_constructor {
+    | map_literal {
       
     }
     ;
@@ -6323,7 +6323,7 @@ datetime_function_parameters
     : datetime_string {
       
     }
-    | map_value_constructor {
+    | map_literal {
       
     }
     ;
@@ -6415,7 +6415,7 @@ duration_function_parameters
     : duration_string {
 
     }
-    | map_value_constructor {
+    | map_literal {
 
     }
     ;
@@ -6465,7 +6465,7 @@ end_node_function
     ;
 
 // Section 20.15 <collection value constructor>
-collection_value_constructor
+/* collection_value_constructor
     : list_value_constructor {
       
     }
@@ -6484,7 +6484,7 @@ collection_value_constructor
     | record_value_constructor {
       
     }
-    ;
+    ; */
 
 // Section 20.16 <list value expression>
 list_value_expression
@@ -6540,11 +6540,11 @@ trim_list_function
     ;
 
 // Section 20.18 <list value constructor>
-list_value_constructor
+/* list_value_constructor
     : list_value_constructor_by_enumeration {
       
     }
-    ;
+    ; */
 
 list_value_constructor_by_enumeration
     : list_value_type_name LEFT_BRACKET list_element_list RIGHT_BRACKET {
@@ -6631,11 +6631,11 @@ multiset_set_function
     ;
 
 // Section 20.21 <multiset value constructor>
-multiset_value_constructor
+/* multiset_value_constructor
     : multiset_value_constructor_by_enumeration {
 
     }
-    ;
+    ; */
 
 multiset_value_constructor_by_enumeration
     : MULTISET LEFT_BRACE multiset_element_list RIGHT_BRACE {
@@ -6659,11 +6659,11 @@ multiset_element
     ;
 
 // Section 20.22 <set value constructor>
-set_value_constructor
+/* set_value_constructor
     : set_value_constructor_by_enumeration {
 
     }
-    ;
+    ; */
 
 set_value_constructor_by_enumeration
     : SET LEFT_BRACE set_element_list RIGHT_BRACE {
@@ -6687,11 +6687,11 @@ set_element
     ;
 
 // Section 20.23 <ordered set value constructor>
-ordered_set_value_constructor
+/* ordered_set_value_constructor
     : ordered_set_value_constructor_by_enumeration {
 
     }
-    ;
+    ; */
 
 ordered_set_value_constructor_by_enumeration
     : ORDERED SET LEFT_BRACE ordered_set_element_list RIGHT_BRACE {
@@ -6718,11 +6718,11 @@ ordered_set_element
     ;
 
 // Section 20.24 <map value constructor>
-map_value_constructor
+/* map_value_constructor
     : map_value_constructor_by_enumeration {
 
     }
-    ;
+    ; */
 
 map_value_constructor_by_enumeration
     : MAP LEFT_BRACE map_element_list RIGHT_BRACE {
@@ -6758,14 +6758,14 @@ map_value
     ;
 
 // Section 20.25 <record value constructor>
-record_value_constructor
+/* record_value_constructor
     : record_value_constructor_by_enumeration {
 
     }
     | UNIT {
 
     }
-    ;
+    ; */
 
 // opt_record
 record_value_constructor_by_enumeration
@@ -7011,7 +7011,7 @@ general_literal
     : predefined_type_literal {
       
     }
-    /* | list_literal {
+    | list_literal {
       
     }
     | set_literal {
@@ -7028,7 +7028,7 @@ general_literal
     }
     | record_literal {
       
-    } */
+    }
     ;
 
 // TODO
@@ -7630,6 +7630,9 @@ map_literal
 
 record_literal
     : record_value_constructor_by_enumeration {
+      
+    }
+    | UNIT {
       
     }
     ;
