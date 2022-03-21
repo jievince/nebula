@@ -1,6 +1,6 @@
 %language "C++"
 %skeleton "lalr1.cc"
-%no-lines
+%no-lines 
 %locations
 %define api.namespace { nebula }
 %define api.parser.class { GraphParser }
@@ -135,6 +135,11 @@ static constexpr size_t kCommentLengthLimit = 256;
 /* %token  SESSION_SET */
 %token IS_SOURCE IS_NOT_SOURCE IS_DESTINATION IS_NOT_DESTINATION IS_NULL IS_NOT_NULL IS_NOT IS_DIRECTED IS_NOT_DIRECTED IS_LABELED IS_NOT_LABELED
 %token SESSION_CLEAR SESSION_CLOSE SESSION_REMOVE SESSION_SET
+%token COMMA_OPTIONAL
+%token GROUP_BY
+%token LEFT_PAREN_ASTERISK_RIGHT_PAREN
+// 没有解决冲突的合并
+/* %token TIME_ZONE CATALOG_PROCEDURE COPY_OF */
 
 // single char operators
 %token  AMPERSAND ASTERISK
@@ -186,6 +191,13 @@ static constexpr size_t kCommentLengthLimit = 256;
 %left   AMPERSAND SOLIDUS PERCENT
 %left   MINUS_SIGN PLUS_SIGN
 %left   ASTERISK  */
+
+%nonassoc LOWER_THAN_COMMIT
+%nonassoc COMMIT ROLLBACK
+%left       MULTISET_UNION MULTISET_EXCEPT
+%left       MULTISET_INTERSECT
+%nonassoc LOWER_THAN_LIMIT
+%nonassoc ORDER LIMIT OFFSET SKIP
 
 
 %start GQL_request
@@ -325,13 +337,13 @@ transaction_activity
     : start_transaction_command {
     
     }
-    | start_transaction_command procedure_specification {
+    | start_transaction_command procedure_specification %prec LOWER_THAN_COMMIT {
       
     }
     | start_transaction_command procedure_specification end_transaction_command {
 
     }
-    | procedure_specification {
+    | procedure_specification %prec LOWER_THAN_COMMIT {
 
     }
     | procedure_specification end_transaction_command {
@@ -716,7 +728,9 @@ static_variable_definition
     ;
 
 as_or_equals
-    : AS
+    : AS {
+      
+    }
     | EQUALS_OPERATOR {
 
     }
@@ -1023,7 +1037,7 @@ binding_table_initializer
 // Section 10.8 Value variable and parameter declaration and definition
 value_variable_declaration
     : VALUE value_variable opt_of_value_type {
-      
+
     }
     ;
 
@@ -1035,13 +1049,25 @@ value_variable_declaration
     ; */
 
 value_variable_definition
-    : VALUE value_variable opt_of_value_type value_initializer {
+    : VALUE value_variable value_initializer {
+
+    }
+    | VALUE value_variable of_value_type value_initializer {
 
     }
     ;
 
 value_parameter_definition
-    : VALUE parameter opt_if_not_exists opt_of_value_type value_initializer {
+    : VALUE parameter value_initializer {
+
+    }
+    | VALUE parameter if_not_exists value_initializer {
+
+    }
+    | VALUE parameter of_value_type value_initializer {
+
+    }
+    | VALUE parameter if_not_exists of_value_type value_initializer {
 
     }
     ;
@@ -2237,7 +2263,10 @@ insert_statement
     : INSERT simple_graph_pattern {
 
     }
-    | OPTIONAL INSERT simple_graph_pattern opt_when_clause {
+    | OPTIONAL INSERT simple_graph_pattern {
+
+    }
+    | OPTIONAL INSERT simple_graph_pattern when_clause {
 
     }
     ;
@@ -2703,8 +2732,32 @@ order_by_and_page_statement
     }
     ;
 
+/* order_by_and_page_statement
+    : order_by_clause %prec LOWER_THAN_LIMIT {
+
+    }
+    | order_by_clause offset_clause %prec LOWER_THAN_LIMIT {
+
+    }
+    | order_by_clause offset_clause limit_clause {
+
+    }
+    | order_by_clause limit_clause %prec LOWER_THAN_LIMIT {
+
+    }
+    | offset_clause %prec LOWER_THAN_LIMIT {
+
+    }
+    | offset_clause limit_clause %prec LOWER_THAN_LIMIT {
+
+    }
+    | limit_clause %prec LOWER_THAN_LIMIT {
+
+    }
+    ; */
+
 opt_offset_clause
-    : %empty {
+    : %empty %prec LOWER_THAN_LIMIT {
 
     }
     | offset_clause {
@@ -2713,7 +2766,7 @@ opt_offset_clause
     ;
 
 opt_limit_clause
-    : %empty {
+    : %empty %prec LOWER_THAN_LIMIT {
 
     }
     | limit_clause {
@@ -2731,7 +2784,7 @@ call_function_statement
 /* Section 15.8 Result projection statements */
 // Section 15.8.1 <primitive result statement>
 primitive_result_statement
-    : return_statement {
+    : return_statement %prec LOWER_THAN_LIMIT {
     
     }
     | return_statement order_by_and_page_statement {
@@ -2976,10 +3029,10 @@ formal_parameter_list
     : mandatory_formal_parameter_list {
 
     }
-    | mandatory_formal_parameter_list COMMA optional_formal_parameter_list {
+    | mandatory_formal_parameter_list COMMA_OPTIONAL formal_parameter_definition_list {
 
     }
-    | optional_formal_parameter_list {
+    | OPTIONAL formal_parameter_definition_list {
 
     }
     ;
@@ -2990,11 +3043,11 @@ mandatory_formal_parameter_list
     }
     ;
 
-optional_formal_parameter_list
+/* optional_formal_parameter_list
     : OPTIONAL formal_parameter_definition_list {
 
     }
-    ;
+    ; */
 
 formal_parameter_declaration_list
     : formal_parameter_declaration {
@@ -3690,15 +3743,23 @@ any_shortest_path_search
     }
     ;
 
+// TODO number_of_paths number_of_groups
 counted_shortest_path_search
-    : SHORTEST number_of_paths opt_path_mode opt_path_or_paths {
+    : SHORTEST number_of_paths_or_groups opt_path_mode opt_path_or_paths {
 
     }
     ;
 
+// TODO
 counted_shortest_group_search
-    : SHORTEST number_of_groups opt_path_mode opt_path_or_paths group_or_groups {
+    : SHORTEST number_of_paths_or_groups opt_path_mode opt_path_or_paths group_or_groups {
       
+    }
+    ;
+
+number_of_paths_or_groups 
+    : unsigned_integer_specification {
+
     }
     ;
 
@@ -4168,7 +4229,7 @@ yield_item_alias
 
 // Section 16.17 <group by clause>
 group_by_clause
-    : GROUP BY grouping_element_list {
+    : GROUP_BY grouping_element_list {
 
     }
     ;
@@ -4211,7 +4272,7 @@ order_by_clause
 
 // Section 16.19 <aggregate function>
 aggregate_function
-    : COUNT LEFT_PAREN ASTERISK RIGHT_PAREN {
+    : COUNT LEFT_PAREN_ASTERISK_RIGHT_PAREN {
 
     }
     | general_set_function {
@@ -4440,7 +4501,10 @@ catalog_graph_reference
 
 // TODO 可能要避免这种写法.. y := opt_xxx a
 catalog_graph_parent_and_name
-    : graph_parent_specification graph_name {
+    : graph_name {
+    
+    }
+    | graph_parent_specification graph_name {
     
     }
     | url_path_parameter {
@@ -4450,10 +4514,7 @@ catalog_graph_parent_and_name
 
 // TODO
 graph_parent_specification
-    : %empty {
-    
-    }
-    | parent_catalog_object_reference {
+    : parent_catalog_object_reference {
     
     }
     | parent_catalog_object_reference qualified_object_name_and_period {
@@ -4569,6 +4630,7 @@ qualified_graph_type_name
     ;
 
 // Section 17.4 Binding table references
+// TODO
 binding_table_reference
     : binding_table_resolution_expression {
 
@@ -4597,7 +4659,10 @@ catalog_binding_table_reference
     ;
 
 catalog_binding_table_parent_and_name
-    : binding_table_parent_specification binding_table_name {
+    : binding_table_name {
+
+    }
+    | binding_table_parent_specification binding_table_name {
 
     }
     | url_path_parameter {
@@ -4605,8 +4670,20 @@ catalog_binding_table_parent_and_name
     }
     ;
 
-binding_table_parent_specification
+// TODO
+/* binding_table_parent_specification
     : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
+
+    }
+    ; */
+binding_table_parent_specification
+    : parent_catalog_object_reference {
+    
+    }
+    | parent_catalog_object_reference qualified_object_name_and_period {
+
+    }
+    | qualified_object_name_and_period {
 
     }
     ;
@@ -4652,7 +4729,10 @@ catalog_procedure_reference
     ;
 
 catalog_procedure_parent_and_name
-    : procedure_parent_specification procedure_name {
+    : procedure_name {
+
+    }
+    | procedure_parent_specification procedure_name {
 
     }
     | url_path_parameter {
@@ -4660,8 +4740,21 @@ catalog_procedure_parent_and_name
     }
     ;
 
-procedure_parent_specification
+// TODO
+/* procedure_parent_specification
     : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
+
+    }
+    ; */
+
+procedure_parent_specification
+    : parent_catalog_object_reference {
+    
+    }
+    | parent_catalog_object_reference qualified_object_name_and_period {
+
+    }
+    | qualified_object_name_and_period {
 
     }
     ;
@@ -4707,7 +4800,10 @@ catalog_query_reference
     ;
 
 catalog_query_parent_and_name
-    : query_parent_specification query_name {
+    : query_name {
+
+    }
+    | query_parent_specification query_name {
 
     }
     | url_path_parameter {
@@ -4715,8 +4811,20 @@ catalog_query_parent_and_name
     }
     ;
 
-query_parent_specification
+// TODO
+/* query_parent_specification
     : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
+
+    }
+    ; */
+query_parent_specification
+    : parent_catalog_object_reference {
+    
+    }
+    | parent_catalog_object_reference qualified_object_name_and_period {
+
+    }
+    | qualified_object_name_and_period {
 
     }
     ;
@@ -4760,7 +4868,10 @@ catalog_function_reference
     ;
 
 catalog_function_parent_and_name
-    : function_parent_specification function_name {
+    : function_name {
+
+    }
+    | function_parent_specification function_name {
 
     }
     | url_path_parameter {
@@ -4768,8 +4879,20 @@ catalog_function_parent_and_name
     }
     ;
 
-function_parent_specification
+// TODO
+/* function_parent_specification
     : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
+
+    }
+    ; */
+function_parent_specification
+    : parent_catalog_object_reference {
+    
+    }
+    | parent_catalog_object_reference qualified_object_name_and_period {
+
+    }
+    | qualified_object_name_and_period {
 
     }
     ;
@@ -6449,10 +6572,10 @@ multiset_value_expression
     : multiset_term {
 
     }
-    | multiset_value_expression MULTISET UNION opt_all_or_distinct multiset_term {
+    | multiset_value_expression MULTISET_UNION opt_all_or_distinct multiset_term {
 
     }
-    | multiset_value_expression MULTISET EXCEPT opt_all_or_distinct multiset_term {
+    | multiset_value_expression MULTISET_EXCEPT opt_all_or_distinct multiset_term {
 
     }
     ;
@@ -6480,7 +6603,7 @@ multiset_term
     : multiset_primary {
 
     }
-    | multiset_term MULTISET INTERSECT opt_all_or_distinct multiset_primary {
+    | multiset_term MULTISET_INTERSECT opt_all_or_distinct multiset_primary {
 
     }
     ;
@@ -6826,13 +6949,14 @@ when_operand
     }
     ;
 
+// TODO NULL seems redudant
 result
     : result_expression {
       
     }
-    | NULL {
+    /* | NULL {
       
-    }
+    } */
     ;
 
 result_expression
@@ -6848,13 +6972,14 @@ cast_specification
     }
     ;
 
+// TODO null_literal seems redudant here
 cast_operand
     : value_expression {
       
     }
-    | null_literal {
+    /* | null_literal {
       
-    }
+    } */
     ;
 
 cast_target
@@ -7541,7 +7666,10 @@ value_type
     ;
 
 of_value_type
-    : opt_of_type_prefix value_type {
+    : value_type {
+      
+    }
+    | of_type_prefix value_type {
       
     }
     ;
