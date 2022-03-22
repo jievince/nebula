@@ -138,6 +138,8 @@ static constexpr size_t kCommentLengthLimit = 256;
 %token COMMA_OPTIONAL
 %token GROUP_BY
 %token LEFT_PAREN_ASTERISK_RIGHT_PAREN
+%token NODE_SYNONYM EDGE_SYNONYM GRAPH_SYNONYM GRAPH_TYPE_SYNONYM BINDING_TABLE_SYNONYM
+%token IF_EXISTS IF_NOT_EXISTS
 // 没有解决冲突的合并
 /* %token TIME_ZONE CATALOG_PROCEDURE COPY_OF */
 
@@ -943,7 +945,7 @@ parameter_definition
 
 // Section 10.6 Graph variable and parameter declaration and definition
 graph_variable_declaration
-    : property_graph_synonym graph_variable of_graph_type {
+    : GRAPH_SYNONYM graph_variable of_graph_type {
 
     }
     ;
@@ -956,14 +958,14 @@ graph_variable_declaration
     ; */
 
 graph_variable_definition
-    : property_graph_synonym graph_variable of_graph_type graph_initializer {
+    : GRAPH_SYNONYM graph_variable of_graph_type graph_initializer {
       
     }
     ;
 
 // TODO seems it should use <parameter> instead of PARAMETER_NAME here
 graph_parameter_definition
-    : property_graph_synonym parameter opt_if_not_exists of_graph_type graph_initializer {
+    : GRAPH_SYNONYM parameter opt_if_not_exists of_graph_type graph_initializer {
 
     }
     ;
@@ -991,7 +993,7 @@ graph_initializer
 
 // Section 10.7 Binding table variable and parameter declaration and definition
 binding_table_variable_declaration
-    : binding_table_synonym binding_table_variable of_binding_table_type
+    : BINDING_TABLE_SYNONYM binding_table_variable of_binding_table_type
     ;
 
 // INACTIVE PARSING RULES
@@ -1002,13 +1004,13 @@ binding_table_variable_declaration
     ; */
 
 binding_table_variable_definition
-    : binding_table_synonym binding_table_variable of_binding_table_type binding_table_initializer {
+    : BINDING_TABLE_SYNONYM binding_table_variable of_binding_table_type binding_table_initializer {
 
     }
     ;
 
 binding_table_parameter_definition
-    : binding_table_synonym parameter opt_if_not_exists of_binding_table_type binding_table_initializer {
+    : BINDING_TABLE_SYNONYM parameter opt_if_not_exists of_binding_table_type binding_table_initializer {
       
     }
     ;
@@ -1061,13 +1063,13 @@ value_parameter_definition
     : VALUE parameter value_initializer {
 
     }
-    | VALUE parameter if_not_exists value_initializer {
+    | VALUE parameter IF_NOT_EXISTS value_initializer {
 
     }
     | VALUE parameter of_value_type value_initializer {
 
     }
-    | VALUE parameter if_not_exists of_value_type value_initializer {
+    | VALUE parameter IF_NOT_EXISTS of_value_type value_initializer {
 
     }
     ;
@@ -1076,7 +1078,7 @@ opt_if_not_exists
     : %empty {
 
     }
-    | if_not_exists {
+    | IF_NOT_EXISTS {
 
     }
     ;
@@ -1179,7 +1181,7 @@ copy_graph_type_expression
     ;
 
 like_graph_expression
-    : property_graph_synonym TYPE like_graph_expression_shorthand {
+    : GRAPH_TYPE_SYNONYM like_graph_expression_shorthand {
 
     }
     ;
@@ -1222,13 +1224,13 @@ binding_table_type_expression
     ;
 
 binding_table_type
-    : binding_table_synonym record_value_type {
+    : BINDING_TABLE_SYNONYM record_value_type {
 
     }
     ;
 
 like_binding_table_type
-    : binding_table_synonym like_binding_table_shorthand {
+    : BINDING_TABLE_SYNONYM like_binding_table_shorthand {
 
     }
     ;
@@ -1501,17 +1503,17 @@ opt_if_exists
     : %empty {
 
     }
-    | if_exists {
+    | IF_EXISTS {
 
     }
     ;
 
 // Section 13.4 <create graph statement>
 create_graph_statement
-    : CREATE property_graph_synonym catalog_graph_parent_and_name opt_if_not_exists opt_of_graph_type opt_graph_source {
+    : CREATE GRAPH_SYNONYM catalog_graph_parent_and_name opt_if_not_exists opt_of_graph_type opt_graph_source {
 
     }
-    | CREATE OR REPLACE property_graph_synonym catalog_graph_parent_and_name opt_of_graph_type opt_graph_source {
+    | CREATE OR REPLACE GRAPH_SYNONYM catalog_graph_parent_and_name opt_of_graph_type opt_graph_source {
 
     }
     ;
@@ -1542,10 +1544,10 @@ graph_source
 
 // Section 13.5 <graph specification>
 graph_specification
-    : property_graph_synonym nested_graph_query_specification {
+    : GRAPH_SYNONYM nested_graph_query_specification {
 
     }
-    | property_graph_synonym nested_ambient_data_modifying_procedure_specification {
+    | GRAPH_SYNONYM nested_ambient_data_modifying_procedure_specification {
 
     }
     ;
@@ -1571,10 +1573,10 @@ drop_graph_statement
 
 // Section 13.7 <create graph type statement>
 create_graph_type_statement
-    : CREATE property_graph_synonym TYPE opt_if_not_exists graph_type_initializer {
+    : CREATE GRAPH_TYPE_SYNONYM opt_if_not_exists graph_type_initializer {
 
     }
-    | CREATE OR REPLACE property_graph_synonym TYPE graph_type_initializer {
+    | CREATE OR REPLACE GRAPH_TYPE_SYNONYM graph_type_initializer {
 
     }
     ;
@@ -1590,7 +1592,7 @@ graph_type_initializer
 
 // Section 13.8 <graph type specification>
 graph_type_specification
-    : property_graph_synonym TYPE nested_graph_type_specification {
+    : GRAPH_TYPE_SYNONYM nested_graph_type_specification {
 
     }
     ;
@@ -1639,10 +1641,10 @@ node_type_definition
     | LEFT_PAREN node_type_filler RIGHT_PAREN {
 
     }
-    | node_synonym node_type_name node_type_filler {
+    | NODE_SYNONYM node_type_name node_type_filler {
 
     }
-    | node_synonym TYPE node_type_name node_type_filler {
+    | NODE_SYNONYM TYPE node_type_name node_type_filler {
       
     }
     ;
@@ -1706,10 +1708,10 @@ edge_type_definition
     | abbreviated_edge_type_pattern {
 
     }
-    | edge_kind edge_synonym edge_type_name edge_type_filler endpoint_definition {
+    | edge_kind EDGE_SYNONYM edge_type_name edge_type_filler endpoint_definition {
 
     }
-    | edge_kind edge_synonym TYPE edge_type_name edge_type_filler endpoint_definition {
+    | edge_kind EDGE_SYNONYM TYPE edge_type_name edge_type_filler endpoint_definition {
 
     }
     ;
@@ -2003,7 +2005,7 @@ property_type_definition
 
 // Section 13.13 <drop graph type statement>
 drop_graph_type_statement
-    : DROP property_graph_synonym TYPE catalog_graph_type_parent_and_name opt_if_exists {
+    : DROP GRAPH_TYPE_SYNONYM catalog_graph_type_parent_and_name opt_if_exists {
 
     }
     ;
@@ -4482,7 +4484,7 @@ graph_reference
     ;
 
 graph_resolution_expression
-    : property_graph_synonym catalog_graph_reference {
+    : GRAPH_SYNONYM catalog_graph_reference {
     
     }
     ;
@@ -4574,7 +4576,7 @@ graph_type_reference
     ;
 
 graph_type_resolution_expression
-    : property_graph_synonym TYPE catalog_graph_type_reference {
+    : GRAPH_TYPE_SYNONYM catalog_graph_type_reference {
 
     }
     ;
@@ -4641,7 +4643,7 @@ binding_table_reference
     ;
 
 binding_table_resolution_expression
-    : binding_table_synonym catalog_binding_table_reference {
+    : BINDING_TABLE_SYNONYM catalog_binding_table_reference {
 
     }
     ;
@@ -7966,16 +7968,10 @@ temporal_type
     ;
 
 graph_element_type
-    : NODE {
+    : NODE_SYNONYM {
 
     }
-    | VERTEX {
-
-    }
-    | EDGE {
-
-    }
-    | RELATIONSHIP {
+    | EDGE_SYNONYM {
 
     }
     ;
@@ -8221,54 +8217,6 @@ identifier
     : extended_identifier
     | delimited_identifier
     ; */
-
-edge_synonym
-    : EDGE {
-      
-    }
-    | RELATIONSHIP {
-      
-    }
-    ;
-
-node_synonym
-    : NODE {
-      
-    }
-    | VERTEX {
-      
-    }
-    ;
-
-binding_table_synonym
-    : TABLE {
-
-    }
-    | BINDING TABLE {
-
-    }
-    ;
-
-property_graph_synonym
-    : GRAPH {
-
-    }
-    | PROPERTY GRAPH {
-
-    }
-    ;
-
-if_exists
-    : IF EXISTS {
-
-    }
-    ;
-
-if_not_exists
-    : IF NOT EXISTS {
-
-    }
-    ;
 
 string_or_varchar
     : STRING {
