@@ -2972,8 +2972,13 @@ return_item_alias
     ;
 
 // Section 15.8.3 <select statement>
+// TODO remove opt_where_clause due to conflicts
 select_statement
-    : SELECT opt_set_quantifier select_item_list select_statement_body opt_where_clause opt_group_by_clause opt_having_clause opt_order_by_clause opt_offset_clause opt_limit_clause {
+    :
+    // SELECT opt_set_quantifier select_item_list select_statement_body opt_where_clause opt_group_by_clause opt_having_clause opt_order_by_clause opt_offset_clause opt_limit_clause {
+
+    // }
+    SELECT opt_set_quantifier select_item_list select_statement_body opt_group_by_clause opt_having_clause opt_order_by_clause opt_offset_clause opt_limit_clause {
 
     }
     ;
