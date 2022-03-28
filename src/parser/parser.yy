@@ -15,8 +15,8 @@
 // %define parse.error verbose
 
 // Define token.
-/* %define api.value.type variant */
-/* %define api.token.constructor */
+// %define api.value.type variant
+// %define api.token.constructor
 %define api.token.prefix {TOK_}
 
 
@@ -132,7 +132,6 @@ static constexpr size_t kCommentLengthLimit = 256;
 
 // special
 
-/* %token  SESSION_SET */
 %token IS_SOURCE IS_NOT_SOURCE IS_DESTINATION IS_NOT_DESTINATION IS_NULL IS_NOT_NULL IS_NOT IS_DIRECTED IS_NOT_DIRECTED IS_LABELED IS_NOT_LABELED
 %token SESSION_CLEAR SESSION_CLOSE SESSION_REMOVE SESSION_SET
 %token COMMA_OPTIONAL
@@ -144,10 +143,10 @@ static constexpr size_t kCommentLengthLimit = 256;
 %token OPTIONAL_LET MANDATORY_LET OPTIONAL_FOR MANDATORY_FOR
 %token SOLIDUS_DOUBLE_PERIOD // TODO CHECK if SOLIDUS and DOUBLE_PERIOD could be used separately
 // 没有解决冲突的合并
-/* %token TIME_ZONE CATALOG_PROCEDURE COPY_OF */
-/* %token EQUALS_OPERATOR_TRUE EQUALS_OPERATOR_FALSE EQUALS_OPERATOR_UNKNOWN EQUALS_OPERATOR_NULL
-%token NOT_EQUALS_OPERATOR_TRUE NOT_EQUALS_OPERATOR_FALSE NOT_EQUALS_OPERATOR_UNKNOWN NOT_EQUALS_OPERATOR_NULL
-%token IS_TRUE IS_FALSE IS_UNKNOWN IS_NOT_TRUE IS_NOT_FALSE IS_NOT_UNKWON */
+// %token TIME_ZONE CATALOG_PROCEDURE COPY_OF
+// %token EQUALS_OPERATOR_TRUE EQUALS_OPERATOR_FALSE EQUALS_OPERATOR_UNKNOWN EQUALS_OPERATOR_NULL
+// %token NOT_EQUALS_OPERATOR_TRUE NOT_EQUALS_OPERATOR_FALSE NOT_EQUALS_OPERATOR_UNKNOWN NOT_EQUALS_OPERATOR_NULL
+// %token IS_TRUE IS_FALSE IS_UNKNOWN IS_NOT_TRUE IS_NOT_FALSE IS_NOT_UNKWON
 
 // dummy token
 %token DUMMY_CATALOG_PROCEDURE_FLAG DUMMY_DATA_PROCEDURE_FLAG DUMMY_QUERY_FLAG DUMMY_FUNCTION_FLAG
@@ -187,22 +186,22 @@ static constexpr size_t kCommentLengthLimit = 256;
 %token CHARACTER_STRING_LITERAL
 %token UNSIGNED_DECIMAL_INTEGER UNSIGNED_HEXADECIMAL_INTEGER UNSIGNED_OCTAL_INTEGER UNSIGNED_BINARY_INTEGER
 
-/* // Precedence: lowest to highest.
-%nonassoc   SET
-%left       UNION EXCEPT
-%left       INTERSECT
-%left       OR
-%left       XOR
-%left       AND
-%right      NOT EXCLAMATION_MARK
-// %nonassoc   IS ISNULL NOTNULL                                // IS sets precedence for IS NULL, etc.
-%left       LEFT_ANGLE_BRACKET RIGHT_ANGLE_BRACKET EQUALS_OPERATOR LESS_THAN_OR_EQUALS_OPERATOR GREATER_THAN_OR_EQUALS_OPERATOR NOT_EQUALS_OPERATOR
-%nonassoc   LIKE
+// Precedence: lowest to highest.
+// %nonassoc   SET
+// %left       UNION EXCEPT
+// %left       INTERSECT
+// %left       OR
+// %left       XOR
+// %left       AND
+// %right      NOT EXCLAMATION_MARK
+// // %nonassoc   IS ISNULL NOTNULL                                // IS sets precedence for IS NULL, etc.
+// %left       LEFT_ANGLE_BRACKET RIGHT_ANGLE_BRACKET EQUALS_OPERATOR LESS_THAN_OR_EQUALS_OPERATOR GREATER_THAN_OR_EQUALS_OPERATOR NOT_EQUALS_OPERATOR
+// %nonassoc   LIKE
 
-%left   VERTICAL_BAR
-%left   AMPERSAND SOLIDUS PERCENT
-%left   MINUS_SIGN PLUS_SIGN
-%left   ASTERISK  */
+// %left   VERTICAL_BAR
+// %left   AMPERSAND SOLIDUS PERCENT
+// %left   MINUS_SIGN PLUS_SIGN
+// %left   ASTERISK
 
 %nonassoc LOWER_THAN_PROCEDURE_SPECIFICATION
 %nonassoc AGGREGATE AT CALL CATALOG CREATE DELETE DETACH DO DROP END FILTER FOR FROM FUNCTION
@@ -240,19 +239,15 @@ static constexpr size_t kCommentLengthLimit = 256;
 
 %%
 
-/* Chapter 6 GQL-requests */
+// Chapter 6 GQL-requests
 // Section 6.1 <GQL-request>
 GQL_request
-    :
-    GQL_program {
+    : GQL_program {
 
     }
     | request_parameter_set SEMICOLON GQL_program {
 
     }
-    /* procedure_specification {
-
-    } */
     ;
 
 // Section 6.2 <request parameter set>
@@ -372,7 +367,7 @@ session_parameter_command
     }
     ;
 
-// TODO BNF有bug: start_transaction_command procedure_specification 1,2 end_transaction_command可以是一个transcation_activity也可以是两个
+// TODO
 transaction_activity
     : start_transaction_command %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
     
@@ -424,7 +419,7 @@ preamble_option_identifier
     }
     ;
 
-/* Chapter 7 Session management */
+// Chapter 7 Session management
 // Section 7.1 <session set command>
 session_set_command
     : SESSION_SET session_set_schema_clause {
@@ -487,10 +482,10 @@ opt_session_parameter_flag
 // TODO
 session_parameter
     :
-    /* parameter_definition {
+    // parameter_definition {
 
-    }
-    | */
+    // }
+    // |
     PARAMETER parameter_definition {
 
     }
@@ -510,9 +505,9 @@ session_remove_command
     : SESSION_REMOVE parameter opt_if_exists {
 
     }
-    /* | REMOVE parameter opt_if_exists {
+    // | REMOVE parameter opt_if_exists {
 
-    } */
+    // }
     ;
 
 // Section 7.3 <session clear command>
@@ -566,9 +561,9 @@ transaction_mode
 
     }
     // TODO
-    /* | implementation_defined_access_mode {
+    // | implementation_defined_access_mode {
 
-    } */
+    // }
     ;
 
 transaction_access_mode
@@ -600,7 +595,7 @@ commit_command
     }
     ;
 
-/* Chapter 9 Procedures */
+// Chapter 9 Procedures
 // Section 9.1 <procedure specification>
 nested_procedure_specification
     : LEFT_BRACE procedure_specification RIGHT_BRACE {
@@ -608,10 +603,10 @@ nested_procedure_specification
     }
     ;
 
-/* Rules for the derivation of the procedure signature of a <procedure specification>, a
-<catalog-modifying procedure specification>, a <data-modifying procedure specification>,
-a <query specification>, and a <function specification> from their <procedure body> need
-to be specified. See Possible Problem GQL-021 . */
+// Rules for the derivation of the procedure signature of a <procedure specification>, a
+// <catalog-modifying procedure specification>, a <data-modifying procedure specification>,
+// a <query specification>, and a <function specification> from their <procedure body> need
+// to be specified. See Possible Problem GQL-021 .
 // TODO
 procedure_specification
     : catalog_modifying_procedure_specification {
@@ -629,11 +624,11 @@ procedure_specification
     ;
 
 // INACTIVE PARSING RULES
-/* nested_catalog_modifying_procedure_specification
-    : LEFT_BRACE catalog_modifying_procedure_specification RIGHT_BRACE {
+// nested_catalog_modifying_procedure_specification
+//     : LEFT_BRACE catalog_modifying_procedure_specification RIGHT_BRACE {
 
-    }
-    ; */
+//     }
+//     ;
 
 catalog_modifying_procedure_specification
     : 
@@ -757,7 +752,7 @@ then_statement
     }
     ;
 
-/* Chapter 10 Variable and parameter declarations and definitions */
+// Chapter 10 Variable and parameter declarations and definitions
 // Section 10.1 Static variable definitions
 static_variable_definition
     : procedure_variable_definition {
@@ -867,14 +862,14 @@ function_initializer
 
 // Section 10.5 Binding variable and parameter declarations and definitions
 // INACTIVE PARSING RULES
-/* compact_variable_declaration_list
-    : compact_variable_declaration {
+// compact_variable_declaration_list
+//     : compact_variable_declaration {
 
-    }
-    | compact_variable_declaration_list COMMA compact_variable_declaration {
+//     }
+//     | compact_variable_declaration_list COMMA compact_variable_declaration {
 
-    }
-    ; */
+//     }
+//     ;
 
 compact_variable_declaration
     : binding_variable_declaration {
@@ -929,14 +924,14 @@ compact_value_variable_definition
     ;
 
 // INACTIVE PARSING RULES
-/* binding_variable_definition_list
-    : binding_variable_definition {
+// binding_variable_definition_list
+//     : binding_variable_definition {
 
-    }
-    | binding_variable_definition_list COMMA binding_variable_definition {
+//     }
+//     | binding_variable_definition_list COMMA binding_variable_definition {
 
-    }
-    ; */
+//     }
+//     ;
 
 binding_variable_definition
     : graph_variable_definition {
@@ -951,27 +946,27 @@ binding_variable_definition
     ;
 
 // INACTIVE PARSING RULES
-/* optional_binding_variable_definition_list
-    : optional_binding_variable_definition {
+// optional_binding_variable_definition_list
+//     : optional_binding_variable_definition {
 
-    }
-    | optional_binding_variable_definition_list COMMA optional_binding_variable_definition {
+//     }
+//     | optional_binding_variable_definition_list COMMA optional_binding_variable_definition {
 
-    }
-    ; */
+//     }
+//     ;
 
 // INACTIVE PARSING RULES
-/* optional_binding_variable_definition
-    : optional_graph_variable_definition {
+// optional_binding_variable_definition
+//     : optional_graph_variable_definition {
 
-    }
-    | optional_binding_table_variable_definition {
+//     }
+//     | optional_binding_table_variable_definition {
 
-    }
-    | optional_value_variable_definition {
+//     }
+//     | optional_value_variable_definition {
 
-    }
-    ; */
+//     }
+//     ;
 
 parameter_definition
     : graph_parameter_definition {
@@ -993,11 +988,11 @@ graph_variable_declaration
     ;
 
 // INACTIVE PARSING RULES
-/* optional_graph_variable_definition
-    : graph_variable_definition {
+// optional_graph_variable_definition
+//     : graph_variable_definition {
 
-    }
-    ; */
+//     }
+//     ;
 
 graph_variable_definition
     : GRAPH_SYNONYM graph_variable of_graph_type graph_initializer {
@@ -1039,11 +1034,11 @@ binding_table_variable_declaration
     ;
 
 // INACTIVE PARSING RULES
-/* optional_binding_table_variable_definition
-    : binding_table_variable_definition {
+// optional_binding_table_variable_definition
+//     : binding_table_variable_definition {
 
-    }
-    ; */
+//     }
+//     ;
 
 binding_table_variable_definition
     : BINDING_TABLE_SYNONYM binding_table_variable of_binding_table_type binding_table_initializer {
@@ -1086,11 +1081,11 @@ value_variable_declaration
     ;
 
 // INACTIVE PARSING RULES
-/* optional_value_variable_definition
-    : value_variable_definition {
+// optional_value_variable_definition
+//     : value_variable_definition {
 
-    }
-    ; */
+//     }
+//     ;
 
 value_variable_definition
     : VALUE value_variable value_initializer {
@@ -1162,19 +1157,19 @@ value_initializer
     }
     ;
 
-/* Chapter 11 Object expressions */
+// Chapter 11 Object expressions
 // Section 11.2 <primary result object expression>
 // TODO primary_result_object_expression is non-deterministic
 // eg. graph_expression is conflicted with binding_table_reference here
 // eg. both of them are conflicted with binding_variable -> non_parenthesized_value_expression_primary -> value_expression_primary -> generic_term
-/* primary_result_object_expression
-    : graph_expression {
+// primary_result_object_expression
+//     : graph_expression {
 
-    }
-    | binding_table_reference {
+//     }
+//     | binding_table_reference {
 
-    }
-    ; */
+//     }
+//     ;
 primary_result_object_expression
     : GRAPH_SYNONYM  graph_expression {
 
@@ -1301,7 +1296,7 @@ like_binding_table_shorthand
     }
     ;
 
-/* Chapter 12 Statements */
+// Chapter 12 Statements
 // Section 12.1 <statement>
 statement
     : catalog_modifying_statement {
@@ -1528,7 +1523,7 @@ primitive_data_transforming_statement
     }
     ;
 
-/* Chapter 13 Catalog-modifying statements */
+// Chapter 13 Catalog-modifying statements
 // Section 13.1 <linear catalog-modifying statement>
 // TODO list, 原地展开, 还是加一条新规则: simple_catalog_modifying_statement_list
 linear_catalog_modifying_statement
@@ -1994,9 +1989,9 @@ connector_pointing_right
     : RIGHT_ARROW {
 
     }
-    /* | TO {
+    // | TO {
 
-    } */
+    // }
     ;
 
 // TODO error?
@@ -2004,9 +1999,9 @@ connector_any_direction
     : TILDE {
 
     }
-    /* | TO {
+    // | TO {
 
-    } */
+    // }
     ;
 
 source_node_type_name
@@ -2133,7 +2128,7 @@ call_catalog_modifying_procedure_statement
     }
     ;
 
-/* Chapter 14 Data-modifying statements */
+// Chapter 14 Data-modifying statements
 // Section 14.1 <linear data-modifying statement>
 linear_data_modifying_statement
     : focused_linear_data_modifying_statement {
@@ -2150,33 +2145,33 @@ focused_linear_data_modifying_statement
     }
     ;
 
-/* focused_linear_data_modifying_statement_body_list
-    : focused_linear_data_modifying_statement_body {
+// focused_linear_data_modifying_statement_body_list
+//     : focused_linear_data_modifying_statement_body {
 
-    }
-    | focused_linear_data_modifying_statement_body_list focused_linear_data_modifying_statement_body {
+//     }
+//     | focused_linear_data_modifying_statement_body_list focused_linear_data_modifying_statement_body {
 
-    }
-    ; */
+//     }
+//     ;
 
-// TODO?
-/* focused_linear_data_modifying_statement_body
-    : simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list {
+// // TODO?
+// focused_linear_data_modifying_statement_body
+//     : simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list {
 
-    }
-    | use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list {
+//     }
+//     | use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list {
 
-    }
-    | simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
+//     }
+//     | simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
 
-    }
-    | use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
+//     }
+//     | use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
 
-    }
-    | nested_data_modifying_procedure_specification {
+//     }
+//     | nested_data_modifying_procedure_specification {
 
-    }
-    ; */
+//     }
+//     ;
 
 focused_linear_data_modifying_statement_body
     : focused_linear_data_modifying_statement_body_item {
@@ -2231,29 +2226,29 @@ use_graph_clause_and_simple_linear_query_statement_list
     ;
 
 // TODO remove a maybe reduant rule
-/* use_graph_clause_and_simple_linear_query_statement
-    : use_graph_clause simple_linear_query_statement {
+// use_graph_clause_and_simple_linear_query_statement
+//     : use_graph_clause simple_linear_query_statement {
 
-    }
-    ; */
+//     }
+//     ;
 
-/* opt_simple_data_accessing_statement_list
-    : %empty {
+// opt_simple_data_accessing_statement_list
+//     : %empty {
 
-    }
-    | simple_data_accessing_statement_list {
+//     }
+//     | simple_data_accessing_statement_list {
 
-    }
-    ; */
+//     }
+//     ;
   
-/* simple_data_accessing_statement_list
-    : simple_data_accessing_statement {
+// simple_data_accessing_statement_list
+//     : simple_data_accessing_statement {
 
-    }
-    | simple_data_accessing_statement_list simple_data_accessing_statement {
+//     }
+//     | simple_data_accessing_statement_list simple_data_accessing_statement {
 
-    }
-    ; */
+//     }
+//     ;
 
 opt_use_graph_clause_and_simple_data_accessing_statement_list
     : %empty {
@@ -2267,21 +2262,21 @@ opt_use_graph_clause_and_simple_data_accessing_statement_list
     }
     ;
 
-/* use_graph_clause_and_simple_data_accessing_statement_list
-    : use_graph_clause simple_data_accessing_statement {
+// use_graph_clause_and_simple_data_accessing_statement_list
+//     : use_graph_clause simple_data_accessing_statement {
 
-    }
-    | use_graph_clause_and_simple_data_accessing_statement_list use_graph_clause simple_data_accessing_statement {
+//     }
+//     | use_graph_clause_and_simple_data_accessing_statement_list use_graph_clause simple_data_accessing_statement {
 
-    }
-    ; */
+//     }
+//     ;
 
-/* // TODO remove a maybe reduant rule
-use_graph_clause_and_simple_data_accessing_statement
-    : use_graph_clause simple_data_accessing_statement {
+// // TODO remove a maybe reduant rule
+// use_graph_clause_and_simple_data_accessing_statement
+//     : use_graph_clause simple_data_accessing_statement {
 
-    }
-    ; */
+//     }
+//     ;
 
 opt_primitive_result_statement
     : %empty {
@@ -2293,17 +2288,17 @@ opt_primitive_result_statement
     ;
 
 // TODO combine the rule, and do the check in the action
-/* ambient_linear_data_modifying_statement
-    : simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
+// ambient_linear_data_modifying_statement
+//     : simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
 
-    }
-    | simple_linear_query_statement simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
+//     }
+//     | simple_linear_query_statement simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
 
-    }
-    | nested_data_modifying_procedure_specification {
+//     }
+//     | nested_data_modifying_procedure_specification {
 
-    }
-    ; */
+//     }
+//     ;
 
 ambient_linear_data_modifying_statement
     : simple_data_accessing_statement_list { std::cerr << "hello"; } opt_primitive_result_statement {
@@ -2384,9 +2379,9 @@ insert_statement
     | OPTIONAL_INSERT simple_graph_pattern opt_when_clause {
 
     }
-    /* | OPTIONAL_INSERT simple_graph_pattern where_clause {
+    // | OPTIONAL_INSERT simple_graph_pattern where_clause {
 
-    } */
+    // }
     ;
 
 opt_when_clause
@@ -2450,10 +2445,10 @@ set_label_item
     }
     ;
 
-/* TODO error syntax?
-<label set expression> ::=
-<AMPERSAND> <label>... { <AMPERSAND> <label>... }
-*/
+// TODO error syntax?
+// <label set expression> ::=
+// <AMPERSAND> <label>... { <AMPERSAND> <label>... }
+
 label_set_expression
     : AMPERSAND label_list {
 
@@ -2540,7 +2535,7 @@ call_data_modifying_procedure_statement
     }
     ;
 
-/* Chapter 15 Query statements */
+// Chapter 15 Query statements
 // Section 15.1 <composite query statement>
 composite_query_statement
     : composite_query_expression {
@@ -2707,7 +2702,7 @@ simple_query_statement_list
     }
     ;
 
-/* Section 15.6 Data-reading statements */
+// Section 15.6 Data-reading statements
 // Section 15.6.1 <match statement>
 match_statement
     : MATCH graph_pattern {
@@ -2728,7 +2723,7 @@ call_query_statement
     }
     ;
 
-/* Section 15.7 Data-transforming statements */
+// Section 15.7 Data-transforming statements
 // Section 15.7.1 <mandatory statement>
 mandatory_statement
     : MANDATORY procedure_call {
@@ -2863,29 +2858,29 @@ order_by_and_page_statement
     }
     ;
 
-/* order_by_and_page_statement
-    : order_by_clause %prec LOWER_THAN_LIMIT {
+// order_by_and_page_statement
+//     : order_by_clause %prec LOWER_THAN_LIMIT {
 
-    }
-    | order_by_clause offset_clause %prec LOWER_THAN_LIMIT {
+//     }
+//     | order_by_clause offset_clause %prec LOWER_THAN_LIMIT {
 
-    }
-    | order_by_clause offset_clause limit_clause {
+//     }
+//     | order_by_clause offset_clause limit_clause {
 
-    }
-    | order_by_clause limit_clause %prec LOWER_THAN_LIMIT {
+//     }
+//     | order_by_clause limit_clause %prec LOWER_THAN_LIMIT {
 
-    }
-    | offset_clause %prec LOWER_THAN_LIMIT {
+//     }
+//     | offset_clause %prec LOWER_THAN_LIMIT {
 
-    }
-    | offset_clause limit_clause %prec LOWER_THAN_LIMIT {
+//     }
+//     | offset_clause limit_clause %prec LOWER_THAN_LIMIT {
 
-    }
-    | limit_clause %prec LOWER_THAN_LIMIT {
+//     }
+//     | limit_clause %prec LOWER_THAN_LIMIT {
 
-    }
-    ; */
+//     }
+//     ;
 
 opt_offset_clause
     : %empty %prec LOWER_THAN_LIMIT {
@@ -2912,7 +2907,7 @@ call_function_statement
     }
     ;
 
-/* Section 15.8 Result projection statements */
+// Section 15.8 Result projection statements
 // Section 15.8.1 <primitive result statement>
 primitive_result_statement
     : return_statement %prec LOWER_THAN_LIMIT {
@@ -3027,9 +3022,9 @@ select_graph_match_list
     : select_graph_match {
 
     }
-    /* | select_graph_match_list COMMA select_graph_match {
+    // | select_graph_match_list COMMA select_graph_match {
 
-    } */
+    // }
     ;
 
 select_graph_match
@@ -3073,7 +3068,7 @@ project_statement
     }
     ;
 
-/* Chapter 16 Common elements */
+// Chapter 16 Common elements
 // Section 16.1 <from graph clause>
 from_graph_clause
     : FROM graph_expression {
@@ -3097,11 +3092,11 @@ at_schema_clause
 
 // Section 16.4 Named elements
 // INACTIVE PARSING RULES
-/* static_variable
-    : static_variable_name {
+// static_variable
+//     : static_variable_name {
 
-    }
-    ; */
+//     }
+//     ;
 
 binding_variable
     : binding_variable_name {
@@ -3176,11 +3171,11 @@ mandatory_formal_parameter_list
     }
     ;
 
-/* optional_formal_parameter_list
-    : OPTIONAL formal_parameter_definition_list {
+// optional_formal_parameter_list
+//     : OPTIONAL formal_parameter_definition_list {
 
-    }
-    ; */
+//     }
+//     ;
 
 formal_parameter_declaration_list
     : formal_parameter_declaration {
@@ -3213,14 +3208,14 @@ formal_parameter_definition
     ;
 
 // INACTIVE PARSING RULES
-/* optional_parameter_cardinality
-    : %empty {
+// optional_parameter_cardinality
+//     : %empty {
     
-    }
-    | parameter_cardinality {
+//     }
+//     | parameter_cardinality {
 
-    }
-    ; */
+//     }
+//     ;
 
 parameter_cardinality
     : SINGLE {
@@ -4285,10 +4280,10 @@ inline_procedure_call
     ;
 
 // Section 16.15 <named procedure call>
-/* ** Editor’s Note (number 294) **
-This needs to be detailed further; in particular it is necessary to describe how PROC is to be resolved statically (to
-determine its signature) vs. dynamically (to execute it). This may require re-determining which Rules in this Subclause
-are SRs and which are GRs. See Possible Problem GQL-120 . */
+// ** Editor’s Note (number 294) **
+// This needs to be detailed further; in particular it is necessary to describe how PROC is to be resolved statically (to
+// determine its signature) vs. dynamically (to execute it). This may require re-determining which Rules in this Subclause
+// are SRs and which are GRs. See Possible Problem GQL-120 .
 named_procedure_call
     : procedure_reference LEFT_PAREN opt_procedure_argument_list RIGHT_PAREN opt_yield_clause {
 
@@ -4575,7 +4570,7 @@ offset_synonym
     }
     ;
 
-/* Chapter 17 Object references */
+// Chapter 17 Object references
 // Section 17.1 Schema references
 schema_reference
     : predefined_schema_parameter {
@@ -4912,9 +4907,9 @@ parent_catalog_object_reference
     : catalog_object_reference {
 
     }
-    /* | catalog_object_reference SOLIDUS {
+    // | catalog_object_reference SOLIDUS {
 
-    } */
+    // }
     ;
 
 catalog_url_path
@@ -4932,10 +4927,10 @@ catalog_url_path
 // TODO
 absolute_url_path
     :
-    /* SOLIDUS {
+    // SOLIDUS {
 
-    }
-    | */
+    // }
+    // |
     SOLIDUS simple_url_path {
 
     }
@@ -4948,18 +4943,14 @@ relative_url_path
     | simple_relative_url_path {
 
     }
-    /* | PERIOD {
+    // | PERIOD {
 
-    } */
+    // }
     ;
 
+// TODO
 parent_object_relative_url_path
-    :
-    /* predefined_parent_object_parameter {
-    
-    }
-    | */
-    predefined_schema_parameter SOLIDUS simple_url_path {
+    : predefined_schema_parameter SOLIDUS simple_url_path {
 
     }
     | predefined_graph_parameter SOLIDUS simple_url_path {
@@ -5077,10 +5068,10 @@ external_object_reference
     }
     ;
 
-/* 3) EOU shall either be an absolute-URL character string or an absolute-URL-with-fragment character
-string as specified by URL or it alternatively shall be a URI with a mandatory scheme as specified by
-RFC 3986 and RFC 3978.
-4) EOU shall not conform to the Format for a <catalog url path>. */
+// 3) EOU shall either be an absolute-URL character string or an absolute-URL-with-fragment character
+// string as specified by URL or it alternatively shall be a URI with a mandatory scheme as specified by
+// RFC 3986 and RFC 3978.
+// 4) EOU shall not conform to the Format for a <catalog url path>.
 external_object_url
     :   //!! See_the_Syntax_Rules. // TODO
     OCCURRENCES_REGEX OCTET_LENGTH OPTIONAL {
@@ -5095,10 +5086,10 @@ element_reference
     }
     ;
 
-/* Chapter 18 Functions */
+// Chapter 18 Functions
 // All built-in (predefined) functions need to be added here
 
-/* Chapter 19 Predicates */
+// Chapter 19 Predicates
 // Section 19.1 <search condition>
 // TODO: boolean_value_expression is changed to untyped_value_expression
 search_condition
@@ -5108,14 +5099,14 @@ search_condition
     ;
 
 // Section 19.2 <predicate>
-/* predicate
-    : complex_predicate {
+// predicate
+//     : complex_predicate {
 
-    }
-    | simple_predicate {
+//     }
+//     | simple_predicate {
 
-    }
-    ; */
+//     }
+//     ;
 
 complex_predicate
     :
@@ -5363,17 +5354,17 @@ element_reference_list
     }
     ;
 
-/* Chapter 20 Value expressions */
+// Chapter 20 Value expressions
 // Section 20.1 <value specification>
 // INACTIVE PARSING RULES
-/* value_specification
-    : literal {
+// value_specification
+//     : literal {
 
-    }
-    | parameter_value_specification {
+//     }
+//     | parameter_value_specification {
 
-    }
-    ; */
+//     }
+//     ;
 
 // TODO parameter_value_specification seems redudant
 unsigned_value_specification
@@ -5502,12 +5493,12 @@ untyped_value_expression
 
     }
     // Seems reduant, because they could also produced by comparison_predicate
-    /* | untyped_value_expression EQUALS_OPERATOR truth_value {
+    // | untyped_value_expression EQUALS_OPERATOR truth_value {
 
-    }
-    | untyped_value_expression NOT_EQUALS_OPERATOR truth_value {
+    // }
+    // | untyped_value_expression NOT_EQUALS_OPERATOR truth_value {
 
-    } */
+    // }
     | untyped_value_expression PLUS_SIGN untyped_value_expression {
 
     }
@@ -5530,9 +5521,9 @@ untyped_value_expression
     | untyped_value_expression CONCATENATION_OPERATOR untyped_value_expression {
 
     }
-    /* | LEFT_PAREN datetime_value_expression MINUS_SIGN datetime_term RIGHT_PAREN {
+    // | LEFT_PAREN datetime_value_expression MINUS_SIGN datetime_term RIGHT_PAREN {
 
-    } */
+    // }
     | untyped_value_expression MULTISET_UNION opt_all_or_distinct untyped_value_expression {
 
     }
@@ -5582,140 +5573,140 @@ generic_primary
     }
     ;
 
-/* untyped_value_expression
-    : common_value_expression {
+// untyped_value_expression
+//     : common_value_expression {
 
-    }
-    | boolean_value_expression %prec LOWER_THAN_RIGHT_PAREN {
+//     }
+//     | boolean_value_expression %prec LOWER_THAN_RIGHT_PAREN {
 
-    }
-    ; */
+//     }
+//     ;
 
-/* common_value_expression
-    : numeric_value_expression {
+// common_value_expression
+//     : numeric_value_expression {
       
-    }
-    | string_value_expression {
+//     }
+//     | string_value_expression {
       
-    }
-    | datetime_value_expression {
+//     }
+//     | datetime_value_expression {
       
-    }
-    | duration_value_expression {
+//     }
+//     | duration_value_expression {
       
-    }
-    | collection_value_expression {
+//     }
+//     | collection_value_expression {
       
-    }
-    | map_value_expression {
+//     }
+//     | map_value_expression {
       
-    }
-    | record_value_expression {
+//     }
+//     | record_value_expression {
       
-    }
-    | reference_value_expression {
+//     }
+//     | reference_value_expression {
       
-    }
-    ; */
+//     }
+//     ;
 
-/* reference_value_expression
-    : primary_result_object_expression {
+// reference_value_expression
+//     : primary_result_object_expression {
       
-    }
-    | graph_element_value_expression {
+//     }
+//     | graph_element_value_expression {
       
-    }
-    ; */
+//     }
+//     ;
 
-// TODO Why doesn't collection_value_expression contain map_value_expression and record_value_expression
-// Because collection_value_constructor contains map_value_constructor and record_value_constructor
-/* collection_value_expression
-    : list_value_expression {
+// // TODO Why doesn't collection_value_expression contain map_value_expression and record_value_expression
+// // Because collection_value_constructor contains map_value_constructor and record_value_constructor
+// collection_value_expression
+//     : list_value_expression {
       
-    }
-    | multiset_value_expression {
+//     }
+//     | multiset_value_expression {
       
-    }
-    | set_value_expression {
+//     }
+//     | set_value_expression {
       
-    }
-    | ordered_set_value_expression {
+//     }
+//     | ordered_set_value_expression {
       
-    }
-    ;
+//     }
+//     ;
 
-set_value_expression
-    : value_expression_primary {
+// set_value_expression
+//     : value_expression_primary {
       
-    }
-    ;
+//     }
+//     ;
 
-ordered_set_value_expression
-    : value_expression_primary {
+// ordered_set_value_expression
+//     : value_expression_primary {
       
-    }
-    ;
+//     }
+//     ;
 
-map_value_expression
-    : value_expression_primary {
+// map_value_expression
+//     : value_expression_primary {
       
-    }
-    ;
+//     }
+//     ;
 
-record_value_expression
-    : value_expression_primary {
+// record_value_expression
+//     : value_expression_primary {
       
-    }
-    ; */
+//     }
+//     ;
 
-// Section 20.3 <boolean value expression>
-/* boolean_value_expression
-    : boolean_term {
+// // Section 20.3 <boolean value expression>
+// boolean_value_expression
+//     : boolean_term {
       
-    }
-    | boolean_value_expression OR boolean_term {
+//     }
+//     | boolean_value_expression OR boolean_term {
       
-    }
-    | boolean_value_expression XOR boolean_term {
+//     }
+//     | boolean_value_expression XOR boolean_term {
       
-    }
-    ;
+//     }
+//     ;
 
-boolean_term
-    : boolean_factor {
+// boolean_term
+//     : boolean_factor {
       
-    }
-    | boolean_term AND boolean_factor {
+//     }
+//     | boolean_term AND boolean_factor {
       
-    }
-    ;
+//     }
+//     ;
 
-boolean_factor
-    : boolean_test {
+// boolean_factor
+//     : boolean_test {
 
-    }
-    | NOT boolean_test {
+//     }
+//     | NOT boolean_test {
 
-    }
-    ;
+//     }
+//     ;
 
-boolean_test
-    : boolean_primary {
+// boolean_test
+//     : boolean_primary {
 
-    }
-    | boolean_primary IS truth_value {
+//     }
+//     | boolean_primary IS truth_value {
 
-    }
-    | boolean_primary IS_NOT truth_value {
+//     }
+//     | boolean_primary IS_NOT truth_value {
 
-    }
-    | boolean_primary EQUALS_OPERATOR truth_value {
+//     }
+//     | boolean_primary EQUALS_OPERATOR truth_value {
 
-    }
-    | boolean_primary NOT_EQUALS_OPERATOR truth_value {
+//     }
+//     | boolean_primary NOT_EQUALS_OPERATOR truth_value {
 
-    }
-    ; */
+//     }
+//     ;
 
 truth_value
     : TRUE {
@@ -5732,64 +5723,64 @@ truth_value
     }
     ;
 
-/* boolean_primary
-    : predicate {
+// boolean_primary
+//     : predicate {
 
-    }
-    | boolean_predicand {
+//     }
+//     | boolean_predicand {
 
-    }
-    ; */
+//     }
+//     ;
 
-// TODO Boolean?
-/* boolean_predicand
-    : parenthesized_Boolean_value_expression {
+// // TODO Boolean?
+// boolean_predicand
+//     : parenthesized_Boolean_value_expression {
 
-    }
-    | non_parenthesized_value_expression_primary {
+//     }
+//     | non_parenthesized_value_expression_primary {
 
-    }
-    ;
+//     }
+//     ;
 
-parenthesized_Boolean_value_expression
-    : LEFT_PAREN boolean_value_expression RIGHT_PAREN {
+// parenthesized_Boolean_value_expression
+//     : LEFT_PAREN boolean_value_expression RIGHT_PAREN {
 
-    }
-    ; */
+//     }
+//     ;
 
-// Section 20.4 <numeric value expression>
-/* numeric_value_expression
-    : term {
+// // Section 20.4 <numeric value expression>
+// numeric_value_expression
+//     : term {
       
-    }
-    | numeric_value_expression PLUS_SIGN term {
+//     }
+//     | numeric_value_expression PLUS_SIGN term {
       
-    }
-    | numeric_value_expression MINUS_SIGN term {
+//     }
+//     | numeric_value_expression MINUS_SIGN term {
       
-    }
-    ;
+//     }
+//     ;
 
-term
-    : factor {
+// term
+//     : factor {
       
-    }
-    | term ASTERISK factor {
+//     }
+//     | term ASTERISK factor {
       
-    }
-    | term SOLIDUS factor {
+//     }
+//     | term SOLIDUS factor {
       
-    }
-    ;
+//     }
+//     ;
 
-factor
-    : numeric_primary {
+// factor
+//     : numeric_primary {
 
-    }
-    | sign numeric_primary {
+//     }
+//     | sign numeric_primary {
 
-    }
-    ; */
+//     }
+//     ;
 
 opt_sign
     : %empty {
@@ -5799,17 +5790,17 @@ opt_sign
 
     }
     ;
-/* 
-numeric_primary
-    :
-    value_expression_primary {
 
-    }
-    |
-    numeric_value_function {
+// numeric_primary
+//     :
+//     value_expression_primary {
 
-    }
-    ; */
+//     }
+//     |
+//     numeric_value_function {
+
+//     }
+//     ;
 
 // Section 20.5 <value expression primary>
 value_expression_primary
@@ -5835,9 +5826,9 @@ non_parenthesized_value_expression_primary
       
     }
     // TODO parameter_value_specification is in unsigned_value_specification
-    /* | parameter_value_specification {
+    // | parameter_value_specification {
       
-    } */
+    // }
     | unsigned_value_specification {
       
     }
@@ -5845,9 +5836,9 @@ non_parenthesized_value_expression_primary
       
     }
     // TODO collection_value_constructor seesm reduant, it's already included in unsigned_value_specification
-    /* | collection_value_constructor {
+    // | collection_value_constructor {
       
-    } */
+    // }
     | value_query_expression {
       
     }
@@ -5867,9 +5858,9 @@ numeric_value_function
     : length_expression {
       
     }
-    /* | absolute_value_expression {
+    // | absolute_value_expression {
       
-    } */
+    // }
     | modulus_expression {
       
     }
@@ -5945,11 +5936,11 @@ path_length_expression
 
 // TODO numeric_value_expression is changed to untyped_value_expression
 // TODO same with duration_absolute_value_function
-/* absolute_value_expression
-    : ABS LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+// absolute_value_expression
+//     : ABS LEFT_PAREN untyped_value_expression RIGHT_PAREN {
 
-    }
-    ; */
+//     }
+//     ;
 
 modulus_expression
     : MOD LEFT_PAREN numeric_value_expression_dividend COMMA numeric_value_expression_divisor RIGHT_PAREN {
@@ -6087,87 +6078,87 @@ outDegree_function
     ;
 
 // Section 20.7 <string value expression>
-/* string_value_expression
-    : character_string_value_expression {
+// string_value_expression
+//     : character_string_value_expression {
 
-    }
-    | byte_string_value_expression {
+//     }
+//     | byte_string_value_expression {
 
-    }
-    ;
+//     }
+//     ;
 
-character_string_value_expression
-    : character_string_concatenation {
+// character_string_value_expression
+//     : character_string_concatenation {
       
-    }
-    | character_string_factor {
+//     }
+//     | character_string_factor {
       
-    }
-    ;
+//     }
+//     ;
 
-character_string_concatenation
-    : character_string_value_expression CONCATENATION_OPERATOR character_string_factor {
+// character_string_concatenation
+//     : character_string_value_expression CONCATENATION_OPERATOR character_string_factor {
 
-    }
-    ;
+//     }
+//     ;
 
-character_string_factor
-    : character_string_primary {
+// character_string_factor
+//     : character_string_primary {
 
-    }
-    ;
+//     }
+//     ;
 
-character_string_primary
-    :
-    value_expression_primary {
+// character_string_primary
+//     :
+//     value_expression_primary {
 
-    }
-    |
-    string_value_function {
+//     }
+//     |
+//     string_value_function {
 
-    }
-    ;
+//     }
+//     ;
 
-byte_string_value_expression
-    : byte_string_concatenation {
+// byte_string_value_expression
+//     : byte_string_concatenation {
       
-    }
-    | byte_string_factor {
+//     }
+//     | byte_string_factor {
       
-    }
-    ;
+//     }
+//     ;
 
-byte_string_factor
-    : byte_string_primary {
+// byte_string_factor
+//     : byte_string_primary {
       
-    }
-    ; */
-/*
-byte_string_primary
-    :
-    value_expression_primary {
-      
-    }
-    |
-    string_value_function {
-      
-    }
-    ;
+//     }
+//     ;
 
-byte_string_concatenation
-    : byte_string_value_expression CONCATENATION_OPERATOR byte_string_factor {
+// byte_string_primary
+//     :
+//     value_expression_primary {
       
-    }
-    ; */
+//     }
+//     |
+//     string_value_function {
+      
+//     }
+//     ;
+
+// byte_string_concatenation
+//     : byte_string_value_expression CONCATENATION_OPERATOR byte_string_factor {
+      
+//     }
+//     ;
 
 // Section 20.8 <string value function>
 string_value_function
     : character_or_byte_string_function {
       
     }
-    /* | byte_string_function {
+    // | byte_string_function {
       
-    } */
+    // }
     ;
 
 character_or_byte_string_function
@@ -6236,11 +6227,11 @@ trim_function
     ;
 
 // TODO: character_string_value_expression is changed to untyped_value_expression
-/* trim_source
-    : untyped_value_expression {
+// trim_source
+//     : untyped_value_expression {
 
-    }
-    ; */
+//     }
+//     ;
 
 trim_specification
     : LEADING {
@@ -6256,11 +6247,11 @@ trim_specification
 
 // TODO: character_string_value_expression is changed to untyped_value_expression
 // TODO: trim_character_string is changed to trim_string, in order to merge with trim_byte_string
-/* trim_string
-    : untyped_value_expression {
+// trim_string
+//     : untyped_value_expression {
       
-    }
-    ; */
+//     }
+//     ;
 
 // TODO: character_string_value_expression is changed to untyped_value_expression
 normalize_function
@@ -6287,62 +6278,62 @@ normal_form
     }
     ;
 
-/* byte_string_function
-    : byte_substring_function {
+// byte_string_function
+//     : byte_substring_function {
       
-    }
-    | byte_string_trim_function {
+//     }
+//     | byte_string_trim_function {
       
-    }
-    ; */
+//     }
+//     ;
 
-// TODO: byte_string_value_expression is changed to untyped_value_expression
-// TODO: same with substring_function
-/* byte_substring_function
-    : SUBSTRING LEFT_PAREN untyped_value_expression COMMA start_position RIGHT_PAREN {
+// // TODO: byte_string_value_expression is changed to untyped_value_expression
+// // TODO: same with substring_function
+// byte_substring_function
+//     : SUBSTRING LEFT_PAREN untyped_value_expression COMMA start_position RIGHT_PAREN {
 
-    }
-    | SUBSTRING LEFT_PAREN untyped_value_expression COMMA start_position COMMA string_length RIGHT_PAREN {
+//     }
+//     | SUBSTRING LEFT_PAREN untyped_value_expression COMMA start_position COMMA string_length RIGHT_PAREN {
       
-    }
-    | LEFT LEFT_PAREN untyped_value_expression COMMA string_length RIGHT_PAREN {
+//     }
+//     | LEFT LEFT_PAREN untyped_value_expression COMMA string_length RIGHT_PAREN {
 
-    }
-    | RIGHT LEFT_PAREN untyped_value_expression COMMA string_length RIGHT_PAREN {
+//     }
+//     | RIGHT LEFT_PAREN untyped_value_expression COMMA string_length RIGHT_PAREN {
 
-    }
-    ; */
+//     }
+//     ;
 
-/* byte_string_trim_function
-    : TRIM LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
+// byte_string_trim_function
+//     : TRIM LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
 
-    }
-    | TRIM LEFT_PAREN byte_string_trim_source COMMA trim_specification RIGHT_PAREN {
+//     }
+//     | TRIM LEFT_PAREN byte_string_trim_source COMMA trim_specification RIGHT_PAREN {
       
-    }
-    | TRIM LEFT_PAREN byte_string_trim_source COMMA trim_specification trim_byte_string RIGHT_PAREN {
+//     }
+//     | TRIM LEFT_PAREN byte_string_trim_source COMMA trim_specification trim_byte_string RIGHT_PAREN {
       
-    }
-    | lTrim LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
+//     }
+//     | lTrim LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
 
-    }
-    | rTrim LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
+//     }
+//     | rTrim LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
 
-    }
-    ; */
+//     }
+//     ;
 
-// TODO: byte_string_value_expression is changed to untyped_value_expression
-/* byte_string_trim_source
-    : untyped_value_expression {
+// // TODO: byte_string_value_expression is changed to untyped_value_expression
+// byte_string_trim_source
+//     : untyped_value_expression {
 
-    }
-    ;
+//     }
+//     ;
 
-trim_byte_string
-    : untyped_value_expression {
+// trim_byte_string
+//     : untyped_value_expression {
 
-    }
-    ; */
+//     }
+//     ;
 
 // TODO numeric_value_expression is changed to untyped_value_expression
 start_position
@@ -6359,43 +6350,43 @@ string_length
     ;
 
 // Section 20.9 <datetime value expression>
-/* datetime_value_expression
-    : datetime_term {
+// datetime_value_expression
+//     : datetime_term {
 
-    }
-    | duration_value_expression PLUS_SIGN datetime_term {
+//     }
+//     | duration_value_expression PLUS_SIGN datetime_term {
 
-    }
-    | datetime_value_expression PLUS_SIGN duration_term {
+//     }
+//     | datetime_value_expression PLUS_SIGN duration_term {
 
-    }
-    | datetime_value_expression MINUS_SIGN duration_term {
+//     }
+//     | datetime_value_expression MINUS_SIGN duration_term {
 
-    }
-    ;
+//     }
+//     ;
     
-datetime_term
-    : datetime_factor {
+// datetime_term
+//     : datetime_factor {
 
-    }
-    ;
+//     }
+//     ;
 
-datetime_factor
-    : datetime_primary {
+// datetime_factor
+//     : datetime_primary {
 
-    }
-    ;
+//     }
+//     ;
 
-datetime_primary
-    :
-    value_expression_primary {
+// datetime_primary
+//     :
+//     value_expression_primary {
 
-    }
-    |
-    datetime_value_function {
+//     }
+//     |
+//     datetime_value_function {
 
-    }
-    ; */
+//     }
+//     ;
 
 // Section 20.10 <datetime value function>
 datetime_value_function
@@ -6504,73 +6495,73 @@ datetime_function_parameters
     ;
 
 // Section 20.11 <duration value expression>
-/* duration_value_expression
-    : duration_term {
+// duration_value_expression
+//     : duration_term {
 
-    }
-    | duration_value_expression_1 PLUS_SIGN duration_term_1 {
+//     }
+//     | duration_value_expression_1 PLUS_SIGN duration_term_1 {
 
-    }
-    | duration_value_expression_1 MINUS_SIGN duration_term_1 {
+//     }
+//     | duration_value_expression_1 MINUS_SIGN duration_term_1 {
 
-    }
-    | LEFT_PAREN datetime_value_expression MINUS_SIGN datetime_term RIGHT_PAREN {
+//     }
+//     | LEFT_PAREN datetime_value_expression MINUS_SIGN datetime_term RIGHT_PAREN {
 
-    }
-    ;
+//     }
+//     ;
 
-duration_term
-    : duration_factor {
+// duration_term
+//     : duration_factor {
 
-    }
-    | duration_term_2 ASTERISK factor {
+//     }
+//     | duration_term_2 ASTERISK factor {
 
-    }
-    | duration_term_2 SOLIDUS factor {
+//     }
+//     | duration_term_2 SOLIDUS factor {
 
-    }
-    | term ASTERISK duration_factor {
+//     }
+//     | term ASTERISK duration_factor {
 
-    }
-    ;
+//     }
+//     ;
 
-duration_factor
-    : duration_primary {
+// duration_factor
+//     : duration_primary {
 
-    }
-    | sign duration_primary {
+//     }
+//     | sign duration_primary {
       
-    }
-    ;
+//     }
+//     ;
 
-duration_primary
-    :
-    value_expression_primary {
+// duration_primary
+//     :
+//     value_expression_primary {
 
-    }
-    |
-    duration_value_function {
+//     }
+//     |
+//     duration_value_function {
 
-    }
-    ;
+//     }
+//     ;
 
-duration_value_expression_1
-    : duration_value_expression {
+// duration_value_expression_1
+//     : duration_value_expression {
 
-    }
-    ;
+//     }
+//     ;
 
-duration_term_1
-    : duration_term {
+// duration_term_1
+//     : duration_term {
 
-    }
-    ;
+//     }
+//     ;
 
-duration_term_2
-    : duration_term {
+// duration_term_2
+//     : duration_term {
 
-    }
-    ; */
+//     }
+//     ;
 
 // Section 20.12 <duration value function>
 duration_value_function
@@ -6578,9 +6569,9 @@ duration_value_function
 
     }
     // TODO: merged to generic_term
-    /* | duration_absolute_value_function {
+    // | duration_absolute_value_function {
 
-    } */
+    // }
     ;
 
 duration_function
@@ -6600,18 +6591,18 @@ duration_function_parameters
 
 // TODO duration_value_expression is changed to untyped_value_expression
 // TODO same with absolute_value_expression
-/* duration_absolute_value_function
-    : ABS LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+// duration_absolute_value_function
+//     : ABS LEFT_PAREN untyped_value_expression RIGHT_PAREN {
 
-    }
-    ; */
+//     }
+//     ;
 
-// Section 20.13 <graph element value expression>
-/* graph_element_value_expression
-    : graph_element_primary {
+// // Section 20.13 <graph element value expression>
+// graph_element_value_expression
+//     : graph_element_primary {
 
-    }
-    ; */
+//     }
+//     ;
 
 graph_element_primary
     :
@@ -6647,59 +6638,59 @@ end_node_function
     ;
 
 // Section 20.15 <collection value constructor>
-/* collection_value_constructor
-    : list_value_constructor {
+// collection_value_constructor
+//     : list_value_constructor {
       
-    }
-    | multiset_value_constructor {
+//     }
+//     | multiset_value_constructor {
       
-    }
-    | set_value_constructor {
+//     }
+//     | set_value_constructor {
       
-    }
-    | ordered_set_value_constructor {
+//     }
+//     | ordered_set_value_constructor {
       
-    }
-    | map_value_constructor {
+//     }
+//     | map_value_constructor {
       
-    }
-    | record_value_constructor {
+//     }
+//     | record_value_constructor {
       
-    }
-    ; */
+//     }
+//     ;
 
 // Section 20.16 <list value expression>
-/* list_value_expression
-    : list_concatenation {
+// list_value_expression
+//     : list_concatenation {
       
-    }
-    | list_primary {
+//     }
+//     | list_primary {
       
-    }
-    ;
+//     }
+//     ;
 
-list_concatenation
-    : list_value_expression_1 CONCATENATION_OPERATOR list_primary {
+// list_concatenation
+//     : list_value_expression_1 CONCATENATION_OPERATOR list_primary {
       
-    }
-    ;
+//     }
+//     ;
 
-list_value_expression_1
-    : list_value_expression {
+// list_value_expression_1
+//     : list_value_expression {
       
-    }
-    ;
+//     }
+//     ;
 
-list_primary
-    :
-    list_value_function {
+// list_primary
+//     :
+//     list_value_function {
       
-    }
-    |
-    value_expression_primary {
+//     }
+//     |
+//     value_expression_primary {
       
-    }
-    ; */
+//     }
+//     ;
 
 // Section 20.17 <list value function>
 list_value_function
@@ -6728,11 +6719,11 @@ trim_list_function
 
 // TODO xx_value_construct seems reduant
 // Section 20.18 <list value constructor>
-/* list_value_constructor
-    : list_value_constructor_by_enumeration {
+// list_value_constructor
+//     : list_value_constructor_by_enumeration {
       
-    }
-    ; */
+//     }
+//     ;
 
 list_value_constructor_by_enumeration
     : list_value_type_name LEFT_BRACKET list_element_list RIGHT_BRACKET {
@@ -6756,17 +6747,17 @@ list_element
     ;
 
 // Section 20.19 <multiset value expression>
-/* multiset_value_expression
-    : multiset_term {
+// multiset_value_expression
+//     : multiset_term {
 
-    }
-    | multiset_value_expression MULTISET_UNION opt_all_or_distinct multiset_term {
+//     }
+//     | multiset_value_expression MULTISET_UNION opt_all_or_distinct multiset_term {
 
-    }
-    | multiset_value_expression MULTISET_EXCEPT opt_all_or_distinct multiset_term {
+//     }
+//     | multiset_value_expression MULTISET_EXCEPT opt_all_or_distinct multiset_term {
 
-    }
-    ; */
+//     }
+//     ;
 
 // TODO
 opt_all_or_distinct
@@ -6786,26 +6777,26 @@ all_or_distinct
 
     }
     ;
-/* 
-multiset_term
-    : multiset_primary {
 
-    }
-    | multiset_term MULTISET_INTERSECT opt_all_or_distinct multiset_primary {
+// multiset_term
+//     : multiset_primary {
 
-    }
-    ;
+//     }
+//     | multiset_term MULTISET_INTERSECT opt_all_or_distinct multiset_primary {
 
-multiset_primary
-    :
-    multiset_value_function {
+//     }
+//     ;
 
-    }
-    |
-    value_expression_primary {
+// multiset_primary
+//     :
+//     multiset_value_function {
 
-    }
-    ; */
+//     }
+//     |
+//     value_expression_primary {
+
+//     }
+//     ;
 
 // Section 20.20 <multiset value function>
 multiset_value_function
@@ -6823,11 +6814,11 @@ multiset_set_function
 
 // TODO xx_value_construct seems reduant
 // Section 20.21 <multiset value constructor>
-/* multiset_value_constructor
-    : multiset_value_constructor_by_enumeration {
+// multiset_value_constructor
+//     : multiset_value_constructor_by_enumeration {
 
-    }
-    ; */
+//     }
+//     ;
 
 multiset_value_constructor_by_enumeration
     : MULTISET LEFT_BRACE multiset_element_list RIGHT_BRACE {
@@ -6852,11 +6843,11 @@ multiset_element
 
 // TODO xx_value_construct seems reduant
 // Section 20.22 <set value constructor>
-/* set_value_constructor
-    : set_value_constructor_by_enumeration {
+// set_value_constructor
+//     : set_value_constructor_by_enumeration {
 
-    }
-    ; */
+//     }
+//     ;
 
 set_value_constructor_by_enumeration
     : SET LEFT_BRACE set_element_list RIGHT_BRACE {
@@ -6881,11 +6872,11 @@ set_element
 
 // TODO xx_value_construct seems reduant
 // Section 20.23 <ordered set value constructor>
-/* ordered_set_value_constructor
-    : ordered_set_value_constructor_by_enumeration {
+// ordered_set_value_constructor
+//     : ordered_set_value_constructor_by_enumeration {
 
-    }
-    ; */
+//     }
+//     ;
 
 ordered_set_value_constructor_by_enumeration
     : ORDERED SET LEFT_BRACE ordered_set_element_list RIGHT_BRACE {
@@ -6913,11 +6904,11 @@ ordered_set_element
 
 // TODO xx_value_construct seems reduant
 // Section 20.24 <map value constructor>
-/* map_value_constructor
-    : map_value_constructor_by_enumeration {
+// map_value_constructor
+//     : map_value_constructor_by_enumeration {
 
-    }
-    ; */
+//     }
+//     ;
 
 map_value_constructor_by_enumeration
     : MAP LEFT_BRACE map_element_list RIGHT_BRACE {
@@ -6954,14 +6945,14 @@ map_value
 
 // TODO xx_value_construct seems reduant
 // Section 20.25 <record value constructor>
-/* record_value_constructor
-    : record_value_constructor_by_enumeration {
+// record_value_constructor
+//     : record_value_constructor_by_enumeration {
 
-    }
-    | UNIT {
+//     }
+//     | UNIT {
 
-    }
-    ; */
+//     }
+//     ;
 
 // opt_record
 record_value_constructor_by_enumeration
@@ -7109,9 +7100,9 @@ case_operand
 
     }
     // TODO: conflicted with binding_variable of non_parenthesized_value_expression_primary
-    /* | element_reference {
+    // | element_reference {
 
-    } */
+    // }
     ;
 
 when_operand_list
@@ -7152,9 +7143,9 @@ result
     : result_expression {
       
     }
-    /* | NULL {
+    // | NULL {
       
-    } */
+    // }
     ;
 
 result_expression
@@ -7175,9 +7166,9 @@ cast_operand
     : untyped_value_expression {
       
     }
-    /* | null_literal {
+    // | null_literal {
       
-    } */
+    // }
     ;
 
 cast_target
@@ -7193,7 +7184,7 @@ element_id_function
     }
     ;
 
-/* Chapter 21 Lexical elements */
+// Chapter 21 Lexical elements
 // Section 21.1 <literal>
 literal
     : signed_numeric_literal {
@@ -7232,14 +7223,14 @@ general_literal
 // TODO
 // character_string_literal is changed to UNBROKEN_CHARACTER_STRING_LITERAL | CHARACTER_STRING_LITERAL here.
 // The original rule is:
-/* predefined_type_literal
-    : boolean_literal
-    | character_string_literal
-    | byte_string_literal
-    | temporal_literal
-    | duration_literal
-    | null_literal
-    ; */
+// predefined_type_literal
+//     : boolean_literal
+//     | character_string_literal
+//     | byte_string_literal
+//     | temporal_literal
+//     | duration_literal
+//     | null_literal
+//     ;
 predefined_type_literal
     : boolean_literal {
       
@@ -7285,144 +7276,11 @@ boolean_literal
     }
     ;
 
-/* CHARACTER_STRING_LITERAL
-    : single_quoted_character_sequence
-    | double_quoted_character_sequence
-    ; */
-
-/* UNBROKEN_CHARACTER_STRING_LITERAL
-    : unbroken_single_quoted_character sequence
-    | unbroken_double_quoted_character sequence
-    ; */
-
-/* single_quoted_character_sequence
-    : unbroken_single_quoted_character sequence [ { separator__unbroken_single_quoted character_sequence }... ]
-    ;
-
-double_quoted_character_sequence
-    : unbroken_double_quoted_character sequence [ { separator__unbroken_double_quoted character_sequence }... ]
-    ; */
-
-/* unbroken_single_quoted_character sequence
-    : quote [ single_quoted_character_representation_... ] quote
-    ;
-
-unbroken_double_quoted_character sequence
-    : double_quote [ double_quoted_character_representation_... ] double_quote
-    ; */
-
-/* unbroken_accent_quoted_character_sequence
-    : grave_accent [ accent_quoted_character_representation_... ] grave_accent
-    ; */
-/* 
-single_quoted_character_representation
-    : character_representation
-    ; */
-
-/* !! See_the_Syntax_Rules.
-double_quoted_character_representation
-    : character_representation
-!! See_the_Syntax_Rules.
-
-accent_quoted_character_representation
-    : character_representation
-    ; */
-
-// !! See_the_Syntax_Rules.
-/* character_representation
-    : string_literal_character
-    | escaped_character
-    ; */
-
-/* string_literal_character
-    : */
-    // !! See_the_Syntax_Rules.
-/* 
-escaped_character
-    : escaped_reverse_SOLIDUS
-    | escaped_quote
-    | escaped_double_quote
-    | escaped_tab
-    | escaped_backspace
-    | escaped_newline
-    | escaped_carriage_return
-    | escaped_form_feed
-    | unicode_escape_value
-
-escaped_reverse_SOLIDUS
-    : reverse_SOLIDUS__reverse_SOLIDUS
-    ;
-
-escaped_quote
-    : reverse_SOLIDUS__quote
-    ;
-
-escaped_double_quote
-    : reverse_SOLIDUS__double_quote
-    ;
-
-escaped_tab
-    : reverse_SOLIDUS__t
-    ;
-
-escaped_backspace
-    : reverse_SOLIDUS__b
-
-escaped_newline
-    : reverse_SOLIDUS__n
-
-escaped_carriage_return
-    : reverse_SOLIDUS__r
-
-escaped_form_feed
-    : reverse_SOLIDUS f
-    ; */
-
-/* unicode_escape_value
-    : unicode_4_digit_escape_value
-    | unicode_6_digit_escape_value
-    ;
-
-unicode_4_digit_escape_value
-    : reverse_SOLIDUS__u_hex digit__hex_digit__hex digit__hex_digit
-    ;
-
-unicode_6_digit_escape_value
-    : reverse_SOLIDUS__U_hex digit__hex_digit__hex digit__hex_digit__hex digit__hex_digit
-    ; */
-
-/* BYTE_STRING_LITERAL
-    : X_quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote [ { separator__quote [ space_... ] [ { hex_digit [ space_... ] hex_digit [ space_... ] }... ] quote }... ]
-    ; */
-
-// INACTIVE PARSING RULES
-/* numeric_literal
-    : signed_numeric_literal
-    | UNSIGNED_NUMERIC_LITERAL
-    ; */
-
 signed_numeric_literal
     : opt_sign UNSIGNED_NUMERIC_LITERAL {
 
     }
     ;
-
-/* UNSIGNED_NUMERIC_LITERAL
-    : exact_numeric_literal {
-
-    }
-    | approximate_numeric_literal {
-
-    }
-    ;
-
-exact_numeric_literal
-    : unsigned_integer {
-      
-    }
-    | UNSIGNED_DECIMAL_INTEGER [ PERIOD [ UNSIGNED_DECIMAL_INTEGER ] ]
-    | PERIOD__unsigned_decimal_integer
-    ; */
 
 sign
     : PLUS_SIGN {
@@ -7447,41 +7305,6 @@ unsigned_integer
 
     }
     ;
-
-/* UNSIGNED_DECIMAL_INTEGER
-    : digit [ { [ underscore ] digit }... ]
-    ;
-
-UNSIGNED_HEXADECIMAL_INTEGER
-    : 0x { [ underscore ] hex_digit }...
-    ;
-
-UNSIGNED_OCTAL_INTEGER
-    : 0o { [ underscore ] octal_digit }...
-    ;
-
-UNSIGNED_BINARY_INTEGER
-    : 0b { [ underscore ] binary_digit }...
-    ; */
-
-/* signed_decimal_integer
-    : opt_sign UNSIGNED_DECIMAL_INTEGER {
-
-    }
-    ; */
-
-/* approximate_numeric_literal
-    :
-    mantissa__E_exponent
-    ;
-
-mantissa
-    : exact_numeric_literal
-    ; */
-
-/* exponent
-    : signed_decimal_integer
-    ; */
 
 temporal_literal
     : date_literal {
@@ -7538,9 +7361,9 @@ duration_literal
     : DURATION duration_string {
 
     }
-    /* | SQL_interval_literal {
+    // | SQL_interval_literal {
 
-    } */
+    // }
     ;
 
 duration_string
@@ -7548,246 +7371,246 @@ duration_string
 
     }
     ;
-/* 
-// <SQL-interval literal> shall conform to the Syntax Rules of <interval literal> in ISO/IEC 9075-2:202x.
-SQL_interval_literal
-    : interval_literal {
 
-    }
-    ;
+// // <SQL-interval literal> shall conform to the Syntax Rules of <interval literal> in ISO/IEC 9075-2:202x.
+// SQL_interval_literal
+//     : interval_literal {
 
-interval_literal
-    : INTERVAL opt_sign interval_string interval_qualifier {
+//     }
+//     ;
 
-    }
-    ;
+// interval_literal
+//     : INTERVAL opt_sign interval_string interval_qualifier {
 
-interval_string
-    : QUOTE unquoted_interval_string QUOTE {
+//     }
+//     ;
 
-    }
-    ;
+// interval_string
+//     : QUOTE unquoted_interval_string QUOTE {
 
-unquoted_interval_string
-    : opt_sign year_month_literal {
+//     }
+//     ;
+
+// unquoted_interval_string
+//     : opt_sign year_month_literal {
     
-    }
-    | opt_sign day_time_literal {
+//     }
+//     | opt_sign day_time_literal {
 
-    }
-    ;
+//     }
+//     ;
 
-year_month_literal
-    : years_value {
+// year_month_literal
+//     : years_value {
     
-    }
-    | years_value MINUS_SIGN months_value {
+//     }
+//     | years_value MINUS_SIGN months_value {
 
-    }
-    | months_value {
+//     }
+//     | months_value {
 
-    }
-    ;
+//     }
+//     ;
   
-day_time_literal
-    : day_time_interval {
+// day_time_literal
+//     : day_time_interval {
 
-    }
-    | time_interval {
+//     }
+//     | time_interval {
 
-    }
-    ;
+//     }
+//     ;
 
-// TODO space? shift/reduce error
-/* day_time_interval
-    : days_value {
+// // TODO space? shift/reduce error
+// day_time_interval
+//     : days_value {
 
-    }
-    | days_value space hours_value {
+//     }
+//     | days_value space hours_value {
 
-    }
-    | days_value space hours_value COLON minutes_value {
+//     }
+//     | days_value space hours_value COLON minutes_value {
 
-    }
-    | days_value space hours_value COLON minutes_value COLON seconds_value {
+//     }
+//     | days_value space hours_value COLON minutes_value COLON seconds_value {
 
-    }
-    ; */
-/*
-day_time_interval
-    : days_value {
+//     }
+//     ;
 
-    }
-    | days_value hours_value {
+// day_time_interval
+//     : days_value {
 
-    }
-    | days_value hours_value COLON minutes_value {
+//     }
+//     | days_value hours_value {
 
-    }
-    | days_value hours_value COLON minutes_value COLON seconds_value {
+//     }
+//     | days_value hours_value COLON minutes_value {
 
-    }
-    ;
+//     }
+//     | days_value hours_value COLON minutes_value COLON seconds_value {
 
-time_interval
-    : hours_value {
+//     }
+//     ;
+
+// time_interval
+//     : hours_value {
       
-    }
-    | hours_value COLON minutes_value {
+//     }
+//     | hours_value COLON minutes_value {
 
-    }
-    | hours_value COLON minutes_value COLON seconds_value {
+//     }
+//     | hours_value COLON minutes_value COLON seconds_value {
 
-    }
-    | minutes_value {
+//     }
+//     | minutes_value {
 
-    }
-    | minutes_value COLON seconds_value {
+//     }
+//     | minutes_value COLON seconds_value {
 
-    }
-    | seconds_value {
+//     }
+//     | seconds_value {
 
-    }
-    ;
+//     }
+//     ;
 
-years_value
-    : datetime_value {
+// years_value
+//     : datetime_value {
 
-    }
-    ;
+//     }
+//     ;
 
-months_value
-    : datetime_value {
+// months_value
+//     : datetime_value {
 
-    }
-    ;
+//     }
+//     ;
 
-days_value
-    : datetime_value {
+// days_value
+//     : datetime_value {
 
-    }
-    ;
+//     }
+//     ;
 
-hours_value
-    : datetime_value {
+// hours_value
+//     : datetime_value {
 
-    }
-    ;
+//     }
+//     ;
 
-minutes_value
-    : datetime_value {
+// minutes_value
+//     : datetime_value {
 
-    }
-    ;
+//     }
+//     ;
 
-seconds_value
-    : seconds_integer_value {
+// seconds_value
+//     : seconds_integer_value {
       
-    }
-    | seconds_integer_value PERIOD {
+//     }
+//     | seconds_integer_value PERIOD {
 
-    }
-    | seconds_integer_value PERIOD seconds_fraction {
+//     }
+//     | seconds_integer_value PERIOD seconds_fraction {
 
-    }
-    ;
+//     }
+//     ;
 
-seconds_integer_value
-    : unsigned_integer {
+// seconds_integer_value
+//     : unsigned_integer {
 
-    }
-    ;
+//     }
+//     ;
 
-seconds_fraction
-    : unsigned_integer {
+// seconds_fraction
+//     : unsigned_integer {
 
-    }
-    ;
+//     }
+//     ;
 
-datetime_value
-    : unsigned_integer {
+// datetime_value
+//     : unsigned_integer {
 
-    }
-    ;
+//     }
+//     ;
 
 
-interval_qualifier
-    : start_field TO end_field {
+// interval_qualifier
+//     : start_field TO end_field {
 
-    }
-    | single_datetime_field {
+//     }
+//     | single_datetime_field {
 
-    }
-    ;
+//     }
+//     ;
 
-start_field
-    : non_second_primary_datetime_field {
+// start_field
+//     : non_second_primary_datetime_field {
 
-    }
-    | non_second_primary_datetime_field LEFT_PAREN interval_leading_field_precision RIGHT_PAREN {
+//     }
+//     | non_second_primary_datetime_field LEFT_PAREN interval_leading_field_precision RIGHT_PAREN {
 
-    }
-    ;
+//     }
+//     ;
 
-end_field
-    : non_second_primary_datetime_field {
+// end_field
+//     : non_second_primary_datetime_field {
 
-    }
-    | SECOND {
+//     }
+//     | SECOND {
     
-    }
-    | SECOND LEFT_PAREN interval_fractional_seconds_precision RIGHT_PAREN {
+//     }
+//     | SECOND LEFT_PAREN interval_fractional_seconds_precision RIGHT_PAREN {
 
-    }
-    ;
+//     }
+//     ;
 
-single_datetime_field
-    : non_second_primary_datetime_field {
+// single_datetime_field
+//     : non_second_primary_datetime_field {
 
-    }
-    | non_second_primary_datetime_field LEFT_PAREN interval_leading_field_precision RIGHT_PAREN {
+//     }
+//     | non_second_primary_datetime_field LEFT_PAREN interval_leading_field_precision RIGHT_PAREN {
 
-    }
-    | SECOND {
+//     }
+//     | SECOND {
     
-    }
-    | SECOND LEFT_PAREN interval_leading_field_precision RIGHT_PAREN {
+//     }
+//     | SECOND LEFT_PAREN interval_leading_field_precision RIGHT_PAREN {
 
-    }
-    | SECOND LEFT_PAREN interval_leading_field_precision COMMA interval_fractional_seconds_precision RIGHT_PAREN {
+//     }
+//     | SECOND LEFT_PAREN interval_leading_field_precision COMMA interval_fractional_seconds_precision RIGHT_PAREN {
 
-    }
-    ;
+//     }
+//     ;
 
-non_second_primary_datetime_field
-    : YEAR {
+// non_second_primary_datetime_field
+//     : YEAR {
 
-    }
-    | MONTH {
+//     }
+//     | MONTH {
       
-    }
-    | DAY {
+//     }
+//     | DAY {
       
-    }
-    | HOUR {
+//     }
+//     | HOUR {
       
-    }
-    | MINUTE {
+//     }
+//     | MINUTE {
       
-    }
-    ;
+//     }
+//     ;
 
-interval_leading_field_precision
-    : unsigned_integer {
+// interval_leading_field_precision
+//     : unsigned_integer {
 
-    }
-    ;
+//     }
+//     ;
 
-interval_fractional_seconds_precision
-    : unsigned_integer {
+// interval_fractional_seconds_precision
+//     : unsigned_integer {
 
-    }
-    ; */
+//     }
+//     ;
 
 
 null_literal
@@ -8310,11 +8133,11 @@ binding_table_name
     ;
 
 // INACTIVE PARSING RULES
-/* value_name
-    : identifier {
+// value_name
+//     : identifier {
       
-    }
-    ; */
+//     }
+//     ;
 
 procedure_name
     : identifier {
@@ -8353,15 +8176,12 @@ field_name
     ;
 
 // INACTIVE PARSING RULES
-/* path_pattern_name
-    : identifier {
+// path_pattern_name
+//     : identifier {
       
-    }
-    ; */
+//     }
+//     ;
 
-/* PARAMETER_NAME
-    : dollar_sign__separated_identifier
-    ; */
 
 element_variable
     : variable_name {
@@ -8409,10 +8229,10 @@ identifier
     ;
 
 
-/* separated_identifier
-    : extended_identifier
-    | delimited_identifier
-    ; */
+// separated_identifier
+//     : extended_identifier
+//     | delimited_identifier
+//     ;
 
 string_or_varchar
     : STRING {
@@ -8440,19 +8260,6 @@ GREATER_THAN_OPERATOR
 LESS_THAN_OPERATOR
     : LEFT_ANGLE_BRACKET
     ;
-
-
-//UNBROKEN_CHARACTER_STRING_LITERAL {unbroken_single_quoted_character_sequence|unbroken_double_quoted_character_sequence}
-
-// date_string {UNBROKEN_CHARACTER_STRING_LITERAL}
-// time_string {UNBROKEN_CHARACTER_STRING_LITERAL}
-// datetime_string {UNBROKEN_CHARACTER_STRING_LITERAL}
-// duration_string {UNBROKEN_CHARACTER_STRING_LITERAL}
-
-// single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
-// double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
-
-// CHARACTER_STRING_LITERAL {single_quoted_character_sequence}|{double_quoted_character_sequence}
 
 %%
 
