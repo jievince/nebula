@@ -640,9 +640,9 @@ is_not_destination IS{separator}NOT{separator}DESTINATION
 {right_paren} {
   NG_RETURN_TOKEN(RIGHT_PAREN);
 }
-  /* {semicolon} {
-    NG_RETURN_TOKEN(SEMICOLON);
-  } */
+{semicolon} {
+  NG_RETURN_TOKEN(SEMICOLON);
+}
 {solidus} {
   NG_RETURN_TOKEN(SOLIDUS);
 }

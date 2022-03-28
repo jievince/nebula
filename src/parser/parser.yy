@@ -140,6 +140,9 @@ static constexpr size_t kCommentLengthLimit = 256;
 %token LEFT_PAREN_ASTERISK_RIGHT_PAREN
 %token NODE_SYNONYM EDGE_SYNONYM GRAPH_SYNONYM GRAPH_TYPE_SYNONYM BINDING_TABLE_SYNONYM
 %token IF_EXISTS IF_NOT_EXISTS
+%token OPTIONAL_MATCH OPTIONAL_INSERT OPTIONAL_CALL MANDATORY_MATCH MANDATORY_CALL
+%token OPTIONAL_LET MANDATORY_LET OPTIONAL_FOR MANDATORY_FOR
+%token SOLIDUS_DOUBLE_PERIOD // TODO CHECK if SOLIDUS and DOUBLE_PERIOD could be used separately
 // 没有解决冲突的合并
 /* %token TIME_ZONE CATALOG_PROCEDURE COPY_OF */
 /* %token EQUALS_OPERATOR_TRUE EQUALS_OPERATOR_FALSE EQUALS_OPERATOR_UNKNOWN EQUALS_OPERATOR_NULL
@@ -148,6 +151,7 @@ static constexpr size_t kCommentLengthLimit = 256;
 
 // dummy token
 %token DUMMY_CATALOG_PROCEDURE_FLAG DUMMY_DATA_PROCEDURE_FLAG DUMMY_QUERY_FLAG DUMMY_FUNCTION_FLAG
+%token DUMMY_AMBIENT_QUERY_STMT 
 
 // single char operators
 %token  AMPERSAND ASTERISK
@@ -158,7 +162,7 @@ static constexpr size_t kCommentLengthLimit = 256;
         PERCENT PERIOD PLUS_SIGN
         QUESTION_MARK QUOTE
         RIGHT_ANGLE_BRACKET RIGHT_BRACE RIGHT_BRACKET RIGHT_PAREN
-        SOLIDUS
+        SEMICOLON SOLIDUS
         TILDE
         VERTICAL_BAR
 
@@ -200,7 +204,15 @@ static constexpr size_t kCommentLengthLimit = 256;
 %left   MINUS_SIGN PLUS_SIGN
 %left   ASTERISK  */
 
-%nonassoc LOWER_THAN_COMMIT
+%nonassoc LOWER_THAN_PROCEDURE_SPECIFICATION
+%nonassoc AGGREGATE AT CALL CATALOG CREATE DELETE DETACH DO DROP END FILTER FOR FROM FUNCTION
+          INSERT LET MANDATORY MATCH MERGE OPTIONAL PROCEDURE PROJECT QUERY
+          REMOVE RETURN SELECT SET USE VALUE WHEN GRAPH_SYNONYM BINDING_TABLE_SYNONYM
+          OPTIONAL_MATCH OPTIONAL_INSERT OPTIONAL_CALL MANDATORY_MATCH MANDATORY_CALL
+          OPTIONAL_LET MANDATORY_LET OPTIONAL_FOR MANDATORY_FOR LEFT_BRACE
+%nonassoc LOWER_THAN_LIMIT
+%nonassoc ORDER LIMIT OFFSET SKIP
+%nonassoc LOWER_THAN_END_TRANSACTION_COMMAND
 %nonassoc COMMIT ROLLBACK
 %nonassoc LOWER_THAN_RIGHT_PAREN
 %nonassoc RIGHT_PAREN
@@ -218,12 +230,10 @@ static constexpr size_t kCommentLengthLimit = 256;
 %nonassoc   IS IS_NOT IS_NULL IS_NOT_NULL // TODO
 %nonassoc   EQUALS_OPERATOR NOT_EQUALS_OPERATOR LEFT_ANGLE_BRACKET RIGHT_ANGLE_BRACKET LESS_THAN_OR_EQUALS_OPERATOR GREATER_THAN_OR_EQUALS_OPERATOR // TODO
 %left       PLUS_SIGN MINUS_SIGN
+
+%nonassoc   LOWER_THAN_SOLIDUS  // TODO
 %left       ASTERISK SOLIDUS
 %right      UNARY_MINUS // TODO %right?
-
-
-%nonassoc LOWER_THAN_LIMIT
-%nonassoc ORDER LIMIT OFFSET SKIP
 
 
 %start GQL_request
@@ -233,12 +243,16 @@ static constexpr size_t kCommentLengthLimit = 256;
 /* Chapter 6 GQL-requests */
 // Section 6.1 <GQL-request>
 GQL_request
-    : GQL_program {
+    :
+    GQL_program {
 
     }
-    | request_parameter_set GQL_program {
+    | request_parameter_set SEMICOLON GQL_program {
 
     }
+    /* procedure_specification {
+
+    } */
     ;
 
 // Section 6.2 <request parameter set>
@@ -360,16 +374,16 @@ session_parameter_command
 
 // TODO BNF有bug: start_transaction_command procedure_specification 1,2 end_transaction_command可以是一个transcation_activity也可以是两个
 transaction_activity
-    : start_transaction_command {
+    : start_transaction_command %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
     
     }
-    | start_transaction_command procedure_specification %prec LOWER_THAN_COMMIT {
+    | start_transaction_command procedure_specification %prec LOWER_THAN_END_TRANSACTION_COMMAND {
       
     }
     | start_transaction_command procedure_specification end_transaction_command {
 
     }
-    | procedure_specification %prec LOWER_THAN_COMMIT {
+    | procedure_specification %prec LOWER_THAN_END_TRANSACTION_COMMAND {
 
     }
     | procedure_specification end_transaction_command {
@@ -470,11 +484,14 @@ opt_session_parameter_flag
     }
     ;
 
+// TODO
 session_parameter
-    : parameter_definition {
+    :
+    /* parameter_definition {
 
     }
-    | PARAMETER parameter_definition {
+    | */
+    PARAMETER parameter_definition {
 
     }
     ;
@@ -906,7 +923,7 @@ compact_value_variable_definition_list
     ;
 
 compact_value_variable_definition
-    : value_variable EQUALS_OPERATOR value_expression {
+    : value_variable EQUALS_OPERATOR untyped_value_expression {
 
     }
     ;
@@ -990,7 +1007,7 @@ graph_variable_definition
 
 // TODO seems it should use <parameter> instead of PARAMETER_NAME here
 graph_parameter_definition
-    : GRAPH_SYNONYM parameter opt_if_not_exists of_graph_type graph_initializer {
+    : GRAPH_SYNONYM PARAMETER_NAME opt_if_not_exists of_graph_type graph_initializer {
 
     }
     ;
@@ -1123,8 +1140,15 @@ value_variable
     }
     ;
 
+// TODO: conflicts: BINDING_TABLE_SYNONYM, `{`
+// AS/EQUALS_OPERATOR untyped_value_expression => AS/EQUALS_OPERATOR untyped_value_expression
+// If the user really want to declare the type of a value_variable, use the following rule instead:
+// value_variable_definition ::= VALUE value_variable of_value_type value_initializer
 value_initializer
-    : as_or_equals value_expression {
+    : AS untyped_value_expression {
+
+    }
+    | EQUALS_OPERATOR untyped_value_expression {
 
     }
     | nested_query_specification {
@@ -1140,11 +1164,22 @@ value_initializer
 
 /* Chapter 11 Object expressions */
 // Section 11.2 <primary result object expression>
-primary_result_object_expression
+// TODO primary_result_object_expression is non-deterministic
+// eg. graph_expression is conflicted with binding_table_reference here
+// eg. both of them are conflicted with binding_variable -> non_parenthesized_value_expression_primary -> value_expression_primary -> generic_term
+/* primary_result_object_expression
     : graph_expression {
 
     }
     | binding_table_reference {
+
+    }
+    ; */
+primary_result_object_expression
+    : GRAPH_SYNONYM  graph_expression {
+
+    }
+    | BINDING_TABLE_SYNONYM binding_table_reference {
 
     }
     ;
@@ -1327,7 +1362,10 @@ call_procedure_statement
     : CALL procedure_call {
 
     }
-    | statement_mode CALL procedure_call {
+    | OPTIONAL_CALL procedure_call {
+
+    }
+    | MANDATORY_CALL procedure_call {
 
     }
     ;
@@ -2107,29 +2145,56 @@ linear_data_modifying_statement
     ;
 
 focused_linear_data_modifying_statement
-    : use_graph_clause focused_linear_data_modifying_statement_body_list {
+    : use_graph_clause focused_linear_data_modifying_statement_body {
 
     }
     ;
 
-focused_linear_data_modifying_statement_body_list
+/* focused_linear_data_modifying_statement_body_list
     : focused_linear_data_modifying_statement_body {
 
     }
     | focused_linear_data_modifying_statement_body_list focused_linear_data_modifying_statement_body {
 
     }
-    ;
+    ; */
 
 // TODO?
-focused_linear_data_modifying_statement_body
-    : opt_simple_linear_query_statement opt_use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_use_graph_clause_and_simple_data_accessing_statement_list {
+/* focused_linear_data_modifying_statement_body
+    : simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list {
 
     }
-    | opt_simple_linear_query_statement opt_use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
+    | use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list {
+
+    }
+    | simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
+
+    }
+    | use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
 
     }
     | nested_data_modifying_procedure_specification {
+
+    }
+    ; */
+
+focused_linear_data_modifying_statement_body
+    : focused_linear_data_modifying_statement_body_item {
+
+    }
+    | focused_linear_data_modifying_statement_body focused_linear_data_modifying_statement_body_item {
+
+    }
+    ;
+
+focused_linear_data_modifying_statement_body_item
+    : simple_data_accessing_statement {
+
+    }
+    | use_graph_clause simple_data_accessing_statement {
+
+    }
+    | primitive_result_statement {
 
     }
     ;
@@ -2157,6 +2222,9 @@ use_graph_clause_and_simple_linear_query_statement_list
     : use_graph_clause simple_linear_query_statement {
 
     }
+    | use_graph_clause_and_simple_linear_query_statement_list simple_linear_query_statement {
+
+    }
     | use_graph_clause_and_simple_linear_query_statement_list use_graph_clause simple_linear_query_statement {
 
     }
@@ -2169,26 +2237,29 @@ use_graph_clause_and_simple_linear_query_statement_list
     }
     ; */
 
-opt_simple_data_accessing_statement_list
+/* opt_simple_data_accessing_statement_list
     : %empty {
 
     }
     | simple_data_accessing_statement_list {
 
     }
-    ;
+    ; */
   
-simple_data_accessing_statement_list
+/* simple_data_accessing_statement_list
     : simple_data_accessing_statement {
 
     }
     | simple_data_accessing_statement_list simple_data_accessing_statement {
 
     }
-    ;
+    ; */
 
 opt_use_graph_clause_and_simple_data_accessing_statement_list
     : %empty {
+
+    }
+    | opt_use_graph_clause_and_simple_data_accessing_statement_list simple_data_accessing_statement {
 
     }
     | opt_use_graph_clause_and_simple_data_accessing_statement_list use_graph_clause simple_data_accessing_statement {
@@ -2221,7 +2292,8 @@ opt_primitive_result_statement
     }
     ;
 
-ambient_linear_data_modifying_statement
+// TODO combine the rule, and do the check in the action
+/* ambient_linear_data_modifying_statement
     : simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
 
     }
@@ -2230,6 +2302,24 @@ ambient_linear_data_modifying_statement
     }
     | nested_data_modifying_procedure_specification {
 
+    }
+    ; */
+
+ambient_linear_data_modifying_statement
+    : simple_data_accessing_statement_list { std::cerr << "hello"; } opt_primitive_result_statement {
+
+    }
+    | nested_data_modifying_procedure_specification {
+
+    }
+    ;
+
+simple_data_accessing_statement_list
+    : simple_data_accessing_statement {
+
+    }
+    | simple_data_accessing_statement_list simple_data_accessing_statement {
+      
     }
     ;
 
@@ -2291,19 +2381,19 @@ insert_statement
     : INSERT simple_graph_pattern {
 
     }
-    | OPTIONAL INSERT simple_graph_pattern {
+    | OPTIONAL_INSERT simple_graph_pattern opt_when_clause {
 
     }
-    | OPTIONAL INSERT simple_graph_pattern when_clause {
+    /* | OPTIONAL_INSERT simple_graph_pattern where_clause {
 
-    }
+    } */
     ;
 
 opt_when_clause
     : %empty {
 
     }
-    | when_clause {
+    | where_clause {
 
     }
     ;
@@ -2343,13 +2433,13 @@ set_item
     ;
 
 set_property_item
-    : binding_variable PERIOD property_name EQUALS_OPERATOR value_expression {
+    : binding_variable PERIOD property_name EQUALS_OPERATOR untyped_value_expression {
       
     }
     ;
 
 set_all_properties_item
-    : binding_variable EQUALS_OPERATOR value_expression {
+    : binding_variable EQUALS_OPERATOR untyped_value_expression {
 
     }
     ;
@@ -2437,7 +2527,7 @@ delete_item_list
     ;
 
 delete_item
-    : value_expression {
+    : untyped_value_expression {
 
     }
     ;
@@ -2590,7 +2680,10 @@ from_graph_clause_and_simple_linear_query_statement_list
     ;
 
 ambient_linear_query_statement
-    : opt_simple_linear_query_statement primitive_result_statement {
+    : primitive_result_statement {
+
+    }
+    | simple_data_accessing_statement_list DUMMY_AMBIENT_QUERY_STMT primitive_result_statement {
 
     }
     | nested_query_specification {
@@ -2620,7 +2713,10 @@ match_statement
     : MATCH graph_pattern {
 
     }
-    | statement_mode MATCH graph_pattern {
+    | OPTIONAL_MATCH graph_pattern {
+
+    }
+    | MANDATORY_MATCH graph_pattern {
 
     }
     ;
@@ -2662,7 +2758,10 @@ let_statement
     : LET compact_variable_definition_list {
 
     }
-    | statement_mode LET compact_variable_definition_list where_clause {
+    | OPTIONAL_LET compact_variable_definition_list where_clause {
+      
+    }
+    | MANDATORY_LET compact_variable_definition_list where_clause {
       
     }
     ;
@@ -2679,7 +2778,10 @@ for_statement
     : FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
 
     }
-    | statement_mode FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
+    | OPTIONAL_FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
+
+    }
+    | MANDATORY_FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
 
     }
     ;
@@ -2861,9 +2963,9 @@ return_item_list
     ;
 
 return_item
-    : value_expression {
+    : untyped_value_expression {
     }
-    | value_expression return_item_alias {
+    | untyped_value_expression return_item_alias {
 
     }
     ;
@@ -2891,10 +2993,10 @@ select_item_list
     ;
 
 select_item
-    : value_expression {
+    : untyped_value_expression {
     
     }
-    | value_expression select_item_alias {
+    | untyped_value_expression select_item_alias {
 
     }
     ;
@@ -2920,13 +3022,14 @@ select_statement_body
     }
     ;
 
+// TODO: distinguish the COMMA with yield_item_list
 select_graph_match_list
     : select_graph_match {
 
     }
-    | select_graph_match_list COMMA select_graph_match {
+    /* | select_graph_match_list COMMA select_graph_match {
 
-    }
+    } */
     ;
 
 select_graph_match
@@ -2963,8 +3066,9 @@ opt_order_by_clause
     ;
 
 // Section 15.8.4 <project statement>
+// TODO untyped_value_expression => untyped_value_expression
 project_statement
-    : PROJECT value_expression {
+    : PROJECT untyped_value_expression {
 
     }
     ;
@@ -3413,7 +3517,7 @@ property_key_value_pair_list
     ;
 
 property_key_value_pair
-    : property_name COLON value_expression {
+    : property_name COLON untyped_value_expression {
 
     }
     ;
@@ -3425,10 +3529,10 @@ element_pattern_cost_clause
     ;
 
 cost_clause
-    : COST value_expression {
+    : COST untyped_value_expression {
     
     }
-    | COST value_expression DEFAULT value_expression {
+    | COST untyped_value_expression DEFAULT untyped_value_expression {
 
     }
     ;
@@ -4210,7 +4314,7 @@ procedure_argument_list
     ;
 
 procedure_argument
-    : value_expression {
+    : untyped_value_expression {
 
     }
     ;
@@ -4317,7 +4421,7 @@ aggregate_function
     ;
 
 general_set_function
-    : general_set_function_type LEFT_PAREN set_quantifier value_expression RIGHT_PAREN {
+    : general_set_function_type LEFT_PAREN set_quantifier untyped_value_expression RIGHT_PAREN {
 
     }
     ;
@@ -4425,7 +4529,7 @@ opt_null_ordering
     ;
 
 sort_key
-    : value_expression {
+    : untyped_value_expression {
 
     }
     ;
@@ -4485,15 +4589,20 @@ schema_reference
     }
     ;
 
+// TODO eg. /a/b/c, c is schema_name; /a/b/c/d, d is schema_name
 catalog_schema_parent_and_name
-    : SOLIDUS schema_name {
-
-    }
-    | absolute_url_path SOLIDUS schema_name {
+    : SOLIDUS simple_relative_url_path_and_schema_name {
 
     }
     | url_path_parameter {
     
+    }
+    ;
+
+// TODO
+simple_relative_url_path_and_schema_name
+    : simple_relative_url_path {
+
     }
     ;
 
@@ -4526,7 +4635,7 @@ catalog_graph_reference
     : catalog_graph_parent_and_name {
     
     }
-    | predefined_graph_parameter {
+    | predefined_graph_parameter %prec LOWER_THAN_SOLIDUS {
     
     }
     | external_object_reference {
@@ -4534,66 +4643,24 @@ catalog_graph_reference
     }
     ;
 
-// TODO 可能要避免这种写法.. y := opt_xxx a
 catalog_graph_parent_and_name
-    : graph_name {
-    
-    }
-    | graph_parent_specification graph_name {
-    
-    }
-    | url_path_parameter {
-    
-    }
-    ;
-
-// TODO
-graph_parent_specification
     : parent_catalog_object_reference {
-    
-    }
-    | parent_catalog_object_reference qualified_object_name_and_period {
 
     }
-    | qualified_object_name_and_period {
-
-    }
-    ;
-
-opt_parent_catalog_object_reference
-    : %empty {
-
-    }
-    | parent_catalog_object_reference {
-
-    }
-    ;
-
-// TODO REWRITE
-opt_qualified_object_name_and_period
-    : %empty {
-
-    }
-    | qualified_object_name_and_period
-    ;
-
-qualified_object_name_and_period
-    : qualified_object_name PERIOD {
-
-    }
-
-local_graph_reference
-    : qualified_graph_name {
+    | parent_catalog_object_reference PERIOD qualified_graph_name {
 
     }
     ;
 
 // TODO
 qualified_graph_name
-    : graph_name {
+    : qualified_object_name {
 
     }
-    | qualified_object_name_and_period graph_name {
+    ;
+
+local_graph_reference
+    : qualified_graph_name {
 
     }
     ;
@@ -4624,26 +4691,10 @@ catalog_graph_type_reference
     ;
 
 catalog_graph_type_parent_and_name
-    : graph_type_name {
-
-    }
-    | graph_type_parent_specification graph_type_name {
-
-    }
-    | url_path_parameter {
-
-    }
-    ;
-
-// TODO %empty is removed
-graph_type_parent_specification
     : parent_catalog_object_reference {
-    
-    }
-    | parent_catalog_object_reference qualified_object_name_and_period {
 
     }
-    | qualified_object_name_and_period {
+    | parent_catalog_object_reference PERIOD qualified_graph_type_name {
 
     }
     ;
@@ -4656,10 +4707,7 @@ local_graph_type_reference
 
 // TODO REWRITE
 qualified_graph_type_name
-    : graph_type_name {
-
-    }
-    | qualified_object_name_and_period graph_type_name {
+    : qualified_object_name {
 
     }
     ;
@@ -4693,32 +4741,12 @@ catalog_binding_table_reference
     }
     ;
 
+
 catalog_binding_table_parent_and_name
-    : binding_table_name {
-
-    }
-    | binding_table_parent_specification binding_table_name {
-
-    }
-    | url_path_parameter {
-
-    }
-    ;
-
-// TODO
-/* binding_table_parent_specification
-    : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
-
-    }
-    ; */
-binding_table_parent_specification
     : parent_catalog_object_reference {
-    
-    }
-    | parent_catalog_object_reference qualified_object_name_and_period {
 
     }
-    | qualified_object_name_and_period {
+    | parent_catalog_object_reference PERIOD qualified_binding_table_name {
 
     }
     ;
@@ -4730,10 +4758,7 @@ local_binding_table_reference
     ;
 
 qualified_binding_table_name
-    : binding_table_name {
-
-    }
-    | qualified_object_name_and_period binding_table_name {
+    : qualified_object_name {
 
     }
     ;
@@ -4764,32 +4789,10 @@ catalog_procedure_reference
     ;
 
 catalog_procedure_parent_and_name
-    : procedure_name {
-
-    }
-    | procedure_parent_specification procedure_name {
-
-    }
-    | url_path_parameter {
-
-    }
-    ;
-
-// TODO
-/* procedure_parent_specification
-    : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
-
-    }
-    ; */
-
-procedure_parent_specification
     : parent_catalog_object_reference {
-    
-    }
-    | parent_catalog_object_reference qualified_object_name_and_period {
 
     }
-    | qualified_object_name_and_period {
+    | parent_catalog_object_reference PERIOD qualified_procedure_name {
 
     }
     ;
@@ -4801,10 +4804,7 @@ local_procedure_reference
     ;
 
 qualified_procedure_name
-    : procedure_name {
-
-    }
-    | qualified_object_name_and_period procedure_name {
+    : qualified_object_name {
 
     }
     ;
@@ -4835,44 +4835,22 @@ catalog_query_reference
     ;
 
 catalog_query_parent_and_name
-    : query_name {
-
-    }
-    | query_parent_specification query_name {
-
-    }
-    | url_path_parameter {
-
-    }
-    ;
-
-// TODO
-/* query_parent_specification
-    : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
-
-    }
-    ; */
-query_parent_specification
     : parent_catalog_object_reference {
-    
-    }
-    | parent_catalog_object_reference qualified_object_name_and_period {
 
     }
-    | qualified_object_name_and_period {
+    | parent_catalog_object_reference PERIOD qualified_query_name {
 
     }
     ;
 
 local_query_reference
-    : qualified_query_name
+    : qualified_query_name {
+
+    }
     ;
 
 qualified_query_name
-    : query_name {
-
-    }
-    | qualified_object_name_and_period query_name {
+    : qualified_object_name {
 
     }
     ;
@@ -4903,31 +4881,10 @@ catalog_function_reference
     ;
 
 catalog_function_parent_and_name
-    : function_name {
-
-    }
-    | function_parent_specification function_name {
-
-    }
-    | url_path_parameter {
-
-    }
-    ;
-
-// TODO
-/* function_parent_specification
-    : opt_parent_catalog_object_reference opt_qualified_object_name_and_period {
-
-    }
-    ; */
-function_parent_specification
     : parent_catalog_object_reference {
-    
-    }
-    | parent_catalog_object_reference qualified_object_name_and_period {
 
     }
-    | qualified_object_name_and_period {
+    | parent_catalog_object_reference PERIOD qualified_function_name {
 
     }
     ;
@@ -4939,10 +4896,7 @@ local_function_reference
     ;
 
 qualified_function_name
-    : function_name {
-
-    }
-    | qualified_object_name_and_period function_name {
+    : qualified_object_name {
 
     }
     ;
@@ -4953,19 +4907,19 @@ catalog_object_reference
 
     }
     ;
-// TODO combine rule
+// TODO: Handle such case: a/b/c/d, a/b/c d.e.f
 parent_catalog_object_reference
     : catalog_object_reference {
 
     }
-    | catalog_object_reference SOLIDUS {
+    /* | catalog_object_reference SOLIDUS {
 
-    }
+    } */
     ;
 
 catalog_url_path
     : absolute_url_path {
-
+ 
     }
     | relative_url_path {
 
@@ -4977,10 +4931,12 @@ catalog_url_path
 
 // TODO
 absolute_url_path
-    : SOLIDUS {
+    :
+    /* SOLIDUS {
 
     }
-    | SOLIDUS simple_url_path {
+    | */
+    SOLIDUS simple_url_path {
 
     }
     ;
@@ -4992,16 +4948,21 @@ relative_url_path
     | simple_relative_url_path {
 
     }
-    | PERIOD {
+    /* | PERIOD {
 
-    }
+    } */
     ;
 
 parent_object_relative_url_path
-    : predefined_parent_object_parameter {
+    :
+    /* predefined_parent_object_parameter {
     
     }
-    | predefined_parent_object_parameter SOLIDUS simple_url_path {
+    | */
+    predefined_schema_parameter SOLIDUS simple_url_path {
+
+    }
+    | predefined_graph_parameter SOLIDUS simple_url_path {
 
     }
     ;
@@ -5035,13 +4996,13 @@ solidus_and_double_period_list
     ;
 
 solidus_and_double_period
-    : SOLIDUS DOUBLE_PERIOD {
+    : SOLIDUS_DOUBLE_PERIOD {
 
     }
     ;
 
 opt_solidus_and_simple_url_path
-    : %empty {
+    : %empty %prec LOWER_THAN_SOLIDUS {
 
     }
     | solidus_and_simple_url_path {
@@ -5056,7 +5017,7 @@ solidus_and_simple_url_path
     ;
 
 parameterized_url_path
-    : url_path_parameter {
+    : url_path_parameter %prec LOWER_THAN_SOLIDUS {
 
     }
     | url_path_parameter solidus_and_simple_url_path {
@@ -5064,9 +5025,8 @@ parameterized_url_path
     }
     ;
 
-// TODO REWRITE !!!!
 simple_url_path
-    : url_segment_list {
+    : url_segment_list %prec LOWER_THAN_SOLIDUS {
     
     }
     ;
@@ -5148,20 +5108,22 @@ search_condition
     ;
 
 // Section 19.2 <predicate>
-predicate
-    : non_deterministic_predicate {
+/* predicate
+    : complex_predicate {
 
     }
-    | deterministic_predicate {
+    | simple_predicate {
 
     }
-    ;
+    ; */
 
-non_deterministic_predicate
-    : comparison_predicate {
+complex_predicate
+    :
+    comparison_predicate {
       
     }
-    | null_predicate {
+    |
+    null_predicate {
       
     }
     | normalized_predicate {
@@ -5169,7 +5131,7 @@ non_deterministic_predicate
     }
     ;
 
-deterministic_predicate
+simple_predicate
     : exists_predicate {
 
     }
@@ -5192,7 +5154,22 @@ deterministic_predicate
 
 // Section 19.3 <comparison predicate>
 comparison_predicate
-    : untyped_value_expression comparison_predicate_part_2 {
+    : untyped_value_expression EQUALS_OPERATOR untyped_value_expression {
+
+    }
+    | untyped_value_expression NOT_EQUALS_OPERATOR untyped_value_expression {
+
+    }
+    | untyped_value_expression LESS_THAN_OPERATOR untyped_value_expression %prec LEFT_ANGLE_BRACKET {
+
+    }
+    | untyped_value_expression GREATER_THAN_OPERATOR untyped_value_expression %prec RIGHT_ANGLE_BRACKET {
+
+    }
+    | untyped_value_expression LESS_THAN_OR_EQUALS_OPERATOR untyped_value_expression {
+
+    }
+    | untyped_value_expression GREATER_THAN_OR_EQUALS_OPERATOR untyped_value_expression {
 
     }
     ;
@@ -5210,10 +5187,10 @@ comp_op
     | NOT_EQUALS_OPERATOR {
       
     }
-    | LESS_THAN_OPERATOR {
+    | LEFT_ANGLE_BRACKET {
       
     }
-    | GREATER_THAN_OPERATOR {
+    | RIGHT_ANGLE_BRACKET {
       
     }
     | LESS_THAN_OR_EQUALS_OPERATOR {
@@ -5503,7 +5480,7 @@ untyped_value_expression
     : generic_primary {
 
     }
-    | non_deterministic_predicate {
+    | complex_predicate {
 
     }
     | untyped_value_expression OR untyped_value_expression {
@@ -5544,7 +5521,10 @@ untyped_value_expression
 
     }
     // 可能需要展开sign
-    | sign untyped_value_expression %prec UNARY_MINUS {
+    | PLUS_SIGN untyped_value_expression %prec UNARY_MINUS {
+
+    }
+    | MINUS_SIGN untyped_value_expression %prec UNARY_MINUS {
 
     }
     | untyped_value_expression CONCATENATION_OPERATOR untyped_value_expression {
@@ -5569,7 +5549,7 @@ generic_primary
     : value_expression_primary {
 
     }
-    | deterministic_predicate {
+    | simple_predicate {
 
     }
     | numeric_value_function {
@@ -5842,7 +5822,7 @@ value_expression_primary
     ;
 
 parenthesized_value_expression
-    : LEFT_PAREN value_expression RIGHT_PAREN {
+    : LEFT_PAREN untyped_value_expression RIGHT_PAREN {
 
     }
     ;
@@ -6770,7 +6750,7 @@ list_element_list
     ;
 
 list_element
-    : value_expression {
+    : untyped_value_expression {
 
     }
     ;
@@ -6865,7 +6845,7 @@ multiset_element_list
     ;
 
 multiset_element
-    : value_expression {
+    : untyped_value_expression {
 
     }
     ;
@@ -6894,7 +6874,7 @@ set_element_list
     ;
 
 set_element
-    : value_expression {
+    : untyped_value_expression {
 
     }
     ;
@@ -6926,7 +6906,7 @@ ordered_set_element_list
     ;
 
 ordered_set_element
-    : value_expression {
+    : untyped_value_expression {
 
     }
     ;
@@ -6961,13 +6941,13 @@ map_element
     ;
 
 map_key
-    : value_expression COLON {
+    : untyped_value_expression COLON {
 
     }
     ;
 
 map_value
-    : value_expression {
+    : untyped_value_expression {
 
     }
     ;
@@ -7009,7 +6989,7 @@ field
     ;
 
 field_value
-    : value_expression {
+    : untyped_value_expression {
 
     }
     ;
@@ -7041,7 +7021,7 @@ case_expression
 
 // TODO
 case_abbreviation
-    : NULLIF LEFT_PAREN value_expression COMMA value_expression RIGHT_PAREN {
+    : NULLIF LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
 
     }
     | COALESCE LEFT_PAREN value_expression_list RIGHT_PAREN {
@@ -7050,10 +7030,10 @@ case_abbreviation
     ;
   
 value_expression_list
-    : value_expression {
+    : untyped_value_expression {
 
     }
-    | value_expression_list COMMA value_expression {
+    | value_expression_list COMMA untyped_value_expression {
 
     }
     ;
@@ -7128,9 +7108,10 @@ case_operand
     : non_parenthesized_value_expression_primary {
 
     }
-    | element_reference {
+    // TODO: conflicted with binding_variable of non_parenthesized_value_expression_primary
+    /* | element_reference {
 
-    }
+    } */
     ;
 
 when_operand_list
@@ -7177,7 +7158,7 @@ result
     ;
 
 result_expression
-    : value_expression {
+    : untyped_value_expression {
       
     }
     ;
@@ -7191,7 +7172,7 @@ cast_specification
 
 // TODO null_literal seems redudant here
 cast_operand
-    : value_expression {
+    : untyped_value_expression {
       
     }
     /* | null_literal {
