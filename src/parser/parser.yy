@@ -2226,7 +2226,7 @@ opt_when_clause
     : %empty {
 
     }
-    | where_clause {
+    | when_clause {
 
     }
     ;
@@ -2247,6 +2247,7 @@ set_statement
 
 set_item_list
     : set_item {
+
     }
     | set_item_list COMMA set_item {
 
@@ -3708,6 +3709,7 @@ simple_path_pattern_list
     }
     ;
 
+// TODO Could simple_path_pattern contains quantifier? eg. `{1, 3}`
 simple_path_pattern
     : // !! Predicative production rule.
     path_pattern_expression {
