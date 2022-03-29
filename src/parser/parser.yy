@@ -237,11 +237,12 @@ static constexpr size_t kCommentLengthLimit = 256;
 
 // Chapter 6 GQL-requests
 // Section 6.1 <GQL-request>
+// TODO consider add ';' between request_parameter_set and GQL_program
 GQL_request
     : GQL_program {
 
     }
-    | request_parameter_set SEMICOLON GQL_program {
+    | request_parameter_set GQL_program {
 
     }
     ;
@@ -2735,6 +2736,7 @@ return_item_list
 
 return_item
     : untyped_value_expression {
+      
     }
     | untyped_value_expression return_item_alias {
 
@@ -6799,17 +6801,8 @@ general_literal
     }
     ;
 
-// TODO
-// character_string_literal is changed to UNBROKEN_CHARACTER_STRING_LITERAL | CHARACTER_STRING_LITERAL here.
-// The original rule is:
-// predefined_type_literal
-//     : boolean_literal
-//     | character_string_literal
-//     | byte_string_literal
-//     | temporal_literal
-//     | duration_literal
-//     | null_literal
-//     ;
+// TODO UNBROKEN_CHARACTER_STRING_LITERAL is newly added here
+// Take advantage of the flex longest match principle
 predefined_type_literal
     : boolean_literal {
       
@@ -6834,8 +6827,13 @@ predefined_type_literal
     }
     ;
 
+// TODO unsigned_integer is newly added here
+// Take advantage of the flex longest match principle
 unsigned_literal
-    : UNSIGNED_NUMERIC_LITERAL {
+    : unsigned_integer {
+
+    }
+    | UNSIGNED_NUMERIC_LITERAL {
       
     }
     | general_literal {
@@ -6855,8 +6853,13 @@ boolean_literal
     }
     ;
 
+// TODO unsigned_integer is newly added here
+// Take advantage of the flex longest match principle
 signed_numeric_literal
-    : opt_sign UNSIGNED_NUMERIC_LITERAL {
+    : opt_sign unsigned_integer {
+
+    }
+    | opt_sign UNSIGNED_NUMERIC_LITERAL {
 
     }
     ;
@@ -7347,19 +7350,19 @@ byte_string_type
     ;
 
 min_length
-    : UNSIGNED_DECIMAL_INTEGER {
+    : unsigned_integer {
 
     }
     ;
 
 max_length
-    : UNSIGNED_DECIMAL_INTEGER {
+    : unsigned_integer {
       
     }
     ;
 
 fixed_length
-    : UNSIGNED_DECIMAL_INTEGER {
+    : unsigned_integer {
       
     }
     ;
@@ -7497,13 +7500,13 @@ decimal_exact_numeric_type
     ;
 
 precision
-    : UNSIGNED_DECIMAL_INTEGER {
+    : unsigned_integer {
 
     }
     ;
 
 scale
-    : UNSIGNED_DECIMAL_INTEGER {
+    : unsigned_integer {
 
     }
     ;
