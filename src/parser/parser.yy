@@ -1300,23 +1300,29 @@ like_binding_table_shorthand
 // Chapter 12 Statements
 // Section 12.1 <statement>
 statement
-    : data_modifying_or_query_or_catalog_statement {
+    : generic_statement {
 
     }
-    | at_schema_clause data_modifying_or_query_or_catalog_statement {
-
-    }
-    ;
-
-opt_at_schema_clause
-    : %empty {
-
-    }
-    | at_schema_clause {
+    | at_schema_clause generic_statement {
 
     }
     ;
 
+generic_statement
+    : composite_generic_statement {
+
+    }
+    | conditional_generic_statement {
+
+    }
+    ;
+
+composite_generic_statement
+    : composite_generic_expression {
+
+    }
+    ;
+    
 // catalog_modifying_statement
 //     : linear_catalog_modifying_statement {
 
@@ -1331,15 +1337,6 @@ opt_at_schema_clause
 
 //     }
 //     ;
-
-data_modifying_or_query_or_catalog_statement
-    : composite_data_modifying_or_query_or_catalog_statement {
-
-    }
-    | conditional_data_modifying_or_query_or_catalog_statement {
-
-    }
-    ;
 
 // Section 12.2 <call procedure statement>
 call_procedure_statement
@@ -1423,7 +1420,7 @@ primitive_catalog_modifying_statement
     }
     ;
 
-simple_data_accessing_or_catalog_statement
+simple_generic_statement
     : match_statement {
       
     }
@@ -1436,25 +1433,13 @@ simple_data_accessing_or_catalog_statement
     | do_statement {
       
     }
-    | call_procedure_statement {
-      
-    }
     | primitive_catalog_modifying_statement {
 
     }
+    | call_procedure_statement {
+      
+    }
     ;
-
-// simple_data_modifying_statement
-//     : primitive_data_modifying_statement {
-
-//     }
-//     | do_statement {
-      
-//     }
-//     | call_data_modifying_procedure_statement {
-      
-//     }
-//     ;
 
 primitive_data_modifying_statement
     : insert_statement {
@@ -1474,33 +1459,6 @@ primitive_data_modifying_statement
     }
     ;
 
-// simple_query_statement
-//     : simple_data_transforming_statement {
-      
-//     }
-//     | simple_data_reading_statement {
-      
-//     }
-//     ;
-
-// simple_data_reading_statement
-//     : match_statement {
-      
-//     }
-//     | call_query_statement {
-      
-//     }
-//     ;
-
-// simple_data_transforming_statement
-//     : primitive_data_transforming_statement {
-      
-//     }
-//     | call_function_statement {
-      
-//     }
-//     ;
-
 simple_query_statement
     : match_statement {
       
@@ -1508,13 +1466,7 @@ simple_query_statement
     | primitive_data_transforming_statement {
       
     }
-    | call_query_or_function_statement {
-
-    }
-    ;
-
-call_query_or_function_statement
-    : call_procedure_statement {
+    | call_procedure_statement {
 
     }
     ;
@@ -2174,10 +2126,10 @@ focused_linear_data_modifying_statement_body
     ;
 
 focused_linear_data_modifying_statement_body_item
-    : simple_data_accessing_or_catalog_statement {
+    : simple_generic_statement {
 
     }
-    | use_graph_clause simple_data_accessing_or_catalog_statement {
+    | use_graph_clause simple_generic_statement {
 
     }
     | primitive_result_statement {
@@ -2194,51 +2146,42 @@ opt_primitive_result_statement
     }
     ;
 
-// ambient_linear_data_modifying_statement
-//     : simple_data_accessing_statement_list opt_primitive_result_statement {
-
-//     }
-//     | nested_data_modifying_procedure_specification {
-
-//     }
-//     ;
-
-simple_data_accessing_or_catalog_statement_list
-    : simple_data_accessing_or_catalog_statement {
+simple_generic_statement_list
+    : simple_generic_statement {
 
     }
-    | simple_data_accessing_or_catalog_statement_list simple_data_accessing_or_catalog_statement {
+    | simple_generic_statement_list simple_generic_statement {
       
     }
     ;
 
 // Section 14.2 <conditional data-modifying statement>
-conditional_data_modifying_or_query_or_catalog_statement
-    : when_then_linear_data_modifying_or_query_or_catalog_statement_branch_list opt_else_linear_data_modifying_or_query_or_catalog_statement_branch %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
+conditional_generic_statement
+    : when_then_linear_generic_statement_branch_list opt_else_linear_generic_statement_branch %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
 
     }
     ;
 
-when_then_linear_data_modifying_or_query_or_catalog_statement_branch_list
-    : when_then_linear_data_modifying_or_query_or_catalog_statement_branch {
+when_then_linear_generic_statement_branch_list
+    : when_then_linear_generic_statement_branch {
 
     }
-    | when_then_linear_data_modifying_or_query_or_catalog_statement_branch_list when_then_linear_data_modifying_or_query_or_catalog_statement_branch {
+    | when_then_linear_generic_statement_branch_list when_then_linear_generic_statement_branch {
 
     }
     ;
 
-opt_else_linear_data_modifying_or_query_or_catalog_statement_branch
+opt_else_linear_generic_statement_branch
     : %empty %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
 
     }
-    | else_linear_data_modifying_or_query_or_catalog_statement_branch {
+    | else_linear_generic_statement_branch {
 
     }
     ;
 
-when_then_linear_data_modifying_or_query_or_catalog_statement_branch
-    : when_clause THEN linear_data_modifying_or_query_or_catalog_statement {
+when_then_linear_generic_statement_branch
+    : when_clause THEN linear_generic_statement {
 
     }
     | when_clause nested_procedure_specification {
@@ -2246,8 +2189,8 @@ when_then_linear_data_modifying_or_query_or_catalog_statement_branch
     }
     ;
 
-else_linear_data_modifying_or_query_or_catalog_statement_branch
-    : ELSE linear_data_modifying_or_query_or_catalog_statement {
+else_linear_generic_statement_branch
+    : ELSE linear_generic_statement {
 
     }
     ;
@@ -2431,58 +2374,15 @@ call_data_modifying_procedure_statement
 
 // Chapter 15 Query statements
 // Section 15.1 <composite query statement>
-composite_data_modifying_or_query_or_catalog_statement
-    : composite_data_modifying_or_query_or_catalog_expression {
-
-    }
-    ;
 
 // Section 15.2 <conditional query statement>
-// conditional_query_statement
-//     : when_then_linear_query_branch_list opt_else_linear_query_branch {
-
-//     }
-//     ;
-
-// when_then_linear_query_branch_list
-//     : when_then_linear_query_branch {
-
-//     }
-//     | when_then_linear_query_branch_list when_then_linear_query_branch {
-
-//     }
-//     ;
-
-// opt_else_linear_query_branch
-//     : %empty {
-
-//     }
-//     | else_linear_query_branch {
-
-//     }
-//     ;
-
-// when_then_linear_query_branch
-//     : when_clause THEN linear_query_expression {
-
-//     }
-//     | when_clause nested_query_specification {
-
-//     }
-//     ;
-
-// else_linear_query_branch
-//     : ELSE linear_query_expression {
-
-//     }
-//     ;
 
 // Section 15.3 <composite query expression>
-composite_data_modifying_or_query_or_catalog_expression
-    : linear_data_modifying_or_query_or_catalog_expression {
+composite_generic_expression
+    : linear_generic_expression {
 
     }
-    | composite_data_modifying_or_query_or_catalog_expression query_conjunction linear_data_modifying_or_query_or_catalog_expression {
+    | composite_generic_expression query_conjunction linear_generic_expression {
 
     }
     ;
@@ -2518,8 +2418,33 @@ opt_set_quantifier
     ;
 
 // Section 15.4 <linear query expression>
-linear_data_modifying_or_query_or_catalog_expression
-    : linear_data_modifying_or_query_or_catalog_statement {
+linear_generic_expression
+    : linear_generic_statement {
+
+    }
+    ;
+
+
+linear_generic_statement
+    : focused_linear_data_modifying_statement {
+
+    }
+    | focused_linear_query_statement {
+
+    }
+    | ambient_linear_generic_statement {
+
+    }
+    ;
+
+ambient_linear_generic_statement
+    : simple_generic_statement_list opt_primitive_result_statement {
+
+    }
+    | primitive_result_statement {
+
+    }
+    | nested_procedure_specification {
 
     }
     ;
@@ -2568,30 +2493,11 @@ from_graph_clause_and_simple_linear_query_statement_list
     }
     ;
 
-// ambient_linear_query_statement
-//     : primitive_result_statement {
-
-//     }
-//     | simple_linear_query_statement primitive_result_statement {
-
-//     }
-//     | nested_query_specification {
-
-//     }
-//     ;
-
-// TODO why remove simple_query_statement_list will cause more conflicts?
 simple_linear_query_statement
-    : simple_query_statement_list {
-
-    }
-    ;
-
-simple_query_statement_list
     : simple_query_statement {
 
     }
-    | simple_query_statement_list simple_query_statement {
+    | simple_linear_query_statement simple_query_statement {
 
     }
     ;
@@ -2611,11 +2517,11 @@ match_statement
     ;
 
 // Section 15.6.2 <call query statement>
-call_query_statement
-    : call_procedure_statement {
+// call_query_statement
+//     : call_procedure_statement {
 
-    }
-    ;
+//     }
+//     ;
 
 // Section 15.7 Data-transforming statements
 // Section 15.7.1 <mandatory statement>
@@ -2752,30 +2658,6 @@ order_by_and_page_statement
     }
     ;
 
-// order_by_and_page_statement
-//     : order_by_clause %prec LOWER_THAN_LIMIT {
-
-//     }
-//     | order_by_clause offset_clause %prec LOWER_THAN_LIMIT {
-
-//     }
-//     | order_by_clause offset_clause limit_clause {
-
-//     }
-//     | order_by_clause limit_clause %prec LOWER_THAN_LIMIT {
-
-//     }
-//     | offset_clause %prec LOWER_THAN_LIMIT {
-
-//     }
-//     | offset_clause limit_clause %prec LOWER_THAN_LIMIT {
-
-//     }
-//     | limit_clause %prec LOWER_THAN_LIMIT {
-
-//     }
-//     ;
-
 opt_offset_clause
     : %empty %prec LOWER_THAN_LIMIT {
 
@@ -2867,6 +2749,7 @@ return_item_alias
 
 // Section 15.8.3 <select statement>
 // TODO remove opt_where_clause due to conflicts
+// consider the bnf of old gql
 select_statement
     :
     // SELECT opt_set_quantifier select_item_list select_statement_body opt_where_clause opt_group_by_clause opt_having_clause opt_order_by_clause opt_offset_clause opt_limit_clause {
@@ -2951,7 +2834,7 @@ opt_having_clause
     ;
 
 opt_order_by_clause
-    : %empty {
+    : %empty %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
 
     }
     | order_by_clause {
@@ -3051,7 +2934,8 @@ opt_formal_parameter_list
 
     }
     ;
-
+ 
+// TODO COMMA_OPTIONAL
 formal_parameter_list
     : mandatory_formal_parameter_list {
 
@@ -3070,6 +2954,7 @@ mandatory_formal_parameter_list
     }
     ;
 
+// TODO
 // optional_formal_parameter_list
 //     : OPTIONAL formal_parameter_definition_list {
 
@@ -5472,141 +5357,6 @@ generic_primary
     }
     ;
 
-// untyped_value_expression
-//     : common_value_expression {
-
-//     }
-//     | boolean_value_expression %prec LOWER_THAN_RIGHT_PAREN {
-
-//     }
-//     ;
-
-// common_value_expression
-//     : numeric_value_expression {
-      
-//     }
-//     | string_value_expression {
-      
-//     }
-//     | datetime_value_expression {
-      
-//     }
-//     | duration_value_expression {
-      
-//     }
-//     | collection_value_expression {
-      
-//     }
-//     | map_value_expression {
-      
-//     }
-//     | record_value_expression {
-      
-//     }
-//     | reference_value_expression {
-      
-//     }
-//     ;
-
-// reference_value_expression
-//     : primary_result_object_expression {
-      
-//     }
-//     | graph_element_value_expression {
-      
-//     }
-//     ;
-
-// // TODO Why doesn't collection_value_expression contain map_value_expression and record_value_expression
-// // Because collection_value_constructor contains map_value_constructor and record_value_constructor
-// collection_value_expression
-//     : list_value_expression {
-      
-//     }
-//     | multiset_value_expression {
-      
-//     }
-//     | set_value_expression {
-      
-//     }
-//     | ordered_set_value_expression {
-      
-//     }
-//     ;
-
-// set_value_expression
-//     : value_expression_primary {
-      
-//     }
-//     ;
-
-// ordered_set_value_expression
-//     : value_expression_primary {
-      
-//     }
-//     ;
-
-// map_value_expression
-//     : value_expression_primary {
-      
-//     }
-//     ;
-
-// record_value_expression
-//     : value_expression_primary {
-      
-//     }
-//     ;
-
-// // Section 20.3 <boolean value expression>
-// boolean_value_expression
-//     : boolean_term {
-      
-//     }
-//     | boolean_value_expression OR boolean_term {
-      
-//     }
-//     | boolean_value_expression XOR boolean_term {
-      
-//     }
-//     ;
-
-// boolean_term
-//     : boolean_factor {
-      
-//     }
-//     | boolean_term AND boolean_factor {
-      
-//     }
-//     ;
-
-// boolean_factor
-//     : boolean_test {
-
-//     }
-//     | NOT boolean_test {
-
-//     }
-//     ;
-
-// boolean_test
-//     : boolean_primary {
-
-//     }
-//     | boolean_primary IS truth_value {
-
-//     }
-//     | boolean_primary IS_NOT truth_value {
-
-//     }
-//     | boolean_primary EQUALS_OPERATOR truth_value {
-
-//     }
-//     | boolean_primary NOT_EQUALS_OPERATOR truth_value {
-
-//     }
-//     ;
-
 truth_value
     : TRUE {
 
@@ -5622,65 +5372,6 @@ truth_value
     }
     ;
 
-// boolean_primary
-//     : predicate {
-
-//     }
-//     | boolean_predicand {
-
-//     }
-//     ;
-
-// // TODO Boolean?
-// boolean_predicand
-//     : parenthesized_Boolean_value_expression {
-
-//     }
-//     | non_parenthesized_value_expression_primary {
-
-//     }
-//     ;
-
-// parenthesized_Boolean_value_expression
-//     : LEFT_PAREN boolean_value_expression RIGHT_PAREN {
-
-//     }
-//     ;
-
-// // Section 20.4 <numeric value expression>
-// numeric_value_expression
-//     : term {
-      
-//     }
-//     | numeric_value_expression PLUS_SIGN term {
-      
-//     }
-//     | numeric_value_expression MINUS_SIGN term {
-      
-//     }
-//     ;
-
-// term
-//     : factor {
-      
-//     }
-//     | term ASTERISK factor {
-      
-//     }
-//     | term SOLIDUS factor {
-      
-//     }
-//     ;
-
-// factor
-//     : numeric_primary {
-
-//     }
-//     | sign numeric_primary {
-
-//     }
-//     ;
-
 opt_sign
     : %empty {
 
@@ -5689,17 +5380,6 @@ opt_sign
 
     }
     ;
-
-// numeric_primary
-//     :
-//     value_expression_primary {
-
-//     }
-//     |
-//     numeric_value_function {
-
-//     }
-//     ;
 
 // Section 20.5 <value expression primary>
 value_expression_primary
@@ -8159,37 +7839,6 @@ GREATER_THAN_OPERATOR
 LESS_THAN_OPERATOR
     : LEFT_ANGLE_BRACKET
     ;
-
-
-linear_data_modifying_or_query_or_catalog_statement
-    : focused_linear_data_modifying_statement {
-
-    }
-    | focused_linear_query_statement {
-
-    }
-    | ambient_linear_data_modifying_or_query_or_catalog_statement {
-
-    }
-    ;
-
-ambient_linear_data_modifying_or_query_or_catalog_statement
-    : simple_data_accessing_or_catalog_statement_list opt_primitive_result_statement {
-
-    }
-    | primitive_result_statement {
-
-    }
-    | nested_procedure_specification {
-
-    }
-    ;
-
-
-
-
-
-
 
 
 %%
