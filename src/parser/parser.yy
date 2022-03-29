@@ -148,10 +148,6 @@ static constexpr size_t kCommentLengthLimit = 256;
 // %token NOT_EQUALS_OPERATOR_TRUE NOT_EQUALS_OPERATOR_FALSE NOT_EQUALS_OPERATOR_UNKNOWN NOT_EQUALS_OPERATOR_NULL
 // %token IS_TRUE IS_FALSE IS_UNKNOWN IS_NOT_TRUE IS_NOT_FALSE IS_NOT_UNKWON
 
-// dummy token
-%token DUMMY_CATALOG_PROCEDURE_FLAG DUMMY_DATA_PROCEDURE_FLAG DUMMY_QUERY_FLAG DUMMY_FUNCTION_FLAG
-%token DUMMY_AMBIENT_QUERY_STMT 
-
 // single char operators
 %token  AMPERSAND ASTERISK
         COLON COMMA
@@ -598,7 +594,7 @@ commit_command
 // Chapter 9 Procedures
 // Section 9.1 <procedure specification>
 nested_procedure_specification
-    : LEFT_BRACE procedure_specification RIGHT_BRACE {
+    : LEFT_BRACE procedure_body RIGHT_BRACE {
 
     }
     ;
@@ -608,17 +604,22 @@ nested_procedure_specification
 // a <query specification>, and a <function specification> from their <procedure body> need
 // to be specified. See Possible Problem GQL-021 .
 // TODO
+// procedure_specification
+//     : catalog_modifying_procedure_specification {
+
+//     }
+//     | data_modifying_procedure_specification {
+
+//     }
+//     | query_specification {
+
+//     }
+//     | function_specification {
+
+//     }
+//     ;
 procedure_specification
-    : catalog_modifying_procedure_specification {
-
-    }
-    | data_modifying_procedure_specification {
-
-    }
-    | query_specification {
-
-    }
-    | function_specification {
+    : procedure_body {
 
     }
     ;
@@ -633,13 +634,13 @@ procedure_specification
 catalog_modifying_procedure_specification
     : 
     // !! Predicative production rule.
-    procedure_body stDev {
+    procedure_body {
 
     }
     ;
 
 nested_data_modifying_procedure_specification
-    : LEFT_BRACE data_modifying_procedure_specification RIGHT_BRACE {
+    : LEFT_BRACE procedure_body RIGHT_BRACE {
 
     }
     ;
@@ -647,14 +648,14 @@ nested_data_modifying_procedure_specification
 data_modifying_procedure_specification
     :
     // !! Predicative production rule.
-    procedure_body stDevP {
+    procedure_body {
 
     }
     ;
 
 // Section 9.2 <query specification>
 nested_query_specification
-    : LEFT_BRACE query_specification RIGHT_BRACE {
+    : LEFT_BRACE procedure_body RIGHT_BRACE {
 
     }
     ;
@@ -662,14 +663,14 @@ nested_query_specification
 query_specification
     :
     // !! Predicative production rule.
-    procedure_body percentileCont {
+    procedure_body {
 
     }
     ;
 
 // Section 9.3 <function specification>
 nested_function_specification
-    : LEFT_BRACE function_specification RIGHT_BRACE {
+    : LEFT_BRACE procedure_body RIGHT_BRACE {
 
     }
     ;
@@ -677,7 +678,7 @@ nested_function_specification
 function_specification
     :
     // !! Predicative production rule.
-    procedure_body percentileDist {
+    procedure_body {
 
     }
     ;
@@ -1299,22 +1300,10 @@ like_binding_table_shorthand
 // Chapter 12 Statements
 // Section 12.1 <statement>
 statement
-    : catalog_modifying_statement {
+    : data_modifying_or_query_or_catalog_statement {
 
     }
-    | at_schema_clause catalog_modifying_statement {
-
-    }
-    | data_modifying_statement {
-
-    }
-    | at_schema_clause data_modifying_statement {
-
-    }
-    | query_statement {
-
-    }
-    | at_schema_clause query_statement {
+    | at_schema_clause data_modifying_or_query_or_catalog_statement {
 
     }
     ;
@@ -1328,26 +1317,26 @@ opt_at_schema_clause
     }
     ;
 
-catalog_modifying_statement
-    : linear_catalog_modifying_statement {
+// catalog_modifying_statement
+//     : linear_catalog_modifying_statement {
+
+//     }
+//     ;
+
+// data_modifying_statement
+//     : conditional_data_modifying_or_query_statement {
+
+//     }
+//     | linear_data_modifying_or_query_statement {
+
+//     }
+//     ;
+
+data_modifying_or_query_or_catalog_statement
+    : composite_data_modifying_or_query_or_catalog_statement {
 
     }
-    ;
-
-data_modifying_statement
-    : conditional_data_modifying_statement {
-
-    }
-    | linear_data_modifying_statement {
-
-    }
-    ;
-
-query_statement
-    : composite_query_statement {
-
-    }
-    | conditional_query_statement {
+    | conditional_data_modifying_or_query_or_catalog_statement {
 
     }
     ;
@@ -1384,14 +1373,15 @@ statement_mode
     ;
 
 // Section 12.3 Statement classes
-simple_catalog_modifying_statement
-    : primitive_catalog_modifying_statement {
+// TODO
+// simple_catalog_modifying_statement
+//     : primitive_catalog_modifying_statement {
 
-    }
-    | call_catalog_modifying_procedure_statement {
+//     }
+//     // | call_catalog_modifying_procedure_statement {
 
-    }
-    ;
+//     // }
+//     ;
 
 // TODO create_schema_statement and drop_schema_statement are newly added here
 primitive_catalog_modifying_statement
@@ -1429,30 +1419,42 @@ primitive_catalog_modifying_statement
       
     }
     | drop_function_statement {
-      
+
     }
     ;
 
-simple_data_accessing_statement
-    : simple_query_statement {
-
-    }
-    | simple_data_modifying_statement {
+simple_data_accessing_or_catalog_statement
+    : match_statement {
       
     }
-    ;
-
-simple_data_modifying_statement
-    : primitive_data_modifying_statement {
+    | primitive_data_transforming_statement {
+      
+    }
+    | primitive_data_modifying_statement {
 
     }
     | do_statement {
       
     }
-    | call_data_modifying_procedure_statement {
+    | call_procedure_statement {
       
     }
+    | primitive_catalog_modifying_statement {
+
+    }
     ;
+
+// simple_data_modifying_statement
+//     : primitive_data_modifying_statement {
+
+//     }
+//     | do_statement {
+      
+//     }
+//     | call_data_modifying_procedure_statement {
+      
+//     }
+//     ;
 
 primitive_data_modifying_statement
     : insert_statement {
@@ -1472,30 +1474,48 @@ primitive_data_modifying_statement
     }
     ;
 
-simple_query_statement
-    : simple_data_transforming_statement {
+// simple_query_statement
+//     : simple_data_transforming_statement {
       
-    }
-    | simple_data_reading_statement {
+//     }
+//     | simple_data_reading_statement {
       
-    }
-    ;
+//     }
+//     ;
 
-simple_data_reading_statement
+// simple_data_reading_statement
+//     : match_statement {
+      
+//     }
+//     | call_query_statement {
+      
+//     }
+//     ;
+
+// simple_data_transforming_statement
+//     : primitive_data_transforming_statement {
+      
+//     }
+//     | call_function_statement {
+      
+//     }
+//     ;
+
+simple_query_statement
     : match_statement {
       
     }
-    | call_query_statement {
+    | primitive_data_transforming_statement {
       
+    }
+    | call_query_or_function_statement {
+
     }
     ;
 
-simple_data_transforming_statement
-    : primitive_data_transforming_statement {
-      
-    }
-    | call_function_statement {
-      
+call_query_or_function_statement
+    : call_procedure_statement {
+
     }
     ;
 
@@ -1526,20 +1546,20 @@ primitive_data_transforming_statement
 // Chapter 13 Catalog-modifying statements
 // Section 13.1 <linear catalog-modifying statement>
 // TODO list, 原地展开, 还是加一条新规则: simple_catalog_modifying_statement_list
-linear_catalog_modifying_statement
-    : simple_catalog_modifying_statement_list {
+// linear_catalog_modifying_statement
+//     : simple_catalog_modifying_statement_list {
 
-    }
-    ;
+//     }
+//     ;
 
-simple_catalog_modifying_statement_list
-    : simple_catalog_modifying_statement {
+// simple_catalog_modifying_statement_list
+//     : simple_catalog_modifying_statement {
 
-    }
-    | simple_catalog_modifying_statement_list simple_catalog_modifying_statement {
+//     }
+//     | simple_catalog_modifying_statement_list simple_catalog_modifying_statement {
 
-    }
-    ;
+//     }
+//     ;
 
 // TODO This rule seems to have been forgotten by rule primitive_catalog_modifying_statement.
 // Section 13.2 <create schema statement>
@@ -1567,6 +1587,7 @@ opt_if_exists
     ;
 
 // Section 13.4 <create graph statement>
+// TODO
 create_graph_statement
     : CREATE GRAPH_SYNONYM catalog_graph_parent_and_name opt_if_not_exists opt_of_graph_type opt_graph_source {
 
@@ -1601,11 +1622,9 @@ graph_source
     ;
 
 // Section 13.5 <graph specification>
+// TODO
 graph_specification
-    : GRAPH_SYNONYM nested_graph_query_specification {
-
-    }
-    | GRAPH_SYNONYM nested_ambient_data_modifying_procedure_specification {
+    : GRAPH_SYNONYM nested_procedure_specification {
 
     }
     ;
@@ -1616,11 +1635,11 @@ nested_graph_query_specification
     }
     ;
 
-nested_ambient_data_modifying_procedure_specification
-    : nested_data_modifying_procedure_specification {
+// nested_ambient_data_modifying_procedure_specification
+//     : nested_data_modifying_procedure_specification {
 
-    }
-    ;
+//     }
+//     ;
 
 // Section 13.6 <drop graph statement>
 drop_graph_statement
@@ -2122,56 +2141,28 @@ drop_function_statement
 
 // Section 13.20 <call catalog-modifying procedure statement>
 // TODO: We can't infer the kind of a call_procedure_statement
-call_catalog_modifying_procedure_statement
-    : call_procedure_statement DUMMY_CATALOG_PROCEDURE_FLAG {
+// call_catalog_modifying_procedure_statement
+//     : call_procedure_statement {
 
-    }
-    ;
+//     }
+//     ;
 
 // Chapter 14 Data-modifying statements
 // Section 14.1 <linear data-modifying statement>
-linear_data_modifying_statement
-    : focused_linear_data_modifying_statement {
+// linear_data_modifying_statement
+//     : focused_linear_data_modifying_statement {
 
-    }
-    | ambient_linear_data_modifying_statement {
+//     }
+//     | ambient_linear_data_modifying_statement {
 
-    }
-    ;
+//     }
+//     ;
 
 focused_linear_data_modifying_statement
-    : use_graph_clause focused_linear_data_modifying_statement_body {
+    : use_graph_clause focused_linear_data_modifying_statement_body %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
 
     }
     ;
-
-// focused_linear_data_modifying_statement_body_list
-//     : focused_linear_data_modifying_statement_body {
-
-//     }
-//     | focused_linear_data_modifying_statement_body_list focused_linear_data_modifying_statement_body {
-
-//     }
-//     ;
-
-// // TODO?
-// focused_linear_data_modifying_statement_body
-//     : simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list {
-
-//     }
-//     | use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list {
-
-//     }
-//     | simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
-
-//     }
-//     | use_graph_clause_and_simple_linear_query_statement_list simple_data_modifying_statement opt_use_graph_clause_and_simple_data_accessing_statement_list primitive_result_statement {
-
-//     }
-//     | nested_data_modifying_procedure_specification {
-
-//     }
-//     ;
 
 focused_linear_data_modifying_statement_body
     : focused_linear_data_modifying_statement_body_item {
@@ -2183,103 +2174,19 @@ focused_linear_data_modifying_statement_body
     ;
 
 focused_linear_data_modifying_statement_body_item
-    : simple_data_accessing_statement {
+    : simple_data_accessing_or_catalog_statement {
 
     }
-    | use_graph_clause simple_data_accessing_statement {
+    | use_graph_clause simple_data_accessing_or_catalog_statement {
 
     }
     | primitive_result_statement {
 
     }
     ;
-
-opt_simple_linear_query_statement
-    : %empty {
-
-    }
-    | simple_linear_query_statement {
-
-    }
-    ;
-
-opt_use_graph_clause_and_simple_linear_query_statement_list
-    : %empty {
-
-    }
-    | use_graph_clause_and_simple_linear_query_statement_list {
-
-    }
-    ;
-
-// TODO 原地展开 use_graph_clause_and_simple_linear_query_statement ?
-use_graph_clause_and_simple_linear_query_statement_list
-    : use_graph_clause simple_linear_query_statement {
-
-    }
-    | use_graph_clause_and_simple_linear_query_statement_list simple_linear_query_statement {
-
-    }
-    | use_graph_clause_and_simple_linear_query_statement_list use_graph_clause simple_linear_query_statement {
-
-    }
-    ;
-
-// TODO remove a maybe reduant rule
-// use_graph_clause_and_simple_linear_query_statement
-//     : use_graph_clause simple_linear_query_statement {
-
-//     }
-//     ;
-
-// opt_simple_data_accessing_statement_list
-//     : %empty {
-
-//     }
-//     | simple_data_accessing_statement_list {
-
-//     }
-//     ;
-  
-// simple_data_accessing_statement_list
-//     : simple_data_accessing_statement {
-
-//     }
-//     | simple_data_accessing_statement_list simple_data_accessing_statement {
-
-//     }
-//     ;
-
-opt_use_graph_clause_and_simple_data_accessing_statement_list
-    : %empty {
-
-    }
-    | opt_use_graph_clause_and_simple_data_accessing_statement_list simple_data_accessing_statement {
-
-    }
-    | opt_use_graph_clause_and_simple_data_accessing_statement_list use_graph_clause simple_data_accessing_statement {
-
-    }
-    ;
-
-// use_graph_clause_and_simple_data_accessing_statement_list
-//     : use_graph_clause simple_data_accessing_statement {
-
-//     }
-//     | use_graph_clause_and_simple_data_accessing_statement_list use_graph_clause simple_data_accessing_statement {
-
-//     }
-//     ;
-
-// // TODO remove a maybe reduant rule
-// use_graph_clause_and_simple_data_accessing_statement
-//     : use_graph_clause simple_data_accessing_statement {
-
-//     }
-//     ;
 
 opt_primitive_result_statement
-    : %empty {
+    : %empty %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
 
     }
     | primitive_result_statement {
@@ -2287,12 +2194,8 @@ opt_primitive_result_statement
     }
     ;
 
-// TODO combine the rule, and do the check in the action
 // ambient_linear_data_modifying_statement
-//     : simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
-
-//     }
-//     | simple_linear_query_statement simple_data_modifying_statement opt_simple_data_accessing_statement_list opt_primitive_result_statement {
+//     : simple_data_accessing_statement_list opt_primitive_result_statement {
 
 //     }
 //     | nested_data_modifying_procedure_specification {
@@ -2300,60 +2203,51 @@ opt_primitive_result_statement
 //     }
 //     ;
 
-ambient_linear_data_modifying_statement
-    : simple_data_accessing_statement_list { std::cerr << "hello"; } opt_primitive_result_statement {
+simple_data_accessing_or_catalog_statement_list
+    : simple_data_accessing_or_catalog_statement {
 
     }
-    | nested_data_modifying_procedure_specification {
-
-    }
-    ;
-
-simple_data_accessing_statement_list
-    : simple_data_accessing_statement {
-
-    }
-    | simple_data_accessing_statement_list simple_data_accessing_statement {
+    | simple_data_accessing_or_catalog_statement_list simple_data_accessing_or_catalog_statement {
       
     }
     ;
 
 // Section 14.2 <conditional data-modifying statement>
-conditional_data_modifying_statement
-    : when_then_linear_data_modifying_statement_branch_list opt_else_linear_data_modifying_statement_branch {
+conditional_data_modifying_or_query_or_catalog_statement
+    : when_then_linear_data_modifying_or_query_or_catalog_statement_branch_list opt_else_linear_data_modifying_or_query_or_catalog_statement_branch %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
 
     }
     ;
 
-when_then_linear_data_modifying_statement_branch_list
-    : when_then_linear_data_modifying_statement_branch {
+when_then_linear_data_modifying_or_query_or_catalog_statement_branch_list
+    : when_then_linear_data_modifying_or_query_or_catalog_statement_branch {
 
     }
-    | when_then_linear_data_modifying_statement_branch_list when_then_linear_data_modifying_statement_branch {
-
-    }
-    ;
-
-opt_else_linear_data_modifying_statement_branch
-    : %empty {
-
-    }
-    | else_linear_data_modifying_statement_branch {
+    | when_then_linear_data_modifying_or_query_or_catalog_statement_branch_list when_then_linear_data_modifying_or_query_or_catalog_statement_branch {
 
     }
     ;
 
-when_then_linear_data_modifying_statement_branch
-    : when_clause THEN linear_data_modifying_statement {
+opt_else_linear_data_modifying_or_query_or_catalog_statement_branch
+    : %empty %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
 
     }
-    | when_clause nested_data_modifying_procedure_specification {
+    | else_linear_data_modifying_or_query_or_catalog_statement_branch {
 
     }
     ;
 
-else_linear_data_modifying_statement_branch
-    : ELSE linear_data_modifying_statement {
+when_then_linear_data_modifying_or_query_or_catalog_statement_branch
+    : when_clause THEN linear_data_modifying_or_query_or_catalog_statement {
+
+    }
+    | when_clause nested_procedure_specification {
+
+    }
+    ;
+
+else_linear_data_modifying_or_query_or_catalog_statement_branch
+    : ELSE linear_data_modifying_or_query_or_catalog_statement {
 
     }
     ;
@@ -2530,65 +2424,65 @@ delete_item
 
 // Section 14.9 <call data-modifying procedure statement>
 call_data_modifying_procedure_statement
-    : call_procedure_statement DUMMY_DATA_PROCEDURE_FLAG {
+    : call_procedure_statement {
 
     }
     ;
 
 // Chapter 15 Query statements
 // Section 15.1 <composite query statement>
-composite_query_statement
-    : composite_query_expression {
+composite_data_modifying_or_query_or_catalog_statement
+    : composite_data_modifying_or_query_or_catalog_expression {
 
     }
     ;
 
 // Section 15.2 <conditional query statement>
-conditional_query_statement
-    : when_then_linear_query_branch_list opt_else_linear_query_branch {
+// conditional_query_statement
+//     : when_then_linear_query_branch_list opt_else_linear_query_branch {
 
-    }
-    ;
+//     }
+//     ;
 
-when_then_linear_query_branch_list
-    : when_then_linear_query_branch {
+// when_then_linear_query_branch_list
+//     : when_then_linear_query_branch {
 
-    }
-    | when_then_linear_query_branch_list when_then_linear_query_branch {
+//     }
+//     | when_then_linear_query_branch_list when_then_linear_query_branch {
 
-    }
-    ;
+//     }
+//     ;
 
-opt_else_linear_query_branch
-    : %empty {
+// opt_else_linear_query_branch
+//     : %empty {
 
-    }
-    | else_linear_query_branch {
+//     }
+//     | else_linear_query_branch {
 
-    }
-    ;
+//     }
+//     ;
 
-when_then_linear_query_branch
-    : when_clause THEN linear_query_expression {
+// when_then_linear_query_branch
+//     : when_clause THEN linear_query_expression {
 
-    }
-    | when_clause nested_query_specification {
+//     }
+//     | when_clause nested_query_specification {
 
-    }
-    ;
+//     }
+//     ;
 
-else_linear_query_branch
-    : ELSE linear_query_expression {
+// else_linear_query_branch
+//     : ELSE linear_query_expression {
 
-    }
-    ;
+//     }
+//     ;
 
 // Section 15.3 <composite query expression>
-composite_query_expression
-    : composite_query_expression query_conjunction linear_query_expression {
+composite_data_modifying_or_query_or_catalog_expression
+    : linear_data_modifying_or_query_or_catalog_expression {
 
     }
-    | linear_query_expression {
+    | composite_data_modifying_or_query_or_catalog_expression query_conjunction linear_data_modifying_or_query_or_catalog_expression {
 
     }
     ;
@@ -2624,21 +2518,21 @@ opt_set_quantifier
     ;
 
 // Section 15.4 <linear query expression>
-linear_query_expression
-    : linear_query_statement {
+linear_data_modifying_or_query_or_catalog_expression
+    : linear_data_modifying_or_query_or_catalog_statement {
 
     }
     ;
 
 // Section 15.5 <linear query statement>
-linear_query_statement
-    : focused_linear_query_statement {
+// linear_query_statement
+//     : focused_linear_query_statement {
       
-    }
-    | ambient_linear_query_statement {
+//     }
+//     | ambient_linear_query_statement {
       
-    }
-    ;
+//     }
+//     ;
 
 focused_linear_query_statement
     : from_graph_clause focused_linear_query_statement_body {
@@ -2674,17 +2568,17 @@ from_graph_clause_and_simple_linear_query_statement_list
     }
     ;
 
-ambient_linear_query_statement
-    : primitive_result_statement {
+// ambient_linear_query_statement
+//     : primitive_result_statement {
 
-    }
-    | simple_data_accessing_statement_list DUMMY_AMBIENT_QUERY_STMT primitive_result_statement {
+//     }
+//     | simple_linear_query_statement primitive_result_statement {
 
-    }
-    | nested_query_specification {
+//     }
+//     | nested_query_specification {
 
-    }
-    ;
+//     }
+//     ;
 
 // TODO why remove simple_query_statement_list will cause more conflicts?
 simple_linear_query_statement
@@ -2718,7 +2612,7 @@ match_statement
 
 // Section 15.6.2 <call query statement>
 call_query_statement
-    : call_procedure_statement DUMMY_QUERY_FLAG {
+    : call_procedure_statement {
 
     }
     ;
@@ -2902,7 +2796,7 @@ opt_limit_clause
 
 // Section 15.7.8 <call function statement>
 call_function_statement
-    : call_procedure_statement DUMMY_FUNCTION_FLAG {
+    : call_procedure_statement {
 
     }
     ;
@@ -8265,6 +8159,38 @@ GREATER_THAN_OPERATOR
 LESS_THAN_OPERATOR
     : LEFT_ANGLE_BRACKET
     ;
+
+
+linear_data_modifying_or_query_or_catalog_statement
+    : focused_linear_data_modifying_statement {
+
+    }
+    | focused_linear_query_statement {
+
+    }
+    | ambient_linear_data_modifying_or_query_or_catalog_statement {
+
+    }
+    ;
+
+ambient_linear_data_modifying_or_query_or_catalog_statement
+    : simple_data_accessing_or_catalog_statement_list opt_primitive_result_statement {
+
+    }
+    | primitive_result_statement {
+
+    }
+    | nested_procedure_specification {
+
+    }
+    ;
+
+
+
+
+
+
+
 
 %%
 

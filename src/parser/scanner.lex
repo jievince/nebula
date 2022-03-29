@@ -16,14 +16,6 @@
     yylloc->step();                     \
     yylloc->columns(yyleng);
 
-using Token = nebula::GraphParser::token;
-using TokenType = nebula::GraphParser::token::token_kind_type;
-
-#define NG_RESERVED_KEYWORD(a, b) {a, Token::TOK_##b},
-#define NG_UNRESERVED_KEYWORD(a, b) {a, Token::TOK_##b},
-
-#define NG_RETURN_TOKEN(a) return Token::TOK_##a;
-
 const std::unordered_map<std::string, TokenType> kCaseSensitiveKeywords {
 /* reserved keyword */
 // case-sensitive reserved keyword

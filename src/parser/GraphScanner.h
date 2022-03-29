@@ -18,6 +18,13 @@
 
 #include "parser/GraphParser.hpp"
 
+using Token = nebula::GraphParser::token;
+using TokenType = nebula::GraphParser::token::token_kind_type;
+
+#define NG_RESERVED_KEYWORD(a, b) {a, Token::TOK_##b},
+#define NG_UNRESERVED_KEYWORD(a, b) {a, Token::TOK_##b},
+#define NG_RETURN_TOKEN(a) return Token::TOK_##a;
+
 namespace nebula {
 
 class GraphScanner : public yyFlexLexer {
