@@ -314,11 +314,11 @@ NG_UNRESERVED_KEYWORD("CONDITION_NUMBER", CONDITION_NUMBER)
 NG_UNRESERVED_KEYWORD("CONNECTING", CONNECTING)
 NG_UNRESERVED_KEYWORD("DESTINATION", DESTINATION)
 NG_UNRESERVED_KEYWORD("DIRECTED", DIRECTED)
-NG_UNRESERVED_KEYWORD("EDGE", EDGE)
+NG_UNRESERVED_KEYWORD("EDGE", EDGE_SYNONYM)
 NG_UNRESERVED_KEYWORD("EDGES", EDGES)
 NG_UNRESERVED_KEYWORD("FINAL", FINAL)
 NG_UNRESERVED_KEYWORD("FIRST", FIRST)
-NG_UNRESERVED_KEYWORD("GRAPH", GRAPH)
+NG_UNRESERVED_KEYWORD("GRAPH", GRAPH_SYNONYM)  // TODO
 NG_UNRESERVED_KEYWORD("GRAPHS", GRAPHS)
 NG_UNRESERVED_KEYWORD("GROUPS", GROUPS)
 NG_UNRESERVED_KEYWORD("INDEX", INDEX)
@@ -333,7 +333,7 @@ NG_UNRESERVED_KEYWORD("NFC", NFC)
 NG_UNRESERVED_KEYWORD("NFD", NFD)
 NG_UNRESERVED_KEYWORD("NFKC", NFKC)
 NG_UNRESERVED_KEYWORD("NFKD", NFKD)
-NG_UNRESERVED_KEYWORD("NODE", NODE)
+NG_UNRESERVED_KEYWORD("NODE", NODE_SYNONYM)
 NG_UNRESERVED_KEYWORD("NODES", NODES)
 NG_UNRESERVED_KEYWORD("NORMALIZED", NORMALIZED)
 NG_UNRESERVED_KEYWORD("NUMBER", NUMBER)
@@ -344,7 +344,7 @@ NG_UNRESERVED_KEYWORD("PATTERNS", PATTERNS)
 NG_UNRESERVED_KEYWORD("PROPERTY", PROPERTY)
 NG_UNRESERVED_KEYWORD("PROPERTIES", PROPERTIES)
 NG_UNRESERVED_KEYWORD("READ", READ)
-NG_UNRESERVED_KEYWORD("RELATIONSHIP", RELATIONSHIP)
+NG_UNRESERVED_KEYWORD("RELATIONSHIP", EDGE_SYNONYM)
 NG_UNRESERVED_KEYWORD("RELATIONSHIPS", RELATIONSHIPS)
 NG_UNRESERVED_KEYWORD("RETURNED_GQLSTATUS", RETURNED_GQLSTATUS)
 NG_UNRESERVED_KEYWORD("SHORTEST", SHORTEST)
@@ -360,7 +360,7 @@ NG_UNRESERVED_KEYWORD("TRANSACTION", TRANSACTION)
 NG_UNRESERVED_KEYWORD("TYPE", TYPE)
 NG_UNRESERVED_KEYWORD("TYPES", TYPES)
 NG_UNRESERVED_KEYWORD("UNDIRECTED", UNDIRECTED)
-NG_UNRESERVED_KEYWORD("VERTEX", VERTEX)
+NG_UNRESERVED_KEYWORD("VERTEX", NODE_SYNONYM)
 NG_UNRESERVED_KEYWORD("VERTICES", VERTICES)
 NG_UNRESERVED_KEYWORD("WALK", WALK)
 NG_UNRESERVED_KEYWORD("WRITE", WRITE)
@@ -486,8 +486,9 @@ unsigned_numeric_literal {exact_numeric_literal}|{approximate_numeric_literal}
 byte_string_literal [Xx]{quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote}({separator}{quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote})*
 
 
-identifier_start [A-Za-z\200-\377_]
-identifier_extend [A-Za-z\200-\377_0-9\$]
+identifier_start [A-Za-z\x80-\xff_]
+identifier_extend [A-Za-z\x80-\xff_0-9\$]
+/* The pattern regular_identifier represents an unverified regular identifier or a keyword */
 regular_identifier {identifier_start}{identifier_extend}*
 extended_identifier {identifier_extend}*
 /* identifier {regular_identifier}|{delimited_identifier} */
@@ -497,6 +498,7 @@ simple_comment_character [^\n\r]
 simple_comment {simple_comment_introducer}{simple_comment_character}*{newline}
 /* bracketed_comment {bracketed_comment_introducer}{bracketed_comment_contents}{bracketed_comment_terminator} */
 bracketed_comment "/*"([^*]|(\*+[^*/]))*\*+\/
+/* We don't use flex state to match comment currently */
 comment {simple_comment}|{bracketed_comment}
 
 
@@ -530,7 +532,7 @@ whitespace [ \t\n\v\f\r]+
 NOTE 155—<newline> is typically represented by\u000A (“Line Feed”) and/or \u000D(“Carriage Return”); however,
 this representation is not required by the GQL document. */
 newline (\n|\r|\n\r)
-separator ({comment}|{whitespace})+
+separator ({whitespace}|{comment})+
 
 separated_identifier {extended_identifier}|{delimited_identifier}
 parameter_name \${separated_identifier}
@@ -544,6 +546,35 @@ is_source (?i:IS{separator}SOURCE)
 is_not_source (?i:IS{separator}NOT{separator}SOURCE)
 is_destination (?i:IS{separator}DESTINATION)
 is_not_destination (?i:IS{separator}NOT{separator}DESTINATION)
+is_null (?i:IS{separator}NULL)
+is_not_null (?i:IS{separator}NOT{separator}NULL)
+is_not (?i:IS{separator}NOT)
+is_directed (?i:IS{separator}DIRECTED)
+is_not_directed (?i:IS{separator}NOT{separator}DIRECTED)
+is_labeled (?i:IS{separator}LABELED)
+is_not_labeled (?i:IS{separator}NOT{separator}LABELED)
+session_clear (?i:SESSION{separator}CLEAR)
+session_close (?i:SESSION{separator}CLOSE)
+session_remove (?i:SESSION{separator}REMOVE)
+session_set (?i:SESSION{separator}SET)
+comma_optional (?i:{comma}{separator}OPTIONAL)
+group_by (?i:GROUP{separator}BY)
+left_paren_asterisk_right_paren (?i:{left_paren}{separator}{asterisk}{separator}{right_paren})
+graph_synonym (?i:(PROPERTY{separator})?GRAPH)
+graph_type_synonym (?i:(PROPERTY{separator})?GRAPH{separator}TYPE)
+binding_table_synonym (?i:(BINDING{separator})?TABLE)
+if_exists (?i:IF{separator}EXISTS)
+if_not_exists (?i:IF{separator}NOT{separator}EXISTS)
+optional_match (?i:OPTIONAL{separator}MATCH)
+optional_insert (?i:OPTIONAL{separator}INSERT)
+optional_call (?i:OPTIONAL{separator}CALL)
+mandatory_match (?i:MANDATORY{separator}MATCH)
+mandatory_call (?i:MANDATORY{separator}CALL)
+optional_let (?i:OPTIONAL{separator}LET)
+mandatory_let (?i:MANDATORY{separator}LET)
+optional_for (?i:OPTIONAL{separator}FOR)
+mandatory_for (?i:MANDATORY{separator}FOR)
+solidus_double_period (?i:{solidus}{separator}?{double_period})
 
 
 %%
@@ -740,13 +771,10 @@ is_not_destination (?i:IS{separator}NOT{separator}DESTINATION)
   NG_RETURN_TOKEN(MULTISET_ALTERNATION_OPERATOR);
 }
 
-{whitespace} {}
+{whitespace} { }
 
-{comment} {}
+{comment} { }
 
- /* {session_set} {
-  NG_RETURN_TOKEN(SESSION_SET);
- } */
 {is_source} {
   NG_RETURN_TOKEN(IS_SOURCE);
 }
@@ -758,6 +786,93 @@ is_not_destination (?i:IS{separator}NOT{separator}DESTINATION)
 }
 {is_not_destination} {
   NG_RETURN_TOKEN(IS_NOT_DESTINATION);
+}
+{is_null} {
+  NG_RETURN_TOKEN(IS_NULL);
+}
+{is_not_null} {
+  NG_RETURN_TOKEN(IS_NOT_NULL);
+}
+{is_not} {
+  NG_RETURN_TOKEN(IS_NOT);
+}
+{is_directed} {
+  NG_RETURN_TOKEN(IS_DIRECTED);
+}
+{is_not_directed} {
+  NG_RETURN_TOKEN(IS_NOT_DIRECTED);
+}
+{is_labeled} {
+  NG_RETURN_TOKEN(IS_LABELED);
+}
+{is_not_labeled} {
+  NG_RETURN_TOKEN(IS_NOT_LABELED);
+}
+{session_clear} {
+  NG_RETURN_TOKEN(SESSION_CLEAR);
+}
+{session_close} {
+  NG_RETURN_TOKEN(SESSION_CLOSE);
+}
+{session_remove} {
+  NG_RETURN_TOKEN(SESSION_REMOVE);
+}
+{session_set} {
+  NG_RETURN_TOKEN(SESSION_SET);
+}
+{comma_optional} {
+  NG_RETURN_TOKEN(COMMA_OPTIONAL);
+}
+{group_by} {
+  NG_RETURN_TOKEN(GROUP_BY);
+}
+{left_paren_asterisk_right_paren} {
+  NG_RETURN_TOKEN(LEFT_PAREN_ASTERISK_RIGHT_PAREN);
+}
+{graph_synonym} {
+  NG_RETURN_TOKEN(GRAPH_SYNONYM);
+}
+{graph_type_synonym} {
+  NG_RETURN_TOKEN(GRAPH_TYPE_SYNONYM);
+}
+{binding_table_synonym} {
+  NG_RETURN_TOKEN(BINDING_TABLE_SYNONYM);
+}
+{if_exists}  {
+  NG_RETURN_TOKEN(IF_EXISTS);
+}
+{if_not_exists} {
+  NG_RETURN_TOKEN(IF_NOT_EXISTS);
+}
+{optional_match} {
+  NG_RETURN_TOKEN(OPTIONAL_MATCH);
+}
+{optional_insert} {
+  NG_RETURN_TOKEN(OPTIONAL_INSERT);
+}
+{optional_call} {
+  NG_RETURN_TOKEN(OPTIONAL_CALL);
+}
+{mandatory_match} {
+  NG_RETURN_TOKEN(MANDATORY_MATCH);
+}
+{mandatory_call} {
+  NG_RETURN_TOKEN(MANDATORY_CALL);
+}
+{optional_let} {
+  NG_RETURN_TOKEN(OPTIONAL_LET);
+}
+{mandatory_let} {
+  NG_RETURN_TOKEN(MANDATORY_LET);
+}
+{optional_for} {
+  NG_RETURN_TOKEN(OPTIONAL_FOR);
+}
+{mandatory_for} {
+  NG_RETURN_TOKEN(MANDATORY_FOR);
+}
+{solidus_double_period} {
+  NG_RETURN_TOKEN(SOLIDUS_DOUBLE_PERIOD);
 }
 
 {regular_identifier} {
