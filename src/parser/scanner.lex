@@ -459,10 +459,6 @@ tilde_slash "~/"
 
 multiset_alternation_operator "|+|"
 
-bracketed_comment_introducer "/*"
-bracketed_comment_terminator "*/"
-non_bracketed_comment_terminator [^{bracketed_comment_terminator}]
-
 /* doubled_grave_accent "``" */
 /* escaped_grave_accent {reverse_solidus}{grave_accent}|{doubled_grave_accent} */
 
@@ -497,39 +493,44 @@ extended_identifier {identifier_extend}*
 /* identifier {regular_identifier}|{delimited_identifier} */
 
 simple_comment_introducer {double_solidus}|{double_minus_sign}
-simple_comment_character [^{newline}]
+simple_comment_character [^\n\r]
 simple_comment {simple_comment_introducer}{simple_comment_character}*{newline}
-bracketed_comment {bracketed_comment_introducer}{non_bracketed_comment_terminator}*{bracketed_comment_terminator}
+/* bracketed_comment {bracketed_comment_introducer}{bracketed_comment_contents}{bracketed_comment_terminator} */
+bracketed_comment "/*"([^*]|(\*+[^*/]))*\*+\/
 comment {simple_comment}|{bracketed_comment}
 
 
-string_literal_character [^{escaped_character}]
-escaped_reverse_solidus {reverse_solidus}{reverse_solidus}
-escaped_quote {reverse_solidus}{quote}
-escaped_double_quote {reverse_solidus}{double_quote}
-escaped_tab {reverse_solidus}t
-escaped_backspace {reverse_solidus}b
-escaped_newline {reverse_solidus}n
-escaped_carriage_return {reverse_solidus}r
-escaped_form_feed {reverse_solidus}f
-unicode_4_digit_escape_value {reverse_solidus}u{hex_digit}{4}
-unicode_6_digit_escape_value {reverse_solidus}U{hex_digit}{6}
+/* string_literal_character [^{escaped_character}] */
+escaped_reverse_solidus \\\\
+escaped_quote \\'
+escaped_double_quote \\\"
+escaped_tab \\t
+escaped_backspace \\b
+escaped_newline \\n
+escaped_carriage_return \\r
+escaped_form_feed \\f
+unicode_4_digit_escape_value \\u{hex_digit}{4}
+unicode_6_digit_escape_value \\U{hex_digit}{6}
 unicode_escape_value {unicode_4_digit_escape_value}|{unicode_6_digit_escape_value}
+/* why doesn't escaped_character contains escaped accent(\`)? */
 escaped_character {escaped_reverse_solidus}|{escaped_quote}|{escaped_double_quote}|{escaped_tab}|{escaped_backspace}|{escaped_newline}|{escaped_carriage_return}|{escaped_form_feed}|{unicode_escape_value}
-character_representation {string_literal_character}|{escaped_character}
-single_quoted_character_representation {character_representation}
-double_quoted_character_representation {character_representation}
-accent_quoted_character_representation {character_representation}
-unbroken_single_quoted_character_sequence {quote}{single_quoted_character_representation}*{quote}
-unbroken_double_quoted_character_sequence {double_quote}{double_quoted_character_representation}*{double_quote}
-unbroken_accent_quoted_character_sequence {grave_accent}{accent_quoted_character_representation}*{grave_accent}
+unbroken_single_quoted_character_sequence \'([^\\\']|{escaped_character})*\'
+unbroken_double_quoted_character_sequence \"([^\\\"]|{escaped_character})*\"
+unbroken_accent_quoted_character_sequence `([^\\`]|{escaped_character})*`
 single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
 double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
 delimited_identifier {double_quoted_character_sequence}|{unbroken_accent_quoted_character_sequence}
 
+/* <whitespace> is any consecutive sequence of Unicode characters with the property White_Space.
+NOTE 154 — These are the characters the Unicode General Category classes “Zs”, “Zl” and “Zp” together with the
+characters: \u0009 (Horizontal Tabulation), \u000A (Line Feed), \u000B (Vertical Tabulation), \u000C (Form Feed),
+\u000D (Carriage Return), and \u0085 (Next Line). */
 whitespace [ \t\n\v\f\r]+
-newline [\n\r(\n\r)]
-separator ({comment}|{whitespace})*
+/* <newline> is the implementation-defined end-of-line indicator.
+NOTE 155—<newline> is typically represented by\u000A (“Line Feed”) and/or \u000D(“Carriage Return”); however,
+this representation is not required by the GQL document. */
+newline (\n|\r|\n\r)
+separator ({comment}|{whitespace})+
 
 separated_identifier {extended_identifier}|{delimited_identifier}
 parameter_name \${separated_identifier}
@@ -539,10 +540,10 @@ character_string_literal {single_quoted_character_sequence}|{double_quoted_chara
 
 /* special */
 /* session_set SESSION{separator}SET */
-is_source IS{separator}SOURCE
-is_not_source IS{separator}NOT{separator}SOURCE
-is_destination IS{separator}DESTINATION
-is_not_destination IS{separator}NOT{separator}DESTINATION
+is_source (?i:IS{separator}SOURCE)
+is_not_source (?i:IS{separator}NOT{separator}SOURCE)
+is_destination (?i:IS{separator}DESTINATION)
+is_not_destination (?i:IS{separator}NOT{separator}DESTINATION)
 
 
 %%
