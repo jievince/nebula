@@ -471,24 +471,27 @@ hex_digit [0-9A-Fa-f]
 octal_digit [0-7]
 binary_digit [01]
 unsigned_decimal_integer {digit}({underscore}?{digit})*
-unsigned_hexadecimal_integer 0x({underscore}?{hex_digit})*
-unsigned_octal_integer 0o({underscore}?{octal_digit})*
-unsigned_binary_integer 0b({underscore}?{binary_digit})*
+unsigned_hexadecimal_integer 0x({underscore}?{hex_digit})+
+unsigned_octal_integer 0o({underscore}?{octal_digit})+
+unsigned_binary_integer 0b({underscore}?{binary_digit})+
 unsigned_integer {unsigned_decimal_integer}|{unsigned_hexadecimal_integer}|{unsigned_octal_integer}|{unsigned_binary_integer}
 exact_numeric_literal {unsigned_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
 sign {plus_sign}|{minus_sign}
 signed_decimal_integer {sign}?{unsigned_decimal_integer}
-mantissa {exact_numeric_literal}
+restricted_exact_numeric_literal {unsigned_decimal_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
+mantissa {restricted_exact_numeric_literal}
 exponent {signed_decimal_integer}
 approximate_numeric_literal {mantissa}[Ee]{exponent}
 
 unsigned_numeric_literal {exact_numeric_literal}|{approximate_numeric_literal}
-byte_string_literal [Xx]{quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote}({separator}{quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote})*
+/* TODO: This pattern is strange */
+unbroken_byte_string_literal_contents {space}*({hex_digit}{space}*{hex_digit}{space}*)*
+byte_string_literal [Xx]{quote}{unbroken_byte_string_literal_contents}{quote}({separator}{quote}{unbroken_byte_string_literal_contents}{quote})*
 
 
 identifier_start [A-Za-z\x80-\xff_]
 identifier_extend [A-Za-z\x80-\xff_0-9\$]
-/* The pattern regular_identifier represents an unverified regular identifier or a keyword */
+/* The pattern regular_identifier could match an unverified regular identifier or a keyword */
 regular_identifier {identifier_start}{identifier_extend}*
 extended_identifier {identifier_extend}*
 /* identifier {regular_identifier}|{delimited_identifier} */
@@ -514,11 +517,12 @@ escaped_form_feed \\f
 unicode_4_digit_escape_value \\u{hex_digit}{4}
 unicode_6_digit_escape_value \\U{hex_digit}{6}
 unicode_escape_value {unicode_4_digit_escape_value}|{unicode_6_digit_escape_value}
-/* why doesn't escaped_character contains escaped accent(\`)? */
+/* Why doesn't escaped_character contains escaped accent(\`)? */
 escaped_character {escaped_reverse_solidus}|{escaped_quote}|{escaped_double_quote}|{escaped_tab}|{escaped_backspace}|{escaped_newline}|{escaped_carriage_return}|{escaped_form_feed}|{unicode_escape_value}
 unbroken_single_quoted_character_sequence \'([^\\\']|{escaped_character})*\'
 unbroken_double_quoted_character_sequence \"([^\\\"]|{escaped_character})*\"
 unbroken_accent_quoted_character_sequence `([^\\`]|{escaped_character})*`
+/* TODO: Consider to restrict the following two patterns to let them just match the single_quoted_character_sequence which contains seprator. */
 single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
 double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
 delimited_identifier {double_quoted_character_sequence}|{unbroken_accent_quoted_character_sequence}
@@ -578,6 +582,16 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
 
 
 %%
+
+ /* Flex rules section */
+ /* How Does the input is matched?
+  * When the generated scanner is run, it analyzes its input looking for strings which match any of its patterns.
+  * Principle 1: If it finds more than one match, it takes the one matching the most text.
+  * Principle 2: If it finds two or more matches of the same length, the rule listed first in the flex input file is chosen.
+  * Once the match is determined, the text corresponding to the match is made available in the global character pointer yytext, and its length in the global integer yyleng.
+  * The action corresponding to the matched pattern is then executed, and then the remaining input is scanned for another match.
+  * The last rule `.` could match any single character except `\n`.
+  */
 
 %{
   /* FLEX:  initial code: The following code block is executed every time yylex is called.
@@ -891,7 +905,9 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
     std::cerr << "FLEX: regular_identifier, normal identifier: " << std::string(yytext, yyleng) << std::endl;
     NG_RETURN_TOKEN(REGULAR_IDENTIFIER);
   //}
-  throw GraphParser::syntax_error(*yylloc, "illegal unicode identifier");
+  // Don't throw exception. Just return an error token to the parser.
+  // throw GraphParser::syntax_error(*yylloc, "illegal unicode identifier");
+  NG_RETURN_TOKEN(ILLEGAL_REGULAR_IDENTIFIER); 
 }
 
 {delimited_identifier} {
@@ -903,45 +919,49 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
   NG_RETURN_TOKEN(PARAMETER_NAME);
 }
 
-{unsigned_decimal_integer} {
-  // yylval->unsignedDecimalInteger = parseUnsignedDecimalInteger(yytext, yyleng);
-  std::cerr << "FLEX: unsigned_decimal_integer" << std::endl;
-  NG_RETURN_TOKEN(UNSIGNED_DECIMAL_INTEGER);
-}
-
-{unsigned_hexadecimal_integer} {
-  // yylval->unsignedHexadecimalInteger = parseUnsignedHexadecimalInteger(yytext, yyleng);
-  NG_RETURN_TOKEN(UNSIGNED_HEXADECIMAL_INTEGER);
-}
-
-{unsigned_octal_integer} {
-  // yylval->unsignedOctalInteger = parseUnsignedOctalInteger(yytext, yyleng);
-  NG_RETURN_TOKEN(UNSIGNED_OCTAL_INTEGER);
-}
-
-{unsigned_binary_integer} {
-  // yylval->unsignedBinaryInteger = parseUnsignedBinaryInteger(yytext, yyleng);
-  NG_RETURN_TOKEN(UNSIGNED_BINARY_INTEGER);
-}
-
-{unsigned_numeric_literal} {
-  // yylval->unsignedNumericLiteral = parseUnsignedNumericLiteral(yytext, yyleng);
-  NG_RETURN_TOKEN(UNSIGNED_NUMERIC_LITERAL);
-}
-
 {byte_string_literal} {
   // yylval->byteStringLiteral = parseByteStringLiteral(yytext, yyleng);
   NG_RETURN_TOKEN(BYTE_STRING_LITERAL);
 }
 
+ /* Both of the following two patterns can match an <unbroken character string literal>,
+  * but flex will choose the first pattern because it's listed first.
+  * The reason why we do need the two patterns that might match the same input is because
+  * some parser rules accept a <character string literal> while some just accept an <unbroken character string literal>.
+  */
 {unbroken_character_string_literal} {
   // yylval->unbrokenCharacterStringLiteral = new std::string(yytext+1, yyleng - 2);
   NG_RETURN_TOKEN(UNBROKEN_CHARACTER_STRING_LITERAL);
 }
-
 {character_string_literal} {
   // yylval->characterStringLiteral = parseCharacterStringLiteral(yytext, yyleng);
   NG_RETURN_TOKEN(CHARACTER_STRING_LITERAL);
+}
+
+ /* The pattern unsigned_numeric_literal could also match an <unsigned hexadecimal integer>,
+  * <unsigned octal integer>, <unsigned binary integer>, or an <unsigned numeric literal>.
+  * Similar to what was said in the previous comment.
+  */
+{unsigned_decimal_integer} {
+  // yylval->unsignedDecimalInteger = parseUnsignedDecimalInteger(yytext, yyleng);
+  std::cerr << "FLEX: unsigned_decimal_integer" << std::endl;
+  NG_RETURN_TOKEN(UNSIGNED_DECIMAL_INTEGER);
+}
+{unsigned_hexadecimal_integer} {
+  // yylval->unsignedHexadecimalInteger = parseUnsignedHexadecimalInteger(yytext, yyleng);
+  NG_RETURN_TOKEN(UNSIGNED_HEXADECIMAL_INTEGER);
+}
+{unsigned_octal_integer} {
+  // yylval->unsignedOctalInteger = parseUnsignedOctalInteger(yytext, yyleng);
+  NG_RETURN_TOKEN(UNSIGNED_OCTAL_INTEGER);
+}
+{unsigned_binary_integer} {
+  // yylval->unsignedBinaryInteger = parseUnsignedBinaryInteger(yytext, yyleng);
+  NG_RETURN_TOKEN(UNSIGNED_BINARY_INTEGER);
+}
+{unsigned_numeric_literal} {
+  // yylval->unsignedNumericLiteral = parseUnsignedNumericLiteral(yytext, yyleng);
+  NG_RETURN_TOKEN(UNSIGNED_NUMERIC_LITERAL);
 }
 
 .                           {
