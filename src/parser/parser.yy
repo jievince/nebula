@@ -1010,7 +1010,7 @@ graph_parameter_definition
     ;
 
 graph_variable
-    : binding_variable_name {
+    : binding_variable {
 
     }
     ;
@@ -1055,7 +1055,7 @@ binding_table_parameter_definition
     ;
 
 binding_table_variable
-    : binding_variable_name {
+    : binding_variable {
 
     }
     ;
@@ -1132,7 +1132,7 @@ opt_of_value_type
     ;
 
 value_variable
-    : binding_variable_name {
+    : binding_variable {
 
     }
     ;
@@ -1161,7 +1161,7 @@ value_initializer
 
 // Chapter 11 Object expressions
 // Section 11.2 <primary result object expression>
-// TODO primary_result_object_expression is non-deterministic
+// TODO primary_result_object_expression is non-deterministic at parser stage
 // eg. graph_expression is conflicted with binding_table_reference here
 // eg. both of them are conflicted with binding_variable -> non_parenthesized_value_expression_primary -> value_expression_primary -> generic_term
 // primary_result_object_expression
@@ -1172,14 +1172,29 @@ value_initializer
 
 //     }
 //     ;
-primary_result_object_expression
-    : GRAPH_SYNONYM  graph_expression {
+// TODO!!!
+restricted_primary_result_object_expression
+    : copy_graph_expression {
 
     }
-    | BINDING_TABLE_SYNONYM binding_table_reference {
+    | graph_specification {
+
+    }
+    | graph_resolution_expression {
+    
+    }
+    | binding_table_resolution_expression {
 
     }
     ;
+// primary_result_object_expression
+//     : GRAPH_SYNONYM graph_expression {
+
+//     }
+//     | BINDING_TABLE_SYNONYM binding_table_reference {
+
+//     }
+//     ;
 
 // Section 11.3 <graph expression>
 graph_expression
@@ -4442,6 +4457,7 @@ qualified_graph_name
     }
     ;
 
+// TODO: qualified_graph_name? Why a local reference name could contains a `PERIOD`?
 local_graph_reference
     : qualified_graph_name {
 
@@ -4534,6 +4550,7 @@ catalog_binding_table_parent_and_name
     }
     ;
 
+// TODO: qualified_binding_table_name? Why a local reference name could contains a `PERIOD`?
 local_binding_table_reference
     : qualified_binding_table_name {
 
@@ -4580,6 +4597,7 @@ catalog_procedure_parent_and_name
     }
     ;
 
+// TODO qualified_procedure_name -> procedure_name
 local_procedure_reference
     : qualified_procedure_name {
 
@@ -5352,7 +5370,8 @@ generic_primary
     | multiset_value_function {
 
     }
-    | primary_result_object_expression {
+    // TODO
+    | restricted_primary_result_object_expression {
 
     }
     // absolute_value_expression, duration_absolute_value_function
@@ -5419,9 +5438,9 @@ non_parenthesized_value_expression_primary
       
     }
     // TODO collection_value_constructor seesm reduant, it's already included in unsigned_value_specification
-    // | collection_value_constructor {
+    | collection_value_constructor {
       
-    // }
+    }
     | value_query_expression {
       
     }
@@ -6221,26 +6240,26 @@ end_node_function
     ;
 
 // Section 20.15 <collection value constructor>
-// collection_value_constructor
-//     : list_value_constructor {
+collection_value_constructor
+    : list_value_constructor {
       
-//     }
-//     | multiset_value_constructor {
+    }
+    | multiset_value_constructor {
       
-//     }
-//     | set_value_constructor {
+    }
+    | set_value_constructor {
       
-//     }
-//     | ordered_set_value_constructor {
+    }
+    | ordered_set_value_constructor {
       
-//     }
-//     | map_value_constructor {
+    }
+    | map_value_constructor {
       
-//     }
-//     | record_value_constructor {
+    }
+    | record_value_constructor {
       
-//     }
-//     ;
+    }
+    ;
 
 // Section 20.16 <list value expression>
 // list_value_expression
@@ -6302,11 +6321,11 @@ trim_list_function
 
 // TODO xx_value_construct seems reduant
 // Section 20.18 <list value constructor>
-// list_value_constructor
-//     : list_value_constructor_by_enumeration {
+list_value_constructor
+    : list_value_constructor_by_enumeration {
       
-//     }
-//     ;
+    }
+    ;
 
 list_value_constructor_by_enumeration
     : list_value_type_name LEFT_BRACKET list_element_list RIGHT_BRACKET {
@@ -6397,11 +6416,11 @@ multiset_set_function
 
 // TODO xx_value_construct seems reduant
 // Section 20.21 <multiset value constructor>
-// multiset_value_constructor
-//     : multiset_value_constructor_by_enumeration {
+multiset_value_constructor
+    : multiset_value_constructor_by_enumeration {
 
-//     }
-//     ;
+    }
+    ;
 
 multiset_value_constructor_by_enumeration
     : MULTISET LEFT_BRACE multiset_element_list RIGHT_BRACE {
@@ -6426,11 +6445,11 @@ multiset_element
 
 // TODO xx_value_construct seems reduant
 // Section 20.22 <set value constructor>
-// set_value_constructor
-//     : set_value_constructor_by_enumeration {
+set_value_constructor
+    : set_value_constructor_by_enumeration {
 
-//     }
-//     ;
+    }
+    ;
 
 set_value_constructor_by_enumeration
     : SET LEFT_BRACE set_element_list RIGHT_BRACE {
@@ -6455,11 +6474,11 @@ set_element
 
 // TODO xx_value_construct seems reduant
 // Section 20.23 <ordered set value constructor>
-// ordered_set_value_constructor
-//     : ordered_set_value_constructor_by_enumeration {
+ordered_set_value_constructor
+    : ordered_set_value_constructor_by_enumeration {
 
-//     }
-//     ;
+    }
+    ;
 
 ordered_set_value_constructor_by_enumeration
     : ORDERED SET LEFT_BRACE ordered_set_element_list RIGHT_BRACE {
@@ -6487,11 +6506,11 @@ ordered_set_element
 
 // TODO xx_value_construct seems reduant
 // Section 20.24 <map value constructor>
-// map_value_constructor
-//     : map_value_constructor_by_enumeration {
+map_value_constructor
+    : map_value_constructor_by_enumeration {
 
-//     }
-//     ;
+    }
+    ;
 
 map_value_constructor_by_enumeration
     : MAP LEFT_BRACE map_element_list RIGHT_BRACE {
@@ -6528,14 +6547,14 @@ map_value
 
 // TODO xx_value_construct seems reduant
 // Section 20.25 <record value constructor>
-// record_value_constructor
-//     : record_value_constructor_by_enumeration {
+record_value_constructor
+    : record_value_constructor_by_enumeration {
 
-//     }
-//     | UNIT {
+    }
+    | UNIT {
 
-//     }
-//     ;
+    }
+    ;
 
 // opt_record
 record_value_constructor_by_enumeration
@@ -6838,8 +6857,14 @@ unsigned_literal
     | UNSIGNED_NUMERIC_LITERAL {
       
     }
-    | general_literal {
+    | restricted_general_literal {
       
+    }
+    ;
+
+restricted_general_literal
+    : predefined_type_literal {
+
     }
     ;
 
@@ -7204,41 +7229,191 @@ null_literal
     ;
 
 list_literal
-    : list_value_constructor_by_enumeration {
+    : list_literal_by_enumeration {
       
+    }
+    ;
+
+list_literal_by_enumeration
+    : list_value_type_name LEFT_BRACKET list_element_literal_list RIGHT_BRACKET {
+
+    }
+    ;
+
+list_element_literal_list
+    : list_element_literal {
+
+    }
+    | list_element_literal_list COMMA list_element_literal {
+
+    }
+    ;
+
+list_element_literal
+    : literal {
+
     }
     ;
 
 set_literal
-    : set_value_constructor_by_enumeration {
-      
+    : set_literal_by_enumeration {
+
+    }
+    ;
+
+set_literal_by_enumeration
+    : SET LEFT_BRACE set_element_literal_list RIGHT_BRACE {
+
+    }
+    ;
+
+set_element_literal_list
+    : set_element_literal {
+
+    }
+    | set_element_literal_list COMMA set_element_literal {
+
+    }
+    ;
+
+set_element_literal
+    : literal {
+
     }
     ;
 
 multiset_literal
-    : multiset_value_constructor_by_enumeration {
-      
+    : multiset_literal_by_enumeration {
+
+    }
+    ;
+
+multiset_literal_by_enumeration
+    : MULTISET LEFT_BRACE multiset_element_literal_list RIGHT_BRACE {
+
+    }
+    ;
+
+multiset_element_literal_list
+    : multiset_element_literal {
+
+    }
+    | multiset_element_literal_list COMMA multiset_element_literal {
+
+    }
+    ;
+
+multiset_element_literal
+    : literal {
+
     }
     ;
 
 ordered_set_literal
-    : ordered_set_value_constructor_by_enumeration {
-      
+    : ordered_set_literal_by_enumeration {
+
+    }
+    ;
+
+ordered_set_literal_by_enumeration
+    : ORDERED SET LEFT_BRACE ordered_set_element_literal_list RIGHT_BRACE {
+
+    }
+    | ORDERED SET LEFT_BRACKET ordered_set_element_literal_list RIGHT_BRACKET {
+
+    }
+    ;
+
+ordered_set_element_literal_list
+    : ordered_set_element_literal {
+
+    }
+    | ordered_set_element_literal_list COMMA ordered_set_element_literal {
+
+    }
+    ;
+
+ordered_set_element_literal
+    : literal {
+
     }
     ;
 
 map_literal
-    : map_value_constructor_by_enumeration {
-      
+    : map_literal_by_enumeration {
+
+    }
+    ;
+
+map_literal_by_enumeration
+    : MAP LEFT_BRACE map_element_literal_list RIGHT_BRACE {
+
+    }
+    ;
+
+map_element_literal_list
+    : map_element_literal {
+
+    }
+    | map_element_literal_list COMMA map_element_literal {
+
+    }
+    ;
+
+map_element_literal
+    : map_key_literal map_value_literal {
+
+    }
+    ;
+
+map_key_literal
+    : literal COLON {
+
+    }
+    ;
+
+map_value_literal
+    : literal {
+
     }
     ;
 
 record_literal
-    : record_value_constructor_by_enumeration {
-      
+    : record_literal_by_enumeration {
+
     }
     | UNIT {
-      
+
+    }
+    ;
+
+record_literal_by_enumeration
+    : LEFT_BRACE field_list_literal RIGHT_BRACE {
+
+    }
+    | RECORD LEFT_BRACE field_list_literal RIGHT_BRACE {
+
+    }
+    ;
+
+field_list_literal
+    : field_literal {
+
+    }
+    | field_list_literal COMMA field_literal {
+
+    }
+    ;
+
+field_literal
+    : field_name field_value_literal {
+
+    }
+    ;
+
+field_value_literal
+    : literal {
+
     }
     ;
 
