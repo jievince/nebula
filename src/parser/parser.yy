@@ -920,7 +920,7 @@ compact_value_variable_definition_list
     ;
 
 compact_value_variable_definition
-    : value_variable EQUALS_OPERATOR untyped_value_expression {
+    : value_variable EQUALS_OPERATOR value_expression {
 
     }
     ;
@@ -1138,14 +1138,14 @@ value_variable
     ;
 
 // TODO: conflicts: BINDING_TABLE_SYNONYM, `{`
-// AS/EQUALS_OPERATOR untyped_value_expression => AS/EQUALS_OPERATOR untyped_value_expression
+// AS/EQUALS_OPERATOR value_expression => AS/EQUALS_OPERATOR untyped_value_expression
 // If the user really want to declare the type of a value_variable, use the following rule instead:
 // value_variable_definition ::= VALUE value_variable of_value_type value_initializer
 value_initializer
-    : AS untyped_value_expression {
+    : AS value_expression {
 
     }
-    | EQUALS_OPERATOR untyped_value_expression {
+    | EQUALS_OPERATOR value_expression {
 
     }
     | nested_query_specification {
@@ -2282,13 +2282,13 @@ set_item
     ;
 
 set_property_item
-    : binding_variable PERIOD property_name EQUALS_OPERATOR untyped_value_expression {
+    : binding_variable PERIOD property_name EQUALS_OPERATOR value_expression {
       
     }
     ;
 
 set_all_properties_item
-    : binding_variable EQUALS_OPERATOR untyped_value_expression {
+    : binding_variable EQUALS_OPERATOR value_expression {
 
     }
     ;
@@ -2376,7 +2376,7 @@ delete_item_list
     ;
 
 delete_item
-    : untyped_value_expression {
+    : value_expression {
 
     }
     ;
@@ -2751,10 +2751,10 @@ return_item_list
     ;
 
 return_item
-    : untyped_value_expression {
+    : value_expression {
       
     }
-    | untyped_value_expression return_item_alias {
+    | value_expression return_item_alias {
 
     }
     ;
@@ -2788,10 +2788,10 @@ select_item_list
     ;
 
 select_item
-    : untyped_value_expression {
+    : value_expression {
     
     }
-    | untyped_value_expression select_item_alias {
+    | value_expression select_item_alias {
 
     }
     ;
@@ -2863,7 +2863,7 @@ opt_order_by_clause
 // Section 15.8.4 <project statement>
 // TODO untyped_value_expression => untyped_value_expression
 project_statement
-    : PROJECT untyped_value_expression {
+    : PROJECT value_expression {
 
     }
     ;
@@ -3314,7 +3314,7 @@ property_key_value_pair_list
     ;
 
 property_key_value_pair
-    : property_name COLON untyped_value_expression {
+    : property_name COLON value_expression {
 
     }
     ;
@@ -3326,10 +3326,10 @@ element_pattern_cost_clause
     ;
 
 cost_clause
-    : COST untyped_value_expression {
+    : COST value_expression {
     
     }
-    | COST untyped_value_expression DEFAULT untyped_value_expression {
+    | COST value_expression DEFAULT value_expression {
 
     }
     ;
@@ -4112,7 +4112,7 @@ procedure_argument_list
     ;
 
 procedure_argument
-    : untyped_value_expression {
+    : value_expression {
 
     }
     ;
@@ -4219,7 +4219,7 @@ aggregate_function
     ;
 
 general_set_function
-    : general_set_function_type LEFT_PAREN set_quantifier untyped_value_expression RIGHT_PAREN {
+    : general_set_function_type LEFT_PAREN set_quantifier value_expression RIGHT_PAREN {
 
     }
     ;
@@ -4327,7 +4327,7 @@ opt_null_ordering
     ;
 
 sort_key
-    : untyped_value_expression {
+    : value_expression {
 
     }
     ;
@@ -5415,7 +5415,7 @@ value_expression_primary
     ;
 
 parenthesized_value_expression
-    : LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+    : LEFT_PAREN value_expression RIGHT_PAREN {
 
     }
     ;
@@ -6438,7 +6438,7 @@ multiset_element_list
     ;
 
 multiset_element
-    : untyped_value_expression {
+    : value_expression {
 
     }
     ;
@@ -6467,7 +6467,7 @@ set_element_list
     ;
 
 set_element
-    : untyped_value_expression {
+    : value_expression {
 
     }
     ;
@@ -6499,7 +6499,7 @@ ordered_set_element_list
     ;
 
 ordered_set_element
-    : untyped_value_expression {
+    : value_expression {
 
     }
     ;
@@ -6534,13 +6534,13 @@ map_element
     ;
 
 map_key
-    : untyped_value_expression COLON {
+    : value_expression COLON {
 
     }
     ;
 
 map_value
-    : untyped_value_expression {
+    : value_expression {
 
     }
     ;
@@ -6582,7 +6582,7 @@ field
     ;
 
 field_value
-    : untyped_value_expression {
+    : value_expression {
 
     }
     ;
@@ -6614,7 +6614,7 @@ case_expression
 
 // TODO
 case_abbreviation
-    : NULLIF LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
+    : NULLIF LEFT_PAREN value_expression COMMA value_expression RIGHT_PAREN {
 
     }
     | COALESCE LEFT_PAREN value_expression_list RIGHT_PAREN {
@@ -6623,10 +6623,10 @@ case_abbreviation
     ;
   
 value_expression_list
-    : untyped_value_expression {
+    : value_expression {
 
     }
-    | value_expression_list COMMA untyped_value_expression {
+    | value_expression_list COMMA value_expression {
 
     }
     ;
@@ -6751,7 +6751,7 @@ result
     ;
 
 result_expression
-    : untyped_value_expression {
+    : value_expression {
       
     }
     ;
@@ -6765,7 +6765,7 @@ cast_specification
 
 // TODO null_literal seems redudant here
 cast_operand
-    : untyped_value_expression {
+    : value_expression {
       
     }
     // | null_literal {
