@@ -419,16 +419,16 @@ preamble_option_identifier
 // Chapter 7 Session management
 // Section 7.1 <session set command>
 session_set_command
-    : SESSION_SET session_set_schema_clause {
+    : SESSION SET session_set_schema_clause {
 
     }
-    | SESSION_SET session_set_graph_clause {
+    | SESSION SET session_set_graph_clause {
 
     }
-    | SESSION_SET session_set_time_zone_clause {
+    | SESSION SET session_set_time_zone_clause {
 
     }
-    | SESSION_SET session_set_parameter_clause {
+    | SESSION SET session_set_parameter_clause {
 
     }
     ;
@@ -479,10 +479,10 @@ opt_session_parameter_flag
 // TODO
 session_parameter
     :
-    // parameter_definition {
+    parameter_definition {
 
-    // }
-    // |
+    }
+    |
     PARAMETER parameter_definition {
 
     }
@@ -498,26 +498,31 @@ session_parameter_flag
     ;
 
 // Section 7.2 <session remove command>
+// TODO: GLR
 session_remove_command
-    : SESSION_REMOVE parameter opt_if_exists {
+    : SESSION REMOVE parameter opt_if_exists {
 
     }
-    // | REMOVE parameter opt_if_exists {
+    | REMOVE parameter opt_if_exists {
 
-    // }
+    }
     ;
 
 // Section 7.3 <session clear command>
 session_clear_command
-    : CLEAR
-    | SESSION_CLEAR {
+    : CLEAR {
+
+    }
+    | SESSION CLEAR {
 
     }
     ;
 
 // Section 7.4 <session close command>
 session_close_command
-    : CLOSE
+    : CLOSE {
+
+    }
     | SESSION_CLOSE {
 
     }
@@ -1004,7 +1009,7 @@ graph_variable_definition
 
 // TODO seems it should use <parameter> instead of PARAMETER_NAME here
 graph_parameter_definition
-    : GRAPH_SYNONYM PARAMETER_NAME opt_if_not_exists of_graph_type graph_initializer {
+    : GRAPH_SYNONYM parameter opt_if_not_exists of_graph_type graph_initializer {
 
     }
     ;
@@ -1098,17 +1103,12 @@ value_variable_definition
     }
     ;
 
+// TODO: GLR
 value_parameter_definition
-    : VALUE parameter value_initializer {
+    : VALUE parameter opt_if_not_exists value_initializer {
 
     }
-    | VALUE parameter IF_NOT_EXISTS value_initializer {
-
-    }
-    | VALUE parameter of_value_type value_initializer {
-
-    }
-    | VALUE parameter IF_NOT_EXISTS of_value_type value_initializer {
+    | VALUE parameter opt_if_not_exists of_value_type value_initializer {
 
     }
     ;
@@ -1117,7 +1117,7 @@ opt_if_not_exists
     : %empty {
 
     }
-    | IF_NOT_EXISTS {
+    | IF NOT EXISTS {
 
     }
     ;
@@ -1359,10 +1359,10 @@ call_procedure_statement
     : CALL procedure_call {
 
     }
-    | OPTIONAL_CALL procedure_call {
+    | OPTIONAL CALL procedure_call {
 
     }
-    | MANDATORY_CALL procedure_call {
+    | MANDATORY CALL procedure_call {
 
     }
     ;
@@ -1457,6 +1457,7 @@ simple_general_statement
     }
     ;
 
+// TODO: GLR: when clause
 primitive_data_modifying_statement
     : insert_statement {
       
@@ -1513,7 +1514,6 @@ primitive_data_transforming_statement
 
 // Chapter 13 Catalog-modifying statements
 // Section 13.1 <linear catalog-modifying statement>
-// TODO list, 原地展开, 还是加一条新规则: simple_catalog_modifying_statement_list
 // linear_catalog_modifying_statement
 //     : simple_catalog_modifying_statement_list {
 
@@ -1549,7 +1549,7 @@ opt_if_exists
     : %empty {
 
     }
-    | IF_EXISTS {
+    | IF EXISTS {
 
     }
     ;
@@ -2132,6 +2132,7 @@ focused_linear_data_modifying_statement
     }
     ;
 
+// TODO: do the check in validator
 focused_linear_data_modifying_statement_body
     : focused_linear_data_modifying_statement_body_item {
 
@@ -2229,12 +2230,9 @@ insert_statement
     : INSERT simple_graph_pattern {
 
     }
-    | OPTIONAL_INSERT simple_graph_pattern opt_when_clause {
+    | OPTIONAL INSERT simple_graph_pattern opt_when_clause {
 
     }
-    // | OPTIONAL_INSERT simple_graph_pattern where_clause {
-
-    // }
     ;
 
 opt_when_clause
@@ -2441,7 +2439,6 @@ linear_general_expression
     }
     ;
 
-
 linear_general_statement
     : focused_linear_data_modifying_statement {
 
@@ -2454,6 +2451,7 @@ linear_general_statement
     }
     ;
 
+// TODO: do the check in validator
 ambient_linear_general_statement
     : simple_general_statement_list opt_primitive_result_statement {
 
@@ -2525,10 +2523,10 @@ match_statement
     : MATCH graph_pattern {
 
     }
-    | OPTIONAL_MATCH graph_pattern {
+    | OPTIONAL MATCH graph_pattern {
 
     }
-    | MANDATORY_MATCH graph_pattern {
+    | MANDATORY MATCH graph_pattern {
 
     }
     ;
@@ -2570,10 +2568,10 @@ let_statement
     : LET compact_variable_definition_list {
 
     }
-    | OPTIONAL_LET compact_variable_definition_list where_clause {
+    | OPTIONAL LET compact_variable_definition_list where_clause {
       
     }
-    | MANDATORY_LET compact_variable_definition_list where_clause {
+    | MANDATORY LET compact_variable_definition_list where_clause {
       
     }
     ;
@@ -2590,10 +2588,10 @@ for_statement
     : FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
 
     }
-    | OPTIONAL_FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
+    | OPTIONAL FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
 
     }
-    | MANDATORY_FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
+    | MANDATORY FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
 
     }
     ;
@@ -2768,6 +2766,7 @@ return_item_alias
 // Section 15.8.3 <select statement>
 // TODO remove opt_where_clause due to conflicts
 // consider the bnf of old gql
+// TODO: GLR: COMMA
 select_statement
     :
     // SELECT opt_set_quantifier select_item_list select_statement_body opt_where_clause opt_group_by_clause opt_having_clause opt_order_by_clause opt_offset_clause opt_limit_clause {
@@ -2822,9 +2821,9 @@ select_graph_match_list
     : select_graph_match {
 
     }
-    // | select_graph_match_list COMMA select_graph_match {
+    | select_graph_match_list COMMA select_graph_match {
 
-    // }
+    }
     ;
 
 select_graph_match
@@ -2954,11 +2953,12 @@ opt_formal_parameter_list
     ;
  
 // TODO COMMA_OPTIONAL
+// TODO: GLR
 formal_parameter_list
     : mandatory_formal_parameter_list {
 
     }
-    | mandatory_formal_parameter_list COMMA_OPTIONAL formal_parameter_definition_list {
+    | mandatory_formal_parameter_list COMMA OPTIONAL formal_parameter_definition_list {
 
     }
     | OPTIONAL formal_parameter_definition_list {
@@ -4207,7 +4207,7 @@ order_by_clause
 
 // Section 16.19 <aggregate function>
 aggregate_function
-    : COUNT LEFT_PAREN_ASTERISK_RIGHT_PAREN {
+    : COUNT LEFT_PAREN ASTERISK RIGHT_PAREN {
 
     }
     | general_set_function {
@@ -4222,6 +4222,9 @@ general_set_function
     : general_set_function_type LEFT_PAREN set_quantifier value_expression RIGHT_PAREN {
 
     }
+    | COUNT LEFT_PAREN set_quantifier value_expression RIGHT_PAREN {
+
+    }
     ;
 
 binary_set_function
@@ -4234,9 +4237,9 @@ general_set_function_type
     : AVG {
 
     }
-    | COUNT {
+    // | COUNT {
 
-    }
+    // }
     | MAX {
 
     }
@@ -7201,6 +7204,7 @@ multiset_value_type
     }
     ;
 
+// TODO: GLR: set stateme
 set_value_type
     : value_type SET {
       

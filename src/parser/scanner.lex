@@ -547,7 +547,6 @@ unbroken_character_string_literal {unbroken_single_quoted_character_sequence}|{u
 character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
 
 /* special */
-/* session_set SESSION{separator}SET */
 is_source (?i:IS{separator}SOURCE)
 is_not_source (?i:IS{separator}NOT{separator}SOURCE)
 is_destination (?i:IS{separator}DESTINATION)
@@ -559,27 +558,12 @@ is_directed (?i:IS{separator}DIRECTED)
 is_not_directed (?i:IS{separator}NOT{separator}DIRECTED)
 is_labeled (?i:IS{separator}LABELED)
 is_not_labeled (?i:IS{separator}NOT{separator}LABELED)
-session_clear (?i:SESSION{separator}CLEAR)
 session_close (?i:SESSION{separator}CLOSE)
-session_remove (?i:SESSION{separator}REMOVE)
-session_set (?i:SESSION{separator}SET)
 comma_optional (?i:{comma}{separator}OPTIONAL)
 group_by (?i:GROUP{separator}BY)
-left_paren_asterisk_right_paren (?i:{left_paren}{separator}{asterisk}{separator}{right_paren})
 graph_synonym (?i:(PROPERTY{separator})?GRAPH)
 graph_type_synonym (?i:(PROPERTY{separator})?GRAPH{separator}TYPE)
 binding_table_synonym (?i:(BINDING{separator})?TABLE)
-if_exists (?i:IF{separator}EXISTS)
-if_not_exists (?i:IF{separator}NOT{separator}EXISTS)
-optional_match (?i:OPTIONAL{separator}MATCH)
-optional_insert (?i:OPTIONAL{separator}INSERT)
-optional_call (?i:OPTIONAL{separator}CALL)
-mandatory_match (?i:MANDATORY{separator}MATCH)
-mandatory_call (?i:MANDATORY{separator}CALL)
-optional_let (?i:OPTIONAL{separator}LET)
-mandatory_let (?i:MANDATORY{separator}LET)
-optional_for (?i:OPTIONAL{separator}FOR)
-mandatory_for (?i:MANDATORY{separator}FOR)
 solidus_double_period (?i:{solidus}{separator}?{double_period})
 
 
@@ -824,26 +808,14 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
 {is_not_labeled} {
   NG_RETURN_TOKEN(IS_NOT_LABELED);
 }
-{session_clear} {
-  NG_RETURN_TOKEN(SESSION_CLEAR);
-}
 {session_close} {
   NG_RETURN_TOKEN(SESSION_CLOSE);
 }
-{session_remove} {
-  NG_RETURN_TOKEN(SESSION_REMOVE);
-}
-{session_set} {
-  NG_RETURN_TOKEN(SESSION_SET);
-}
-{comma_optional} {
-  NG_RETURN_TOKEN(COMMA_OPTIONAL);
-}
+  /* {comma_optional} {
+    NG_RETURN_TOKEN(COMMA_OPTIONAL);
+  } */
 {group_by} {
   NG_RETURN_TOKEN(GROUP_BY);
-}
-{left_paren_asterisk_right_paren} {
-  NG_RETURN_TOKEN(LEFT_PAREN_ASTERISK_RIGHT_PAREN);
 }
 {graph_synonym} {
   NG_RETURN_TOKEN(GRAPH_SYNONYM);
@@ -853,39 +825,6 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
 }
 {binding_table_synonym} {
   NG_RETURN_TOKEN(BINDING_TABLE_SYNONYM);
-}
-{if_exists}  {
-  NG_RETURN_TOKEN(IF_EXISTS);
-}
-{if_not_exists} {
-  NG_RETURN_TOKEN(IF_NOT_EXISTS);
-}
-{optional_match} {
-  NG_RETURN_TOKEN(OPTIONAL_MATCH);
-}
-{optional_insert} {
-  NG_RETURN_TOKEN(OPTIONAL_INSERT);
-}
-{optional_call} {
-  NG_RETURN_TOKEN(OPTIONAL_CALL);
-}
-{mandatory_match} {
-  NG_RETURN_TOKEN(MANDATORY_MATCH);
-}
-{mandatory_call} {
-  NG_RETURN_TOKEN(MANDATORY_CALL);
-}
-{optional_let} {
-  NG_RETURN_TOKEN(OPTIONAL_LET);
-}
-{mandatory_let} {
-  NG_RETURN_TOKEN(MANDATORY_LET);
-}
-{optional_for} {
-  NG_RETURN_TOKEN(OPTIONAL_FOR);
-}
-{mandatory_for} {
-  NG_RETURN_TOKEN(MANDATORY_FOR);
 }
 {solidus_double_period} {
   NG_RETURN_TOKEN(SOLIDUS_DOUBLE_PERIOD);
