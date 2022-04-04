@@ -1163,7 +1163,7 @@ value_initializer
 // Section 11.2 <primary result object expression>
 // TODO primary_result_object_expression is non-deterministic at parser stage
 // eg. graph_expression is conflicted with binding_table_reference here
-// eg. both of them are conflicted with binding_variable -> non_parenthesized_value_expression_primary -> value_expression_primary -> generic_term
+// eg. both of them are conflicted with binding_variable -> non_parenthesized_value_expression_primary -> value_expression_primary -> general_term
 // primary_result_object_expression
 //     : graph_expression {
 
@@ -1316,25 +1316,25 @@ like_binding_table_shorthand
 // Chapter 12 Statements
 // Section 12.1 <statement>
 statement
-    : generic_statement {
+    : general_statement {
 
     }
-    | at_schema_clause generic_statement {
-
-    }
-    ;
-
-generic_statement
-    : composite_generic_statement {
-
-    }
-    | conditional_generic_statement {
+    | at_schema_clause general_statement {
 
     }
     ;
 
-composite_generic_statement
-    : composite_generic_expression {
+general_statement
+    : composite_general_statement {
+
+    }
+    | conditional_general_statement {
+
+    }
+    ;
+
+composite_general_statement
+    : composite_general_expression {
 
     }
     ;
@@ -1436,7 +1436,7 @@ primitive_catalog_modifying_statement
     }
     ;
 
-simple_generic_statement
+simple_general_statement
     : match_statement {
       
     }
@@ -2142,10 +2142,10 @@ focused_linear_data_modifying_statement_body
     ;
 
 focused_linear_data_modifying_statement_body_item
-    : simple_generic_statement {
+    : simple_general_statement {
 
     }
-    | use_graph_clause simple_generic_statement {
+    | use_graph_clause simple_general_statement {
 
     }
     | primitive_result_statement {
@@ -2162,42 +2162,42 @@ opt_primitive_result_statement
     }
     ;
 
-simple_generic_statement_list
-    : simple_generic_statement {
+simple_general_statement_list
+    : simple_general_statement {
 
     }
-    | simple_generic_statement_list simple_generic_statement {
+    | simple_general_statement_list simple_general_statement {
       
     }
     ;
 
 // Section 14.2 <conditional data-modifying statement>
-conditional_generic_statement
-    : when_then_linear_generic_statement_branch_list opt_else_linear_generic_statement_branch %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
+conditional_general_statement
+    : when_then_linear_general_statement_branch_list opt_else_linear_general_statement_branch %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
 
     }
     ;
 
-when_then_linear_generic_statement_branch_list
-    : when_then_linear_generic_statement_branch {
+when_then_linear_general_statement_branch_list
+    : when_then_linear_general_statement_branch {
 
     }
-    | when_then_linear_generic_statement_branch_list when_then_linear_generic_statement_branch {
+    | when_then_linear_general_statement_branch_list when_then_linear_general_statement_branch {
 
     }
     ;
 
-opt_else_linear_generic_statement_branch
+opt_else_linear_general_statement_branch
     : %empty %prec LOWER_THAN_PROCEDURE_SPECIFICATION {
 
     }
-    | else_linear_generic_statement_branch {
+    | else_linear_general_statement_branch {
 
     }
     ;
 
-when_then_linear_generic_statement_branch
-    : when_clause THEN linear_generic_statement {
+when_then_linear_general_statement_branch
+    : when_clause THEN linear_general_statement {
 
     }
     | when_clause nested_procedure_specification {
@@ -2205,8 +2205,8 @@ when_then_linear_generic_statement_branch
     }
     ;
 
-else_linear_generic_statement_branch
-    : ELSE linear_generic_statement {
+else_linear_general_statement_branch
+    : ELSE linear_general_statement {
 
     }
     ;
@@ -2395,11 +2395,11 @@ call_data_modifying_procedure_statement
 // Section 15.2 <conditional query statement>
 
 // Section 15.3 <composite query expression>
-composite_generic_expression
-    : linear_generic_expression {
+composite_general_expression
+    : linear_general_expression {
 
     }
-    | composite_generic_expression query_conjunction linear_generic_expression {
+    | composite_general_expression query_conjunction linear_general_expression {
 
     }
     ;
@@ -2435,27 +2435,27 @@ opt_set_quantifier
     ;
 
 // Section 15.4 <linear query expression>
-linear_generic_expression
-    : linear_generic_statement {
+linear_general_expression
+    : linear_general_statement {
 
     }
     ;
 
 
-linear_generic_statement
+linear_general_statement
     : focused_linear_data_modifying_statement {
 
     }
     | focused_linear_query_statement {
 
     }
-    | ambient_linear_generic_statement {
+    | ambient_linear_general_statement {
 
     }
     ;
 
-ambient_linear_generic_statement
-    : simple_generic_statement_list opt_primitive_result_statement {
+ambient_linear_general_statement
+    : simple_general_statement_list opt_primitive_result_statement {
 
     }
     | primitive_result_statement {
@@ -4894,6 +4894,250 @@ element_reference
 
 // Chapter 18 Functions
 // All built-in (predefined) functions need to be added here
+built_in_function
+    : CHARACTER_LENGTH LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | BYTE_LENGTH LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | OCTET_LENGTH LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | LENGTH LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
+    | ABS LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | MOD LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
+
+    }
+    | trigonometric_function_name LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | LOG LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
+
+    }
+    | LOG10 LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | LN LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | EXP LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | POWER LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
+
+    }
+    | SQRT LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | FLOOR LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | ceil_synonym LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    // TODO: Just accept binding_variable? 
+    | inDegree LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
+    | outDegree LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
+    | SUBSTRING LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
+      
+    }
+    | SUBSTRING LEFT_PAREN untyped_value_expression COMMA untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
+      
+    }
+    | LEFT LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
+      
+    }
+    | RIGHT LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
+      
+    }
+    | UPPER LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | toUpper LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+      
+    }
+    | LOWER LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+      
+    }
+    | toLower LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+      
+    }
+    | TRIM LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | TRIM LEFT_PAREN untyped_value_expression COMMA trim_specification RIGHT_PAREN {
+
+    }
+    | TRIM LEFT_PAREN untyped_value_expression COMMA trim_specification untyped_value_expression RIGHT_PAREN {
+
+    }
+    | lTrim LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | rTrim LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    | NORMALIZE LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+      
+    }
+    | NORMALIZE LEFT_PAREN untyped_value_expression COMMA normal_form RIGHT_PAREN {
+      
+    }
+    | CURRENT_DATE {
+      
+    }
+    | DATE LEFT_PAREN RIGHT_PAREN {
+      
+    }
+    | DATE LEFT_PAREN date_function_parameters RIGHT_PAREN {
+      
+    }
+    | CURRENT_TIME {
+
+    }
+    | TIME LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | TIME LEFT_PAREN time_function_parameters RIGHT_PAREN {
+
+    }
+    | CURRENT_TIMESTAMP {
+
+    }
+    | DATETIME LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | DATETIME LEFT_PAREN datetime_function_parameters RIGHT_PAREN {
+      
+    }
+    | LOCALTIME {
+
+    }
+    | LOCALTIME LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | LOCALTIME LEFT_PAREN time_function_parameters RIGHT_PAREN {
+      
+    }
+    | LOCALTIMESTAMP {
+
+    }
+    | LOCALDATETIME LEFT_PAREN RIGHT_PAREN {
+
+    }
+    | LOCALDATETIME LEFT_PAREN datetime_function_parameters RIGHT_PAREN {
+
+    }
+    | DURATION LEFT_PAREN duration_function_parameters RIGHT_PAREN {
+
+    }
+    // Just accept binding_variable?
+    // startNode and endNode functions need the info of the working table,
+    // so they should be separated from simple functions
+    | startNode LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
+    | endNode LEFT_PAREN binding_variable RIGHT_PAREN {
+
+    }
+    | tail LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+      
+    }
+    | TRIM LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
+      
+    }
+    // TODO
+    | SET LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    ;
+
+trigonometric_function_name
+    : SIN | COS | TAN | COT | SINH | COSH | TANH | ASIN | ACOS | ATAN | DEGREES | RADIANS {
+
+    }
+    ;
+
+ceil_synonym
+    : CEIL {
+
+    }
+    | CEILING {
+
+    }
+    ;
+
+trim_specification
+    : LEADING {
+      
+    }
+    | TRAILING {
+      
+    }
+    | BOTH {
+      
+    }
+    ;
+
+normal_form
+    : NFC {
+
+    }
+    | NFD {
+
+    }
+    | NFKC {
+
+    }
+    | NFKD {
+
+    }
+    ;
+
+date_function_parameters
+    : date_string {
+
+    }
+    | map_literal {
+      
+    }
+    ;
+
+time_function_parameters
+    : time_string {
+      
+    }
+    | map_literal {
+      
+    }
+    ;
+
+datetime_function_parameters
+    : datetime_string {
+      
+    }
+    | map_literal {
+      
+    }
+    ;
+
+duration_function_parameters
+    : duration_string {
+
+    }
+    | map_literal {
+
+    }
+    ;
 
 // Chapter 19 Predicates
 // Section 19.1 <search condition>
@@ -4905,32 +5149,18 @@ search_condition
     ;
 
 // Section 19.2 <predicate>
-// predicate
-//     : complex_predicate {
-
-//     }
-//     | simple_predicate {
-
-//     }
-//     ;
-
-complex_predicate
-    :
-    comparison_predicate {
+predicate
+    : comparison_predicate {
       
     }
-    |
-    null_predicate {
+    | exists_predicate {
+
+    }
+    | null_predicate {
       
     }
     | normalized_predicate {
       
-    }
-    ;
-
-simple_predicate
-    : exists_predicate {
-
     }
     | directed_predicate {
       
@@ -5274,10 +5504,13 @@ value_expression
     ;
 
 untyped_value_expression
-    : generic_primary {
+    : value_expression_primary {
 
     }
-    | complex_predicate {
+    | predicate {
+
+    }
+    | restricted_primary_result_object_expression {
 
     }
     | untyped_value_expression OR untyped_value_expression {
@@ -5298,13 +5531,6 @@ untyped_value_expression
     | untyped_value_expression IS_NOT truth_value {
 
     }
-    // Seems reduant, because they could also produced by comparison_predicate
-    // | untyped_value_expression EQUALS_OPERATOR truth_value {
-
-    // }
-    // | untyped_value_expression NOT_EQUALS_OPERATOR truth_value {
-
-    // }
     | untyped_value_expression PLUS_SIGN untyped_value_expression {
 
     }
@@ -5317,7 +5543,6 @@ untyped_value_expression
     | untyped_value_expression SOLIDUS untyped_value_expression {
 
     }
-    // 可能需要展开sign
     | PLUS_SIGN untyped_value_expression %prec UNARY_MINUS {
 
     }
@@ -5327,9 +5552,6 @@ untyped_value_expression
     | untyped_value_expression CONCATENATION_OPERATOR untyped_value_expression {
 
     }
-    // | LEFT_PAREN datetime_value_expression MINUS_SIGN datetime_term RIGHT_PAREN {
-
-    // }
     | untyped_value_expression MULTISET_UNION opt_all_or_distinct untyped_value_expression {
 
     }
@@ -5341,44 +5563,18 @@ untyped_value_expression
     }
     ;
 
-// 叶子结点
-generic_primary
-    : value_expression_primary {
+// general_primary
+//     : value_expression_primary {
 
-    }
-    | simple_predicate {
+//     }
+//     // | simple_predicate {
 
-    }
-    | numeric_value_function {
+//     // }
+//     // TODO
+//     | restricted_primary_result_object_expression {
 
-    }
-    | string_value_function {
-
-    }
-    | datetime_value_function {
-
-    }
-    | duration_value_function {
-
-    }
-    | graph_element_function {
-
-    }
-    | list_value_function {
-
-    }
-    | multiset_value_function {
-
-    }
-    // TODO
-    | restricted_primary_result_object_expression {
-
-    }
-    // absolute_value_expression, duration_absolute_value_function
-    | ABS LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
+//     }
+//     ;
 
 truth_value
     : TRUE {
@@ -5437,7 +5633,6 @@ non_parenthesized_value_expression_primary
     | aggregate_function {
       
     }
-    // TODO collection_value_constructor seesm reduant, it's already included in unsigned_value_specification
     | collection_value_constructor {
       
     }
@@ -5453,791 +5648,58 @@ non_parenthesized_value_expression_primary
     | element_id_function {
       
     }
+    // TODO: maybe some predicate could also be put here
+    | built_in_function {
+
+    }
     ;
 
 // Section 20.6 <numeric value function>
-numeric_value_function
-    : length_expression {
-      
-    }
-    // | absolute_value_expression {
-      
-    // }
-    | modulus_expression {
-      
-    }
-    | trigonometric_function {
-      
-    }
-    | general_logarithm_function {
-      
-    }
-    | common_logarithm {
-      
-    }
-    | natural_logarithm {
-      
-    }
-    | exponential_function {
-      
-    }
-    | power_function {
-      
-    }
-    | square_root {
-      
-    }
-    | floor_function {
-      
-    }
-    | ceiling_function {
-      
-    }
-    | inDegree_function {
-      
-    }
-    | outDegree_function {
-      
-    }
-    ;
-
-length_expression
-    : char_length_expression {
-      
-    }
-    | byte_length_expression {
-      
-    }
-    | path_length_expression {
-      
-    }
-    ;
-
-// TODO: character_string_value_expression is changed to untyped_value_expression
-char_length_expression
-    : CHARACTER_LENGTH LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO: string_value_expression is changed to untyped_value_expression
-byte_length_expression
-    : BYTE_LENGTH LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    | OCTET_LENGTH LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-path_length_expression
-    : LENGTH LEFT_PAREN binding_variable RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-// TODO same with duration_absolute_value_function
-// absolute_value_expression
-//     : ABS LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-//     }
-//     ;
-
-modulus_expression
-    : MOD LEFT_PAREN numeric_value_expression_dividend COMMA numeric_value_expression_divisor RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-numeric_value_expression_dividend
-    : untyped_value_expression {
-
-    }
-    ;
-
-numeric_value_expression_divisor
-    : untyped_value_expression {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-trigonometric_function
-    : trigonometric_function_name LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-trigonometric_function_name
-    : SIN | COS | TAN | COT | SINH | COSH | TANH | ASIN | ACOS | ATAN | DEGREES | RADIANS {
-
-    }
-    ;
-
-general_logarithm_function
-    : LOG LEFT_PAREN general_logarithm_base COMMA general_logarithm_argument RIGHT_PAREN {
-
-    }
-    ;
-// TODO numeric_value_expression is changed to untyped_value_expression
-general_logarithm_base
-    : untyped_value_expression {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-general_logarithm_argument
-    : untyped_value_expression {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-common_logarithm
-    : LOG10 LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-natural_logarithm
-    : LN LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-exponential_function
-    : EXP LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-power_function
-    : POWER LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-numeric_value_expression_base
-    : untyped_value_expression {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-numeric_value_expression_exponent
-    : untyped_value_expression {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-square_root
-    : SQRT LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-floor_function
-    : FLOOR LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-ceiling_function
-    : ceil_synonym LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-ceil_synonym
-    : CEIL {
-
-    }
-    | CEILING {
-
-    }
-    ;
-
-inDegree_function
-    : inDegree LEFT_PAREN binding_variable RIGHT_PAREN {
-
-    }
-    ;
-
-outDegree_function
-    : outDegree LEFT_PAREN binding_variable RIGHT_PAREN {
-
-    }
-    ;
-
-// Section 20.7 <string value expression>
-// string_value_expression
-//     : character_string_value_expression {
-
-//     }
-//     | byte_string_value_expression {
-
-//     }
-//     ;
-
-// character_string_value_expression
-//     : character_string_concatenation {
-      
-//     }
-//     | character_string_factor {
-      
-//     }
-//     ;
-
-// character_string_concatenation
-//     : character_string_value_expression CONCATENATION_OPERATOR character_string_factor {
-
-//     }
-//     ;
-
-// character_string_factor
-//     : character_string_primary {
-
-//     }
-//     ;
-
-// character_string_primary
-//     :
-//     value_expression_primary {
-
-//     }
-//     |
-//     string_value_function {
-
-//     }
-//     ;
-
-// byte_string_value_expression
-//     : byte_string_concatenation {
-      
-//     }
-//     | byte_string_factor {
-      
-//     }
-//     ;
-
-// byte_string_factor
-//     : byte_string_primary {
-      
-//     }
-//     ;
-
-// byte_string_primary
-//     :
-//     value_expression_primary {
-      
-//     }
-//     |
-//     string_value_function {
-      
-//     }
-//     ;
-
-// byte_string_concatenation
-//     : byte_string_value_expression CONCATENATION_OPERATOR byte_string_factor {
-      
-//     }
-//     ;
 
 // Section 20.8 <string value function>
-string_value_function
-    : character_or_byte_string_function {
-      
-    }
-    // | byte_string_function {
-      
-    // }
-    ;
-
-character_or_byte_string_function
-    : substring_function {
-      
-    }
-    | fold {
-      
-    }
-    | trim_function {
-      
-    }
-    | normalize_function {
-      
-    }
-    ;
-
-// TODO: character_string_value_expression is changed to untyped_value_expression
-substring_function
-    : SUBSTRING LEFT_PAREN untyped_value_expression COMMA start_position RIGHT_PAREN {
-      
-    }
-    | SUBSTRING LEFT_PAREN untyped_value_expression COMMA start_position COMMA string_length RIGHT_PAREN {
-      
-    }
-    | LEFT LEFT_PAREN untyped_value_expression COMMA string_length RIGHT_PAREN {
-      
-    }
-    | RIGHT LEFT_PAREN untyped_value_expression COMMA string_length RIGHT_PAREN {
-      
-    }
-    ;
-
-// TODO: character_string_value_expression is changed to untyped_value_expression
-fold
-    : UPPER LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    | toUpper LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-      
-    }
-    | LOWER LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-      
-    }
-    | toLower LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-      
-    }
-    ;
-
-trim_function
-    : TRIM LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    | TRIM LEFT_PAREN untyped_value_expression COMMA trim_specification RIGHT_PAREN {
-
-    }
-    | TRIM LEFT_PAREN untyped_value_expression COMMA trim_specification untyped_value_expression RIGHT_PAREN {
-
-    }
-    | lTrim LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    | rTrim LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO: character_string_value_expression is changed to untyped_value_expression
-// trim_source
-//     : untyped_value_expression {
-
-//     }
-//     ;
-
-trim_specification
-    : LEADING {
-      
-    }
-    | TRAILING {
-      
-    }
-    | BOTH {
-      
-    }
-    ;
-
-// TODO: character_string_value_expression is changed to untyped_value_expression
-// TODO: trim_character_string is changed to trim_string, in order to merge with trim_byte_string
-// trim_string
-//     : untyped_value_expression {
-      
-//     }
-//     ;
-
-// TODO: character_string_value_expression is changed to untyped_value_expression
-normalize_function
-    : NORMALIZE LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-      
-    }
-    | NORMALIZE LEFT_PAREN untyped_value_expression COMMA normal_form RIGHT_PAREN {
-      
-    }
-    ;
-
-normal_form
-    : NFC {
-
-    }
-    | NFD {
-
-    }
-    | NFKC {
-
-    }
-    | NFKD {
-
-    }
-    ;
-
-// byte_string_function
-//     : byte_substring_function {
-      
-//     }
-//     | byte_string_trim_function {
-      
-//     }
-//     ;
-
-// // TODO: byte_string_value_expression is changed to untyped_value_expression
-// // TODO: same with substring_function
-// byte_substring_function
-//     : SUBSTRING LEFT_PAREN untyped_value_expression COMMA start_position RIGHT_PAREN {
-
-//     }
-//     | SUBSTRING LEFT_PAREN untyped_value_expression COMMA start_position COMMA string_length RIGHT_PAREN {
-      
-//     }
-//     | LEFT LEFT_PAREN untyped_value_expression COMMA string_length RIGHT_PAREN {
-
-//     }
-//     | RIGHT LEFT_PAREN untyped_value_expression COMMA string_length RIGHT_PAREN {
-
-//     }
-//     ;
-
-// byte_string_trim_function
-//     : TRIM LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
-
-//     }
-//     | TRIM LEFT_PAREN byte_string_trim_source COMMA trim_specification RIGHT_PAREN {
-      
-//     }
-//     | TRIM LEFT_PAREN byte_string_trim_source COMMA trim_specification trim_byte_string RIGHT_PAREN {
-      
-//     }
-//     | lTrim LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
-
-//     }
-//     | rTrim LEFT_PAREN byte_string_trim_source RIGHT_PAREN {
-
-//     }
-//     ;
-
-// // TODO: byte_string_value_expression is changed to untyped_value_expression
-// byte_string_trim_source
-//     : untyped_value_expression {
-
-//     }
-//     ;
-
-// trim_byte_string
-//     : untyped_value_expression {
-
-//     }
-//     ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-start_position
-    : untyped_value_expression {
-
-    }
-    ;
-
-// TODO numeric_value_expression is changed to untyped_value_expression
-string_length
-    : untyped_value_expression {
-
-    }
-    ;
 
 // Section 20.9 <datetime value expression>
-// datetime_value_expression
-//     : datetime_term {
-
-//     }
-//     | duration_value_expression PLUS_SIGN datetime_term {
-
-//     }
-//     | datetime_value_expression PLUS_SIGN duration_term {
-
-//     }
-//     | datetime_value_expression MINUS_SIGN duration_term {
-
-//     }
-//     ;
-    
-// datetime_term
-//     : datetime_factor {
-
-//     }
-//     ;
-
-// datetime_factor
-//     : datetime_primary {
-
-//     }
-//     ;
-
-// datetime_primary
-//     :
-//     value_expression_primary {
-
-//     }
-//     |
-//     datetime_value_function {
-
-//     }
-//     ;
 
 // Section 20.10 <datetime value function>
-datetime_value_function
-    : date_function {
-      
-    }
-    | time_function {
-      
-    }
-    | datetime_function {
-      
-    }
-    | local_time_function {
-      
-    }
-    | local_datetime_function {
-      
-    }
-    ;
-
-date_function
-    : CURRENT_DATE {
-      
-    }
-    | DATE LEFT_PAREN RIGHT_PAREN {
-      
-    }
-    | DATE LEFT_PAREN date_function_parameters RIGHT_PAREN {
-      
-    }
-    ;
-
-time_function
-    : CURRENT_TIME {
-
-    }
-    | TIME LEFT_PAREN RIGHT_PAREN {
-
-    }
-    | TIME LEFT_PAREN time_function_parameters RIGHT_PAREN {
-
-    }
-    ;
-
-local_time_function
-    : LOCALTIME {
-
-    }
-    | LOCALTIME LEFT_PAREN RIGHT_PAREN {
-
-    }
-    | LOCALTIME LEFT_PAREN time_function_parameters RIGHT_PAREN {
-      
-    }
-    ;
-
-datetime_function
-    : CURRENT_TIMESTAMP {
-
-    }
-    | DATETIME LEFT_PAREN RIGHT_PAREN {
-
-    }
-    | DATETIME LEFT_PAREN datetime_function_parameters RIGHT_PAREN {
-      
-    }
-    ;
-
-local_datetime_function
-    : LOCALTIMESTAMP {
-
-    }
-    | LOCALDATETIME LEFT_PAREN RIGHT_PAREN {
-
-    }
-    | LOCALDATETIME LEFT_PAREN datetime_function_parameters RIGHT_PAREN {
-
-    }
-    ;
-
-date_function_parameters
-    : date_string {
-
-    }
-    | map_literal {
-      
-    }
-    ;
-
-time_function_parameters
-    : time_string {
-      
-    }
-    | map_literal {
-      
-    }
-    ;
-
-datetime_function_parameters
-    : datetime_string {
-      
-    }
-    | map_literal {
-      
-    }
-    ;
 
 // Section 20.11 <duration value expression>
-// duration_value_expression
-//     : duration_term {
-
-//     }
-//     | duration_value_expression_1 PLUS_SIGN duration_term_1 {
-
-//     }
-//     | duration_value_expression_1 MINUS_SIGN duration_term_1 {
-
-//     }
-//     | LEFT_PAREN datetime_value_expression MINUS_SIGN datetime_term RIGHT_PAREN {
-
-//     }
-//     ;
-
-// duration_term
-//     : duration_factor {
-
-//     }
-//     | duration_term_2 ASTERISK factor {
-
-//     }
-//     | duration_term_2 SOLIDUS factor {
-
-//     }
-//     | term ASTERISK duration_factor {
-
-//     }
-//     ;
-
-// duration_factor
-//     : duration_primary {
-
-//     }
-//     | sign duration_primary {
-      
-//     }
-//     ;
-
-// duration_primary
-//     :
-//     value_expression_primary {
-
-//     }
-//     |
-//     duration_value_function {
-
-//     }
-//     ;
-
-// duration_value_expression_1
-//     : duration_value_expression {
-
-//     }
-//     ;
-
-// duration_term_1
-//     : duration_term {
-
-//     }
-//     ;
-
-// duration_term_2
-//     : duration_term {
-
-//     }
-//     ;
 
 // Section 20.12 <duration value function>
-duration_value_function
-    : duration_function {
 
-    }
-    // TODO: merged to generic_term
-    // | duration_absolute_value_function {
-
-    // }
-    ;
-
-duration_function
-    : DURATION LEFT_PAREN duration_function_parameters RIGHT_PAREN {
-
-    }
-    ;
-
-duration_function_parameters
-    : duration_string {
-
-    }
-    | map_literal {
-
-    }
-    ;
-
-// TODO duration_value_expression is changed to untyped_value_expression
-// TODO same with absolute_value_expression
-// duration_absolute_value_function
-//     : ABS LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-//     }
-//     ;
-
-// // Section 20.13 <graph element value expression>
-// graph_element_value_expression
-//     : graph_element_primary {
-
-//     }
-//     ;
+// Section 20.13 <graph element value expression>
 
 graph_element_primary
     :
-    graph_element_function {
+    // graph_element_function {
 
-    }
-    |
+    // }
+    // |
     value_expression_primary {
 
     }
     ;
 
 // Section 20.14 <graph element function>
-graph_element_function
-    : start_node_function {
+// graph_element_function
+//     : start_node_function {
 
-    }
-    | end_node_function {
+//     }
+//     | end_node_function {
 
-    }
-    ;
+//     }
+//     ;
 
-start_node_function
-    : startNode LEFT_PAREN binding_variable RIGHT_PAREN {
+// start_node_function
+//     : startNode LEFT_PAREN binding_variable RIGHT_PAREN {
 
-    }
-    ;
+//     }
+//     ;
 
-end_node_function
-    : endNode LEFT_PAREN binding_variable RIGHT_PAREN {
+// end_node_function
+//     : endNode LEFT_PAREN binding_variable RIGHT_PAREN {
 
-    }
-    ;
+//     }
+//     ;
 
 // Section 20.15 <collection value constructor>
 collection_value_constructor
@@ -6262,54 +5724,23 @@ collection_value_constructor
     ;
 
 // Section 20.16 <list value expression>
-// list_value_expression
-//     : list_concatenation {
-      
-//     }
-//     | list_primary {
-      
-//     }
-//     ;
-
-// list_concatenation
-//     : list_value_expression_1 CONCATENATION_OPERATOR list_primary {
-      
-//     }
-//     ;
-
-// list_value_expression_1
-//     : list_value_expression {
-      
-//     }
-//     ;
-
-// list_primary
-//     :
-//     list_value_function {
-      
-//     }
-//     |
-//     value_expression_primary {
-      
-//     }
-//     ;
 
 // Section 20.17 <list value function>
-list_value_function
-    : tail_list_function {
+// list_value_function
+//     : tail_list_function {
       
-    }
-    | trim_list_function {
+//     }
+//     | trim_list_function {
       
-    }
-    ;
+//     }
+//     ;
 
 // TODO: list_value_expression is changed to untyped_value_expression
-tail_list_function
-    : tail LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+// tail_list_function
+//     : tail LEFT_PAREN untyped_value_expression RIGHT_PAREN {
       
-    }
-    ;
+//     }
+//     ;
 
 // TODO: list_value_expression is changed to untyped_value_expression
 // TODO numeric_value_expression is changed to untyped_value_expression
@@ -6379,26 +5810,6 @@ all_or_distinct
 
     }
     ;
-
-// multiset_term
-//     : multiset_primary {
-
-//     }
-//     | multiset_term MULTISET_INTERSECT opt_all_or_distinct multiset_primary {
-
-//     }
-//     ;
-
-// multiset_primary
-//     :
-//     multiset_value_function {
-
-//     }
-//     |
-//     value_expression_primary {
-
-//     }
-//     ;
 
 // Section 20.20 <multiset value function>
 multiset_value_function

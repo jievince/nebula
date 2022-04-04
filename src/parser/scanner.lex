@@ -476,7 +476,7 @@ unsigned_octal_integer 0o({underscore}?{octal_digit})+
 unsigned_binary_integer 0b({underscore}?{binary_digit})+
 unsigned_integer {unsigned_decimal_integer}|{unsigned_hexadecimal_integer}|{unsigned_octal_integer}|{unsigned_binary_integer}
 exact_numeric_literal {unsigned_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
-sign {plus_sign}|{minus_sign}
+sign [+-]
 signed_decimal_integer {sign}?{unsigned_decimal_integer}
 restricted_exact_numeric_literal {unsigned_decimal_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
 mantissa {restricted_exact_numeric_literal}
@@ -491,13 +491,15 @@ byte_string_literal [Xx]{quote}{unbroken_byte_string_literal_contents}{quote}({s
 
 identifier_start [A-Za-z\x80-\xff_]
 identifier_extend [A-Za-z\x80-\xff_0-9\$]
-/* The pattern regular_identifier could match an unverified regular identifier or a keyword */
+/* The pattern regular_identifier could match a keyword or an unverified regular identifier */
 regular_identifier {identifier_start}{identifier_extend}*
 extended_identifier {identifier_extend}*
 /* identifier {regular_identifier}|{delimited_identifier} */
 
 simple_comment_introducer {double_solidus}|{double_minus_sign}
+/* TODO: [^\n] */
 simple_comment_character [^\n\r]
+/* TODO: maybe need to remove the last newline*/
 simple_comment {simple_comment_introducer}{simple_comment_character}*{newline}
 /* bracketed_comment {bracketed_comment_introducer}{bracketed_comment_contents}{bracketed_comment_terminator} */
 bracketed_comment "/*"([^*]|(\*+[^*/]))*\*+\/
