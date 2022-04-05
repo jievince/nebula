@@ -499,7 +499,7 @@ extended_identifier {identifier_extend}*
 simple_comment_introducer {double_solidus}|{double_minus_sign}
 /* TODO: [^\n] */
 simple_comment_character [^\n\r]
-/* TODO: maybe need to remove the last newline*/
+/* TODO: maybe need to remove the last newline or make it be optional */
 simple_comment {simple_comment_introducer}{simple_comment_character}*{newline}
 /* bracketed_comment {bracketed_comment_introducer}{bracketed_comment_contents}{bracketed_comment_terminator} */
 bracketed_comment "/*"([^*]|(\*+[^*/]))*\*+\/
@@ -537,7 +537,7 @@ whitespace [ \t\n\v\f\r]+
 /* <newline> is the implementation-defined end-of-line indicator.
 NOTE 155—<newline> is typically represented by\u000A (“Line Feed”) and/or \u000D(“Carriage Return”); however,
 this representation is not required by the GQL document. */
-newline (\n|\r|\n\r)
+newline \r|\n|\r\n
 separator ({whitespace}|{comment})+
 
 separated_identifier {extended_identifier}|{delimited_identifier}
@@ -774,6 +774,11 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
 {whitespace} { }
 
 {comment} { }
+
+{newline} {
+  yylineno++;
+  yylloc->lines(yyleng);
+}
 
 {is_source} {
   NG_RETURN_TOKEN(IS_SOURCE);

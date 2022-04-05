@@ -7387,6 +7387,7 @@ binding_variable_name
     }
     ;
 
+// TODO: identifier?
 variable_name
     : REGULAR_IDENTIFIER {
       
