@@ -2,6 +2,7 @@
 %option yyclass="GraphScanner"
 %option nodefault noyywrap
 %option 8bit never-interactive
+/* %option stack */
 %option yylineno
 %option warn
 %option debug
@@ -12,11 +13,41 @@
 #include "GraphParser.hpp"
 #include "graph/service/GraphFlags.h"
 
+extern bool inUBSLC;
+
 #define YY_USER_ACTION                  \
     yylloc->step();                     \
     yylloc->columns(yyleng);
 
-const std::unordered_map<std::string, TokenType> kCaseSensitiveKeywords {
+using Token = nebula::GraphParser::token;
+using TokenType = nebula::GraphParser::token::token_kind_type;
+
+struct Keyword {
+  enum class Category : int8_t {
+    INVALID_KEYWORD,
+    RESERVED_KEYWORD,
+    UNRESERVED_KEYWORD,
+  };
+  Keyword(TokenType t, Category c)
+      : token(t), category(c) {}
+
+  bool operator==(const Keyword& rhs) const {
+    return category == rhs.category && token == rhs.token;
+  }
+  bool operator!=(const Keyword& rhs) const {
+    return !(*this == rhs);
+  }
+
+  TokenType token;
+  Category category;
+};
+static const Keyword kInvalidKeyword{TokenType{}, Keyword::Category::INVALID_KEYWORD};
+
+#define NG_RESERVED_KEYWORD(a, b) {a, {Token::TOK_##b, Keyword::Category::RESERVED_KEYWORD}},
+#define NG_UNRESERVED_KEYWORD(a, b) {a, {Token::TOK_##b, Keyword::Category::UNRESERVED_KEYWORD}},
+#define NG_RETURN_TOKEN(a) return Token::TOK_##a;
+
+const std::unordered_map<std::string, Keyword> kCaseSensitiveKeywords {
 /* reserved keyword */
 // case-sensitive reserved keyword
 NG_RESERVED_KEYWORD("endNode", endNode)
@@ -34,7 +65,7 @@ NG_RESERVED_KEYWORD("toLower", toLower)
 NG_RESERVED_KEYWORD("toUpper", toUpper)
 };
 
-const std::unordered_map<std::string, TokenType> kCaseInsensitiveKeywords {
+const std::unordered_map<std::string, Keyword> kCaseInsensitiveKeywords {
 // case-insensitive reserved keyword
 NG_RESERVED_KEYWORD("ABS", ABS)
 NG_RESERVED_KEYWORD("ACOS", ACOS)
@@ -368,10 +399,9 @@ NG_UNRESERVED_KEYWORD("ZONE", ZONE)
 };
 
 // Check against the keyword list.
-bool keywordLookup(const std::unordered_map<std::string, TokenType>& keywords,
+const Keyword& keywordLookup(const std::unordered_map<std::string, Keyword>& keywords,
                    std::string text,
-                   bool caseSensitivity,
-                   TokenType& token) {
+                   bool caseSensitivity) {
   if (!caseSensitivity) {
     std::transform(
         text.begin(), text.end(), text.begin(), [](unsigned char c) { return std::toupper(c); });
@@ -379,18 +409,26 @@ bool keywordLookup(const std::unordered_map<std::string, TokenType>& keywords,
 
   auto iter = keywords.find(text);
   if (iter != keywords.end()) {
-    token = iter->second;
-    return true;
+    return iter->second;
   }
-  return false;
+  return kInvalidKeyword;
 }
 
-bool keywordLookup(const std::string& text, TokenType& token) {
-  return keywordLookup(kCaseSensitiveKeywords, text, true, token) ||
-         keywordLookup(kCaseInsensitiveKeywords, text, false, token);
+const Keyword& keywordLookup(const std::string& text) {
+  auto& keyword = keywordLookup(kCaseSensitiveKeywords, text, true);
+  if (keyword != kInvalidKeyword) {
+    return keyword;
+  }
+  return keywordLookup(kCaseInsensitiveKeywords, text, false);
 }
 
 %}
+
+
+%x USQCS
+%x UDQCS
+%x UAQCS
+%s UBSLC
 
 
 /* delimiter token */
@@ -475,7 +513,8 @@ unsigned_hexadecimal_integer 0x({underscore}?{hex_digit})+
 unsigned_octal_integer 0o({underscore}?{octal_digit})+
 unsigned_binary_integer 0b({underscore}?{binary_digit})+
 unsigned_integer {unsigned_decimal_integer}|{unsigned_hexadecimal_integer}|{unsigned_octal_integer}|{unsigned_binary_integer}
-exact_numeric_literal {unsigned_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
+/* a little change here */
+exact_numeric_literal {unsigned_integer}|{unsigned_decimal_integer}{period}{unsigned_decimal_integer}?|{period}{unsigned_decimal_integer}
 sign [+-]
 signed_decimal_integer {sign}?{unsigned_decimal_integer}
 restricted_exact_numeric_literal {unsigned_decimal_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
@@ -485,8 +524,9 @@ approximate_numeric_literal {mantissa}[Ee]{exponent}
 
 unsigned_numeric_literal {exact_numeric_literal}|{approximate_numeric_literal}
 /* TODO: This pattern is strange */
-unbroken_byte_string_literal_contents {space}*({hex_digit}{space}*{hex_digit}{space}*)*
-byte_string_literal [Xx]{quote}{unbroken_byte_string_literal_contents}{quote}({separator}{quote}{unbroken_byte_string_literal_contents}{quote})*
+byte_string_literal_introducer [Xx]
+unbroken_byte_string_literal_contents {quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote}
+byte_string_literal [Xx]{unbroken_byte_string_literal_contents}({separator}{unbroken_byte_string_literal_contents})*
 
 
 identifier_start [A-Za-z\x80-\xff_]
@@ -542,6 +582,7 @@ separator ({whitespace}|{comment})+
 
 separated_identifier {extended_identifier}|{delimited_identifier}
 parameter_name \${separated_identifier}
+parameter_name_1 \${extended_identifier}
 
 unbroken_character_string_literal {unbroken_single_quoted_character_sequence}|{unbroken_double_quoted_character_sequence}
 character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
@@ -584,6 +625,13 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
    * Reset the current scanning locations each time yylex is called to match new pattern.
    */
   // std::cerr << "FLEX: YYTEXT: " << string(yytext, yyleng) << std::endl;
+  // 词法反馈, 当[Xx]时, BEGIN(UNBROKEN_BYTE_STRING_LITERAL);
+  if (inUBSLC) {
+    BEGIN(UBSLC);
+  } else if (YY_START == UBSLC) {
+    BEGIN(INITIAL);
+  }
+
 %}
 
   /* {space} {
@@ -604,9 +652,9 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
 {comma} {
   NG_RETURN_TOKEN(COMMA);
 }
-  /* {dollar_sign} {
-    NG_RETURN_TOKEN(DOLLAR_SIGN);
-  } */
+{dollar_sign} {
+  NG_RETURN_TOKEN(DOLLAR_SIGN);
+}
   /* {double_quote} {
     NG_RETURN_TOKEN(DOUBLE_QUOTE);
   } */
@@ -649,9 +697,9 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
 {question_mark} {
   NG_RETURN_TOKEN(QUESTION_MARK);
 }
-{quote} {
-  NG_RETURN_TOKEN(QUOTE);
-}
+  /* {quote} {
+    NG_RETURN_TOKEN(QUOTE);
+  } */
   /* {reverse_solidus} {
     NG_RETURN_TOKEN(REVERSE_SOLIDUS);
   } */
@@ -771,14 +819,15 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
   NG_RETURN_TOKEN(MULTISET_ALTERNATION_OPERATOR);
 }
 
-{whitespace} { }
-
-{comment} { }
-
+ /* TODO: warning, rule cannot be matched */
 {newline} {
   yylineno++;
   yylloc->lines(yyleng);
 }
+
+{whitespace} { }
+
+{comment} { }
 
 {is_source} {
   NG_RETURN_TOKEN(IS_SOURCE);
@@ -835,39 +884,113 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
   NG_RETURN_TOKEN(SOLIDUS_DOUBLE_PERIOD);
 }
 
+{byte_string_literal_introducer} {
+  NG_RETURN_TOKEN(BYTE_STRING_LITERAL_INTRODUCER);
+}
+
 {regular_identifier} {
   /* Check against the keyword lists. */
-  TokenType token;
-  bool found = keywordLookup(std::string(yytext, yyleng), token);
-  if (found) {
+  auto& keyword = keywordLookup(std::string(yytext, yyleng));
+  if (keyword != kInvalidKeyword) {
     std::cerr << "FLEX: regular_identifier, keyword: " << std::string(yytext, yyleng) << std::endl;
-    // yylval->keywordVal = new std::string(yytext, yyleng);
-    return token;
+    if (keyword.category == Keyword::Category::UNRESERVED_KEYWORD) {
+      // yylval->build(std::string(yytext, yyleng));
+    }
+    return keyword.token;
   }
 
   /* Not a keyword. Check if it is a legal unicode identifier. */
   //if (isValidUnicodeIdentifier(yytext, yyleng)) {
-    // yylval->identVal = new std::string(yytext, yyleng);
     std::cerr << "FLEX: regular_identifier, normal identifier: " << std::string(yytext, yyleng) << std::endl;
+    // yylval->build(std::string(yytext, yyleng));
     NG_RETURN_TOKEN(REGULAR_IDENTIFIER);
   //}
   // Don't throw exception. Just return an error token to the parser.
   // throw GraphParser::syntax_error(*yylloc, "illegal unicode identifier");
-  NG_RETURN_TOKEN(ILLEGAL_REGULAR_IDENTIFIER); 
+  NG_RETURN_TOKEN(INVALID_KEYWORD); 
 }
 
-{delimited_identifier} {
-  NG_RETURN_TOKEN(DELIMITED_IDENTIFIER);
+{parameter_name_1} {
+  NG_RETURN_TOKEN(PARAMETER_NAME_1);
 }
 
-{parameter_name} {
-  // yylval->paramVal = new std::string(yytext + 1, yyleng - 1);
-  NG_RETURN_TOKEN(PARAMETER_NAME);
+{quote} {
+  BEGIN(USQCS);
+}
+{double_quote} {
+  BEGIN(UDQCS);
+}
+{grave_accent} {
+  BEGIN(UAQCS);
+}
+<USQCS>([^\\\'])* {
+  // str.append(yytext, yyleng);
+}
+<UDQCS>([^\\\"])* {
+  // str.append(yytext, yyleng);
+}
+<UAQCS>([^\\`])* {
+  // str.append(yytext, yyleng);
+}
+<USQCS,UDQCS,UAQCS>{escaped_reverse_solidus} {
+  // str.push_back('\\');
+}
+<USQCS,UDQCS,UAQCS>{escaped_quote} {
+  // str.push_back('\'');
+}
+<USQCS,UDQCS,UAQCS>{escaped_double_quote} {
+  // str.push_back('\"');
+}
+<USQCS,UDQCS,UAQCS>{escaped_tab} {
+  // str.push_back('\t');
+}
+<USQCS,UDQCS,UAQCS>{escaped_backspace} {
+  // str.push_back('\b');
+}
+<USQCS,UDQCS,UAQCS>{escaped_newline} {
+  // str.push_back('\n');
+}
+<USQCS,UDQCS,UAQCS>{escaped_carriage_return} {
+  // str.push_back('\r');
+}
+<USQCS,UDQCS,UAQCS>{escaped_form_feed} {
+  // str.push_back('\f');
+}
+<USQCS,UDQCS,UAQCS>{unicode_escape_value} {
+  // auto encoded = folly::codePointToUtf8(std::strtoul(yytext+2, nullptr, 16));
+  // str.append(encoded);
+}
+<USQCS>{quote} {
+  // yylval->build(str);
+  BEGIN(INITIAL);
+  NG_RETURN_TOKEN(UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE);
+}
+<UDQCS>{double_quote} {
+  // yylval->build(str);
+  BEGIN(INITIAL);
+  NG_RETURN_TOKEN(UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE);
+}
+<UAQCS>{grave_accent} {
+  // yylval->build(str);
+  BEGIN(INITIAL);
+  NG_RETURN_TOKEN(UNBROKEN_ACCENT_QUOTED_CHARACTER_SEQUENCE);
 }
 
-{byte_string_literal} {
-  // yylval->byteStringLiteral = parseByteStringLiteral(yytext, yyleng);
-  NG_RETURN_TOKEN(BYTE_STRING_LITERAL);
+  /* {delimited_identifier} {
+    // yylval->build(parseDelimitedIdentifier(std::string(yytext, yyleng)));
+    NG_RETURN_TOKEN(DELIMITED_IDENTIFIER);
+  }
+
+  {parameter_name} {
+    // yylval->build(parseSeparatedIdentifier(std::strign(yytext+1, yyleng-1)));
+    NG_RETURN_TOKEN(PARAMETER_NAME);
+  } */
+
+<UBSLC>{unbroken_byte_string_literal_contents} {
+  std::string text(yytext+1, yytext-2);
+  boost::erase_all(text, " ");
+  // yylval->build(parseUnbrokenByteStringLiteral(text));
+  NG_RETURN_TOKEN(UNBROKEN_BYTE_STRING_LITERAL);
 }
 
  /* Both of the following two patterns can match an <unbroken character string literal>,
@@ -875,38 +998,48 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
   * The reason why we do need the two patterns that might match the same input is because
   * some parser rules accept a <character string literal> while some just accept an <unbroken character string literal>.
   */
-{unbroken_character_string_literal} {
-  // yylval->unbrokenCharacterStringLiteral = new std::string(yytext+1, yyleng - 2);
-  NG_RETURN_TOKEN(UNBROKEN_CHARACTER_STRING_LITERAL);
-}
-{character_string_literal} {
-  // yylval->characterStringLiteral = parseCharacterStringLiteral(yytext, yyleng);
-  NG_RETURN_TOKEN(CHARACTER_STRING_LITERAL);
-}
+  /* {unbroken_character_string_literal} {
+    yylval->build(std::string(yytext+1, yyleng - 2));
+    NG_RETURN_TOKEN(UNBROKEN_CHARACTER_STRING_LITERAL);
+  } */
+  /* {character_string_literal} {
+    // yylval->build(parseCharacterStringLiteral(std::string(yytext, yyleng)));
+    NG_RETURN_TOKEN(CHARACTER_STRING_LITERAL);
+  } */
 
- /* The pattern unsigned_numeric_literal could also match an <unsigned hexadecimal integer>,
-  * <unsigned octal integer>, <unsigned binary integer>, or an <unsigned numeric literal>.
+ /* The pattern unsigned_numeric_literal could also match an <unsigned integer>.
   * Similar to what was said in the previous comment.
   */
 {unsigned_decimal_integer} {
-  // yylval->unsignedDecimalInteger = parseUnsignedDecimalInteger(yytext, yyleng);
-  std::cerr << "FLEX: unsigned_decimal_integer" << std::endl;
-  NG_RETURN_TOKEN(UNSIGNED_DECIMAL_INTEGER);
+  std::string text(yytext, yyleng);
+  boost::erase_all(text, "_");
+  // uint256_t val = parseUnsignedDecimalInteger(text);
+  // yylval->build(val);
+  NG_RETURN_TOKEN(UNSIGNED_INTEGER);
 }
 {unsigned_hexadecimal_integer} {
-  // yylval->unsignedHexadecimalInteger = parseUnsignedHexadecimalInteger(yytext, yyleng);
-  NG_RETURN_TOKEN(UNSIGNED_HEXADECIMAL_INTEGER);
+  std::string text(yytext + 2, yyleng - 2);
+  boost::erase_all(text, "_");
+  // uint256_t val = parseUnsignedHexadecimalInteger(text);
+  // yylval->build(val);
+  NG_RETURN_TOKEN(UNSIGNED_INTEGER);
 }
 {unsigned_octal_integer} {
-  // yylval->unsignedOctalInteger = parseUnsignedOctalInteger(yytext, yyleng);
-  NG_RETURN_TOKEN(UNSIGNED_OCTAL_INTEGER);
+  std::string text(yytext + 2, yyleng - 2);
+  boost::erase_all(text, "_");
+  // uint256_t val = parseUnsignedOctalInteger(text);
+  // yylval->build(val);
+  NG_RETURN_TOKEN(UNSIGNED_INTEGER);
 }
 {unsigned_binary_integer} {
-  // yylval->unsignedBinaryInteger = parseUnsignedBinaryInteger(yytext, yyleng);
-  NG_RETURN_TOKEN(UNSIGNED_BINARY_INTEGER);
+  std::string text(yytext + 2, yyleng - 2);
+  boost::erase_all(text, "_");
+  // uint256_t val = parseUnsignedBinaryInteger(text);
+  // yylval->build(val);
+  NG_RETURN_TOKEN(UNSIGNED_INTEGER);
 }
 {unsigned_numeric_literal} {
-  // yylval->unsignedNumericLiteral = parseUnsignedNumericLiteral(yytext, yyleng);
+  // yylval->build(parseUnsignedNumericLiteral(std::string(yytext, yyleng)));
   NG_RETURN_TOKEN(UNSIGNED_NUMERIC_LITERAL);
 }
 

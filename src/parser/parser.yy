@@ -1,9 +1,14 @@
+%{
+bool inUBSLC{false};
+%}
+
 %language "C++"
 %skeleton "lalr1.cc"
 %no-lines 
 %locations
 %define api.namespace { nebula }
 %define api.parser.class { GraphParser }
+%define api.value.type variant
 %lex-param { nebula::GraphScanner& scanner }
 %parse-param { nebula::GraphScanner& scanner }
 %parse-param { std::string &errmsg }
@@ -151,6 +156,7 @@ static constexpr size_t kCommentLengthLimit = 256;
 // single char operators
 %token  AMPERSAND ASTERISK
         COLON COMMA
+        DOLLAR_SIGN
         EQUALS_OPERATOR EXCLAMATION_MARK
         LEFT_BRACE LEFT_BRACKET LEFT_PAREN LEFT_ANGLE_BRACKET
         MINUS_SIGN
@@ -174,13 +180,20 @@ static constexpr size_t kCommentLengthLimit = 256;
         SLASH_MINUS SLASH_MINUS_RIGHT SLASH_TILDE SLASH_TILDE_RIGHT
         TILDE_LEFT_BRACKET TILDE_RIGHT_ARROW TILDE_SLASH
 
-%token REGULAR_IDENTIFIER DELIMITED_IDENTIFIER ILLEGAL_REGULAR_IDENTIFIER
+%token REGULAR_IDENTIFIER DELIMITED_IDENTIFIER INVALID_KEYWORD EXTENDED_IDENTIFIER
+%token UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE
+%token UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE
+%token UNBROKEN_ACCENT_QUOTED_CHARACTER_SEQUENCE
+%token UNBROKEN_BYTE_STRING_LITERAL
 %token PARAMETER_NAME
+%token PARAMETER_NAME_1
 %token UNSIGNED_NUMERIC_LITERAL
 %token BYTE_STRING_LITERAL
 %token UNBROKEN_CHARACTER_STRING_LITERAL
 %token CHARACTER_STRING_LITERAL
-%token UNSIGNED_DECIMAL_INTEGER UNSIGNED_HEXADECIMAL_INTEGER UNSIGNED_OCTAL_INTEGER UNSIGNED_BINARY_INTEGER
+%token UNSIGNED_INTEGER
+%token BYTE_STRING_LITERAL_INTRODUCER
+%token UNBROKEN_BYTE_STRING_LITERAL_CONTENTS
 
 // Precedence: lowest to highest.
 // %nonassoc   SET
@@ -2910,8 +2923,17 @@ label
     ;
 
 parameter
-    : PARAMETER_NAME {
+    : parameter_name {
       
+    }
+    ;
+
+parameter_name
+    : PARAMETER_NAME_1 {
+
+    } 
+    | DOLLAR_SIGN delimited_identifier {
+
     }
     ;
 
@@ -3449,7 +3471,7 @@ graph_pattern_quantifier
     ;
 
 fixed_quantifier
-    : LEFT_BRACE unsigned_integer RIGHT_BRACE {
+    : LEFT_BRACE UNSIGNED_INTEGER RIGHT_BRACE {
 
     }
     ;
@@ -3479,11 +3501,15 @@ opt_upper_bound
     ;
 
 lower_bound
-    : unsigned_integer
+    : UNSIGNED_INTEGER {
+
+    }
     ;
 
 upper_bound
-    : unsigned_integer
+    : UNSIGNED_INTEGER {
+      
+    }
     ;
 
 parenthesized_path_pattern_expression
@@ -5416,7 +5442,7 @@ unsigned_value_specification
     ;
 
 unsigned_integer_specification
-    : unsigned_integer {
+    : UNSIGNED_INTEGER {
       
     }
     | parameter {
@@ -6242,14 +6268,14 @@ predefined_type_literal
     : boolean_literal {
       
     }
-    | UNBROKEN_CHARACTER_STRING_LITERAL {
+    // | UNBROKEN_CHARACTER_STRING_LITERAL {
+      
+    // }
+    | character_string_literal {
       
     }
-    | CHARACTER_STRING_LITERAL {
-      
-    }
-    | BYTE_STRING_LITERAL {
-      
+    | byte_string_literal {
+      inUBSLC = false;
     }
     | temporal_literal {
       
@@ -6262,10 +6288,43 @@ predefined_type_literal
     }
     ;
 
-// TODO unsigned_integer is newly added here
+unbroken_character_string_literal
+    : UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE {
+
+    }
+    | UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE {
+
+    }
+    ;
+
+character_string_literal
+    : single_quoted_character_sequence {
+
+    }
+    | double_quoted_character_sequence {
+
+    }
+    ;
+
+byte_string_literal
+    : BYTE_STRING_LITERAL_INTRODUCER { inUBSLC = true; } unbroken_byte_string_literal_contents_list {
+
+    }
+    ;
+
+unbroken_byte_string_literal_contents_list
+    : UNBROKEN_BYTE_STRING_LITERAL_CONTENTS {
+
+    }
+    | unbroken_byte_string_literal_contents_list UNBROKEN_BYTE_STRING_LITERAL_CONTENTS {
+
+    }
+    ;
+
+// TODO UNSIGNED_INTEGER is newly added here
 // Take advantage of the flex longest match principle
 unsigned_literal
-    : unsigned_integer {
+    : UNSIGNED_INTEGER {
 
     }
     | UNSIGNED_NUMERIC_LITERAL {
@@ -6294,10 +6353,10 @@ boolean_literal
     }
     ;
 
-// TODO unsigned_integer is newly added here
+// TODO UNSIGNED_INTEGER is newly added here
 // Take advantage of the flex longest match principle
 signed_numeric_literal
-    : opt_sign unsigned_integer {
+    : opt_sign UNSIGNED_INTEGER {
 
     }
     | opt_sign UNSIGNED_NUMERIC_LITERAL {
@@ -6310,21 +6369,6 @@ sign
 
     }
     | MINUS_SIGN {
-
-    }
-    ;
-
-unsigned_integer
-    : UNSIGNED_DECIMAL_INTEGER {
-
-    }
-    | UNSIGNED_HEXADECIMAL_INTEGER {
-
-    }
-    | UNSIGNED_OCTAL_INTEGER {
-
-    }
-    | UNSIGNED_BINARY_INTEGER {
 
     }
     ;
@@ -6363,19 +6407,19 @@ datetime_literal
     ;
 
 date_string
-    : UNBROKEN_CHARACTER_STRING_LITERAL {
+    : unbroken_character_string_literal {
 
     }
     ;
 
 time_string
-    : UNBROKEN_CHARACTER_STRING_LITERAL {
+    : unbroken_character_string_literal {
 
     }
     ;
 
 datetime_string
-    : UNBROKEN_CHARACTER_STRING_LITERAL {
+    : unbroken_character_string_literal {
 
     }
     ;
@@ -6390,7 +6434,7 @@ duration_literal
     ;
 
 duration_string
-    : UNBROKEN_CHARACTER_STRING_LITERAL {
+    : unbroken_character_string_literal {
 
     }
     ;
@@ -6539,19 +6583,19 @@ duration_string
 //     ;
 
 // seconds_integer_value
-//     : unsigned_integer {
+//     : UNSIGNED_INTEGER {
 
 //     }
 //     ;
 
 // seconds_fraction
-//     : unsigned_integer {
+//     : UNSIGNED_INTEGER {
 
 //     }
 //     ;
 
 // datetime_value
-//     : unsigned_integer {
+//     : UNSIGNED_INTEGER {
 
 //     }
 //     ;
@@ -6624,13 +6668,13 @@ duration_string
 //     ;
 
 // interval_leading_field_precision
-//     : unsigned_integer {
+//     : UNSIGNED_INTEGER {
 
 //     }
 //     ;
 
 // interval_fractional_seconds_precision
-//     : unsigned_integer {
+//     : UNSIGNED_INTEGER {
 
 //     }
 //     ;
@@ -6941,19 +6985,19 @@ byte_string_type
     ;
 
 min_length
-    : unsigned_integer {
+    : UNSIGNED_INTEGER {
 
     }
     ;
 
 max_length
-    : unsigned_integer {
+    : UNSIGNED_INTEGER {
       
     }
     ;
 
 fixed_length
-    : unsigned_integer {
+    : UNSIGNED_INTEGER {
       
     }
     ;
@@ -7091,13 +7135,13 @@ decimal_exact_numeric_type
     ;
 
 precision
-    : unsigned_integer {
+    : UNSIGNED_INTEGER {
 
     }
     ;
 
 scale
-    : unsigned_integer {
+    : UNSIGNED_INTEGER {
 
     }
     ;
@@ -7398,15 +7442,45 @@ identifier
     : REGULAR_IDENTIFIER {
       
     }
-    | DELIMITED_IDENTIFIER {
+    | delimited_identifier {
 
     }
     ;
 
+delimited_identifier
+    : double_quoted_character_sequence {
+
+    }
+    | UNBROKEN_ACCENT_QUOTED_CHARACTER_SEQUENCE {
+
+    }
+    ;
+
+single_quoted_character_sequence
+    : UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE {
+
+    }
+    | single_quoted_character_sequence UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE {
+
+    }
+    ;
+
+double_quoted_character_sequence
+    : UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE {
+
+    }
+    | double_quoted_character_sequence UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE {
+
+    }
+    ;
 
 // separated_identifier
-//     : extended_identifier
-//     | delimited_identifier
+//     : EXTENDED_IDENTIFIER {
+
+//     }
+//     | delimited_identifier {
+
+//     }
 //     ;
 
 string_or_varchar

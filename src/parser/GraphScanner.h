@@ -5,6 +5,8 @@
 #ifndef PARSER_GRAPHSCANNER_H_
 #define PARSER_GRAPHSCANNER_H_
 
+#include <boost/multiprecision/cpp_int.hpp>
+
 #include "common/base/Base.h"
 
 // Only include FlexLexer.h if it hasn't been already included
@@ -17,13 +19,6 @@
 #define YY_DECL int nebula::GraphScanner::yylex()
 
 #include "parser/GraphParser.hpp"
-
-using Token = nebula::GraphParser::token;
-using TokenType = nebula::GraphParser::token::token_kind_type;
-
-#define NG_RESERVED_KEYWORD(a, b) {a, Token::TOK_##b},
-#define NG_UNRESERVED_KEYWORD(a, b) {a, Token::TOK_##b},
-#define NG_RETURN_TOKEN(a) return Token::TOK_##a;
 
 namespace nebula {
 
@@ -104,6 +99,37 @@ class GraphScanner : public yyFlexLexer {
   char *sbuf() {
     return sbuf_.get();
   }
+
+  // std::string parseDelimitedIdentifier(const std::string& text) {
+  //   if (text[0] == '"') {
+  //     return parseDoubleQuotedCharacterSequence(text);
+  //   }
+  //   // text[0] == '`'
+  //   // unbroken_accent_quoted_character_sequence
+  //   return text.substr(1, text.size() - 2);
+  // }
+
+  // std::string parseDoubleQuotedCharacterSequence(const std::string& text) {
+  //   return "";
+  // }
+
+  // std::string parseByteStringLiteral(const std::string& text) {
+
+  // }
+
+  // boost::multiprecision::uint256_t parseUnsignedInteger(const std::string& text) {
+  //   std::string s(text);
+  //   boost::erase_all(s, "_");
+  //   if (boost::starts_with(s, "0x")) {
+  //     return boost::multiprecision::uint256_t(s.substr(2));
+  //   } else if (boost::starts_with(s, "0o")) {
+  //     return boost::multiprecision::uint256_t(s.substr(2));
+  //   } else if (boost::starts_with(s, "0b")) {
+  //     return  boost::multiprecision::uint256_t(s.substr(2));
+  //   } else {
+  //     return boost::multiprecision::uint256_t(s);
+  //   }
+  // }
 
   // using Token = nebula::GraphParser::token;
   // auto parseDecimal() {
