@@ -1,29 +1,40 @@
 %{
-bool inUBSLC{false};
 %}
 
 %language "C++"
 %skeleton "lalr1.cc"
+// glr doesn't support variant. 
+// %skeleton "glr.cc"
+// Bison v3.8 has a new experimental C++ GLR implementation that supports variant semantic types.
+// But we are using bison-3.7.6 currently.
+// %skeleton "glr2.cc"
+// %glr-parser
 %no-lines 
 %locations
 %define api.namespace { nebula }
 %define api.parser.class { GraphParser }
-%define api.value.type variant
 %lex-param { nebula::GraphScanner& scanner }
 %parse-param { nebula::GraphScanner& scanner }
 %parse-param { std::string &errmsg }
 %parse-param { nebula::Sentence** sentences }
 %parse-param { nebula::graph::QueryContext* qctx }
 
-// Enable run-time traces (yydebug).
+// Enable parser tracing and detailed error messages.
 %define parse.trace
-// %define parse.error verbose
+// %define parse.error detailed
+// %define parse.lac full
 
-// Define token.
-// %define api.value.type variant
 // %define api.token.constructor
+// Variant-based storage of semantic values
+%define api.value.type variant
+// %define api.token.raw
+// %define parse.assert
+// Prefix tokens with TOK_
 %define api.token.prefix {TOK_}
+// %define api.value.automove
 
+// Currently we have 25 shift/reduce conflicts and they could be handled by glr.
+%expect 25
 
 %code requires {
 #include <iostream>
@@ -180,37 +191,14 @@ static constexpr size_t kCommentLengthLimit = 256;
         SLASH_MINUS SLASH_MINUS_RIGHT SLASH_TILDE SLASH_TILDE_RIGHT
         TILDE_LEFT_BRACKET TILDE_RIGHT_ARROW TILDE_SLASH
 
-%token REGULAR_IDENTIFIER DELIMITED_IDENTIFIER INVALID_KEYWORD EXTENDED_IDENTIFIER
-%token UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE
-%token UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE
-%token UNBROKEN_ACCENT_QUOTED_CHARACTER_SEQUENCE
-%token UNBROKEN_BYTE_STRING_LITERAL
-%token PARAMETER_NAME
-%token PARAMETER_NAME_1
-%token UNSIGNED_NUMERIC_LITERAL
-%token BYTE_STRING_LITERAL
-%token UNBROKEN_CHARACTER_STRING_LITERAL
-%token CHARACTER_STRING_LITERAL
-%token UNSIGNED_INTEGER
-%token BYTE_STRING_LITERAL_INTRODUCER
-%token UNBROKEN_BYTE_STRING_LITERAL_CONTENTS
-
-// Precedence: lowest to highest.
-// %nonassoc   SET
-// %left       UNION EXCEPT
-// %left       INTERSECT
-// %left       OR
-// %left       XOR
-// %left       AND
-// %right      NOT EXCLAMATION_MARK
-// // %nonassoc   IS ISNULL NOTNULL                                // IS sets precedence for IS NULL, etc.
-// %left       LEFT_ANGLE_BRACKET RIGHT_ANGLE_BRACKET EQUALS_OPERATOR LESS_THAN_OR_EQUALS_OPERATOR GREATER_THAN_OR_EQUALS_OPERATOR NOT_EQUALS_OPERATOR
-// %nonassoc   LIKE
-
-// %left   VERTICAL_BAR
-// %left   AMPERSAND SOLIDUS PERCENT
-// %left   MINUS_SIGN PLUS_SIGN
-// %left   ASTERISK
+%token <std::string> REGULAR_IDENTIFIER
+%token <std::string> UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE BROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE
+%token <std::string> UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE BROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE
+%token <std::string> UNBROKEN_ACCENT_QUOTED_CHARACTER_SEQUENCE
+%token <std::string> BYTE_STRING_LITERAL
+%token <std::string> PARAMETER_NAME_1
+%token <uint64_t>    UNSIGNED_INTEGER
+%token <double>      UNSIGNED_FLOATING_POINT
 
 %nonassoc LOWER_THAN_PROCEDURE_SPECIFICATION
 %nonassoc AGGREGATE AT CALL CATALOG CREATE DELETE DETACH DO DROP END FILTER FOR FROM FUNCTION
@@ -224,13 +212,9 @@ static constexpr size_t kCommentLengthLimit = 256;
 %nonassoc COMMIT ROLLBACK
 %nonassoc LOWER_THAN_RIGHT_PAREN
 %nonassoc RIGHT_PAREN
-
-
 %left       MULTISET_UNION MULTISET_EXCEPT
 %left       MULTISET_INTERSECT
-
 %left       CONCATENATION_OPERATOR  // TODO
-
 %left       OR XOR  // TODO
 %left       AND
 %left       HIGHER_THAN_AND  // TODO: %left?
@@ -238,11 +222,13 @@ static constexpr size_t kCommentLengthLimit = 256;
 %nonassoc   IS IS_NOT IS_NULL IS_NOT_NULL // TODO
 %nonassoc   EQUALS_OPERATOR NOT_EQUALS_OPERATOR LEFT_ANGLE_BRACKET RIGHT_ANGLE_BRACKET LESS_THAN_OR_EQUALS_OPERATOR GREATER_THAN_OR_EQUALS_OPERATOR // TODO
 %left       PLUS_SIGN MINUS_SIGN
-
 %nonassoc   LOWER_THAN_SOLIDUS  // TODO
 %left       ASTERISK SOLIDUS
 %right      UNARY_MINUS // TODO %right?
 
+
+%nterm <std::string> double_quoted_character_sequence
+%nterm <std::string> delimited_identifier
 
 %start GQL_request
 
@@ -301,15 +287,6 @@ main_activity
     }
     ;
 
-opt_session_activity
-    : %empty {
-
-    }
-    | session_activity {
-
-    }
-    ;
-
 opt_session_close_command
     : %empty {
 
@@ -343,15 +320,6 @@ session_activity
 
     }
     | session_clear_command session_parameter_command_list {
-
-    }
-    | session_parameter_command_list {
-
-    }
-    ;
-
-opt_session_parameter_command_list
-    : %empty {
 
     }
     | session_parameter_command_list {
@@ -480,22 +448,14 @@ session_set_parameter_clause
     }
     ;
 
-opt_session_parameter_flag
-    : %empty {
-
-    }
-    | session_parameter_flag {
-
-    }
-    ;
-
 // TODO
 session_parameter
     :
-    parameter_definition {
+    // reduce/reduce conflict with graph_resolution_expression
+    // parameter_definition {
 
-    }
-    |
+    // }
+    // |
     PARAMETER parameter_definition {
 
     }
@@ -650,13 +610,13 @@ procedure_specification
 //     }
 //     ;
 
-catalog_modifying_procedure_specification
-    : 
-    // !! Predicative production rule.
-    procedure_body {
+// catalog_modifying_procedure_specification
+//     : 
+//     // !! Predicative production rule.
+//     procedure_body {
 
-    }
-    ;
+//     }
+//     ;
 
 nested_data_modifying_procedure_specification
     : LEFT_BRACE procedure_body RIGHT_BRACE {
@@ -664,13 +624,13 @@ nested_data_modifying_procedure_specification
     }
     ;
 
-data_modifying_procedure_specification
-    :
-    // !! Predicative production rule.
-    procedure_body {
+// data_modifying_procedure_specification
+//     :
+//     // !! Predicative production rule.
+//     procedure_body {
 
-    }
-    ;
+//     }
+//     ;
 
 // Section 9.2 <query specification>
 nested_query_specification
@@ -679,13 +639,13 @@ nested_query_specification
     }
     ;
 
-query_specification
-    :
-    // !! Predicative production rule.
-    procedure_body {
+// query_specification
+//     :
+//     // !! Predicative production rule.
+//     procedure_body {
 
-    }
-    ;
+//     }
+//     ;
 
 // Section 9.3 <function specification>
 nested_function_specification
@@ -694,13 +654,13 @@ nested_function_specification
     }
     ;
 
-function_specification
-    :
-    // !! Predicative production rule.
-    procedure_body {
+// function_specification
+//     :
+//     // !! Predicative production rule.
+//     procedure_body {
 
-    }
-    ;
+//     }
+//     ;
 
 // Section 9.4 <procedure body>
 procedure_body
@@ -718,23 +678,23 @@ procedure_body
     }
     ;
 
-opt_static_variable_definition_block
-    : %empty {
+// opt_static_variable_definition_block
+//     : %empty {
 
-    }
-    | static_variable_definition_block {
+//     }
+//     | static_variable_definition_block {
 
-    }
-    ;
+//     }
+//     ;
 
-opt_binding_variable_definition_block
-    : %empty {
+// opt_binding_variable_definition_block
+//     : %empty {
 
-    }
-    | binding_variable_definition_block {
+//     }
+//     | binding_variable_definition_block {
 
-    }
-    ;
+//     }
+//     ;
 
 static_variable_definition_block
     : static_variable_definition {
@@ -1130,7 +1090,13 @@ opt_if_not_exists
     : %empty {
 
     }
-    | IF NOT EXISTS {
+    | if_not_exists {
+
+    }
+    ;
+
+if_not_exists
+    : IF NOT EXISTS {
 
     }
     ;
@@ -1272,13 +1238,19 @@ like_graph_expression
     ;
 
 of_graph_type
-    : opt_of_type_prefix graph_type_expression {
+    : graph_type_expression {
+
+    }
+    | of_type_prefix graph_type_expression {
 
     }
     | like_graph_expression_shorthand {
 
     }
-    | opt_of_type_prefix nested_graph_type_specification {
+    | nested_graph_type_specification {
+      
+    }
+    | of_type_prefix nested_graph_type_specification {
       
     }
     ;
@@ -1372,22 +1344,19 @@ call_procedure_statement
     : CALL procedure_call {
 
     }
-    | OPTIONAL CALL procedure_call {
-
-    }
-    | MANDATORY CALL procedure_call {
+    | statement_mode CALL procedure_call {
 
     }
     ;
 
-opt_statement_mode
-    : %empty {
+// opt_statement_mode
+//     : %empty {
 
-    }
-    | statement_mode {
+//     }
+//     | statement_mode {
 
-    }
-    ;
+//     }
+//     ;
 
 statement_mode
     : OPTIONAL {
@@ -1568,7 +1537,7 @@ opt_if_exists
     ;
 
 // Section 13.4 <create graph statement>
-// TODO
+// TODO: 2 reduce/reduce conflict: opt_if_not_exists with opt_of_type_prefix
 create_graph_statement
     : CREATE GRAPH_SYNONYM catalog_graph_parent_and_name opt_if_not_exists opt_of_graph_type opt_graph_source {
 
@@ -1707,23 +1676,23 @@ node_type_definition
     }
     ;
 
-opt_node_type_name
-    : %empty {
+// opt_node_type_name
+//     : %empty {
 
-    }
-    | node_type_name {
+//     }
+//     | node_type_name {
 
-    }
-    ;
+//     }
+//     ;
 
-opt_node_type_filler
-    : %empty {
+// opt_node_type_filler
+//     : %empty {
 
-    }
-    | node_type_filler {
+//     }
+//     | node_type_filler {
 
-    }
-    ;
+//     }
+//     ;
 
 node_type_name
     : // !! Predicative production rule.
@@ -2394,11 +2363,11 @@ delete_item
 
 
 // Section 14.9 <call data-modifying procedure statement>
-call_data_modifying_procedure_statement
-    : call_procedure_statement {
+// call_data_modifying_procedure_statement
+//     : call_procedure_statement {
 
-    }
-    ;
+//     }
+//     ;
 
 // Chapter 15 Query statements
 // Section 15.1 <composite query statement>
@@ -2536,10 +2505,7 @@ match_statement
     : MATCH graph_pattern {
 
     }
-    | OPTIONAL MATCH graph_pattern {
-
-    }
-    | MANDATORY MATCH graph_pattern {
+    | statement_mode MATCH graph_pattern {
 
     }
     ;
@@ -2581,10 +2547,7 @@ let_statement
     : LET compact_variable_definition_list {
 
     }
-    | OPTIONAL LET compact_variable_definition_list where_clause {
-      
-    }
-    | MANDATORY LET compact_variable_definition_list where_clause {
+    | statement_mode LET compact_variable_definition_list where_clause {
       
     }
     ;
@@ -2601,10 +2564,7 @@ for_statement
     : FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
 
     }
-    | OPTIONAL FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
-
-    }
-    | MANDATORY FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
+    | statement_mode FOR for_item_list opt_for_ordinality_or_index opt_where_clause {
 
     }
     ;
@@ -2705,11 +2665,11 @@ opt_limit_clause
     ;
 
 // Section 15.7.8 <call function statement>
-call_function_statement
-    : call_procedure_statement {
+// call_function_statement
+//     : call_procedure_statement {
 
-    }
-    ;
+//     }
+//     ;
 
 // Section 15.8 Result projection statements
 // Section 15.8.1 <primitive result statement>
@@ -3728,12 +3688,6 @@ group_or_groups
     }
     ;
 
-number_of_groups
-    : unsigned_integer_specification {
-
-    }
-    ;
-
 // Section 16.9 <simple graph pattern>
 simple_graph_pattern
     : simple_path_pattern_list {
@@ -4433,14 +4387,14 @@ simple_relative_url_path_and_schema_name
     }
     ;
 
-opt_absolute_url_path
-    : %empty {
+// opt_absolute_url_path
+//     : %empty {
 
-    }
-    | absolute_url_path {
+//     }
+//     | absolute_url_path {
 
-    }
-    ;
+//     }
+//     ;
 
 // Section 17.2 Graph references
 graph_reference
@@ -4822,7 +4776,7 @@ solidus_and_double_period_list
     ;
 
 solidus_and_double_period
-    : SOLIDUS_DOUBLE_PERIOD {
+    : SOLIDUS DOUBLE_PERIOD {
 
     }
     ;
@@ -5086,6 +5040,10 @@ built_in_function
     }
     // TODO
     | SET LEFT_PAREN untyped_value_expression RIGHT_PAREN {
+
+    }
+    // TODO: see the general rules of <element_id function>
+    | element_id_function {
 
     }
     ;
@@ -5592,19 +5550,6 @@ untyped_value_expression
     }
     ;
 
-// general_primary
-//     : value_expression_primary {
-
-//     }
-//     // | simple_predicate {
-
-//     // }
-//     // TODO
-//     | restricted_primary_result_object_expression {
-
-//     }
-//     ;
-
 truth_value
     : TRUE {
 
@@ -5652,10 +5597,6 @@ non_parenthesized_value_expression_primary
     | binding_variable {
       
     }
-    // TODO parameter_value_specification is in unsigned_value_specification
-    // | parameter_value_specification {
-      
-    // }
     | unsigned_value_specification {
       
     }
@@ -5672,9 +5613,6 @@ non_parenthesized_value_expression_primary
       
     }
     | cast_specification {
-      
-    }
-    | element_id_function {
       
     }
     // TODO: maybe some predicate could also be put here
@@ -5709,26 +5647,6 @@ graph_element_primary
     ;
 
 // Section 20.14 <graph element function>
-// graph_element_function
-//     : start_node_function {
-
-//     }
-//     | end_node_function {
-
-//     }
-//     ;
-
-// start_node_function
-//     : startNode LEFT_PAREN binding_variable RIGHT_PAREN {
-
-//     }
-//     ;
-
-// end_node_function
-//     : endNode LEFT_PAREN binding_variable RIGHT_PAREN {
-
-//     }
-//     ;
 
 // Section 20.15 <collection value constructor>
 collection_value_constructor
@@ -5755,31 +5673,7 @@ collection_value_constructor
 // Section 20.16 <list value expression>
 
 // Section 20.17 <list value function>
-// list_value_function
-//     : tail_list_function {
-      
-//     }
-//     | trim_list_function {
-      
-//     }
-//     ;
 
-// TODO: list_value_expression is changed to untyped_value_expression
-// tail_list_function
-//     : tail LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-      
-//     }
-//     ;
-
-// TODO: list_value_expression is changed to untyped_value_expression
-// TODO numeric_value_expression is changed to untyped_value_expression
-trim_list_function
-    : TRIM LEFT_PAREN untyped_value_expression COMMA untyped_value_expression RIGHT_PAREN {
-      
-    }
-    ;
-
-// TODO xx_value_construct seems reduant
 // Section 20.18 <list value constructor>
 list_value_constructor
     : list_value_constructor_by_enumeration {
@@ -5809,17 +5703,6 @@ list_element
     ;
 
 // Section 20.19 <multiset value expression>
-// multiset_value_expression
-//     : multiset_term {
-
-//     }
-//     | multiset_value_expression MULTISET_UNION opt_all_or_distinct multiset_term {
-
-//     }
-//     | multiset_value_expression MULTISET_EXCEPT opt_all_or_distinct multiset_term {
-
-//     }
-//     ;
 
 // TODO
 opt_all_or_distinct
@@ -5841,20 +5724,7 @@ all_or_distinct
     ;
 
 // Section 20.20 <multiset value function>
-multiset_value_function
-    : multiset_set_function {
-      
-    }
-    ;
 
-// TODO: multiset_value_expression is changed to untyped_value_expression
-multiset_set_function
-    : SET LEFT_PAREN untyped_value_expression RIGHT_PAREN {
-
-    }
-    ;
-
-// TODO xx_value_construct seems reduant
 // Section 20.21 <multiset value constructor>
 multiset_value_constructor
     : multiset_value_constructor_by_enumeration {
@@ -5883,7 +5753,6 @@ multiset_element
     }
     ;
 
-// TODO xx_value_construct seems reduant
 // Section 20.22 <set value constructor>
 set_value_constructor
     : set_value_constructor_by_enumeration {
@@ -5912,7 +5781,6 @@ set_element
     }
     ;
 
-// TODO xx_value_construct seems reduant
 // Section 20.23 <ordered set value constructor>
 ordered_set_value_constructor
     : ordered_set_value_constructor_by_enumeration {
@@ -5944,7 +5812,6 @@ ordered_set_element
     }
     ;
 
-// TODO xx_value_construct seems reduant
 // Section 20.24 <map value constructor>
 map_value_constructor
     : map_value_constructor_by_enumeration {
@@ -5985,7 +5852,6 @@ map_value
     }
     ;
 
-// TODO xx_value_construct seems reduant
 // Section 20.25 <record value constructor>
 record_value_constructor
     : record_value_constructor_by_enumeration {
@@ -6262,20 +6128,15 @@ general_literal
     }
     ;
 
-// TODO UNBROKEN_CHARACTER_STRING_LITERAL is newly added here
-// Take advantage of the flex longest match principle
 predefined_type_literal
     : boolean_literal {
       
     }
-    // | UNBROKEN_CHARACTER_STRING_LITERAL {
-      
-    // }
     | character_string_literal {
       
     }
-    | byte_string_literal {
-      inUBSLC = false;
+    | BYTE_STRING_LITERAL {
+
     }
     | temporal_literal {
       
@@ -6306,28 +6167,8 @@ character_string_literal
     }
     ;
 
-byte_string_literal
-    : BYTE_STRING_LITERAL_INTRODUCER { inUBSLC = true; } unbroken_byte_string_literal_contents_list {
-
-    }
-    ;
-
-unbroken_byte_string_literal_contents_list
-    : UNBROKEN_BYTE_STRING_LITERAL_CONTENTS {
-
-    }
-    | unbroken_byte_string_literal_contents_list UNBROKEN_BYTE_STRING_LITERAL_CONTENTS {
-
-    }
-    ;
-
-// TODO UNSIGNED_INTEGER is newly added here
-// Take advantage of the flex longest match principle
 unsigned_literal
-    : UNSIGNED_INTEGER {
-
-    }
-    | UNSIGNED_NUMERIC_LITERAL {
+    : unsigned_numeric_literal {
       
     }
     | restricted_general_literal {
@@ -6353,13 +6194,8 @@ boolean_literal
     }
     ;
 
-// TODO UNSIGNED_INTEGER is newly added here
-// Take advantage of the flex longest match principle
 signed_numeric_literal
-    : opt_sign UNSIGNED_INTEGER {
-
-    }
-    | opt_sign UNSIGNED_NUMERIC_LITERAL {
+    : opt_sign unsigned_numeric_literal {
 
     }
     ;
@@ -6369,6 +6205,15 @@ sign
 
     }
     | MINUS_SIGN {
+
+    }
+    ;
+
+unsigned_numeric_literal
+    : UNSIGNED_INTEGER {
+
+    }
+    | UNSIGNED_FLOATING_POINT {
 
     }
     ;
@@ -6992,13 +6837,17 @@ min_length
 
 max_length
     : UNSIGNED_INTEGER {
-      
+        if ($1 == 0) {
+          throw nebula::GraphParser::syntax_error(@1, "max length shall be greater than 0");
+        }
     }
     ;
 
 fixed_length
     : UNSIGNED_INTEGER {
-      
+        if ($1 == 0) {
+          throw nebula::GraphParser::syntax_error(@1, "fixed length shall be greater than 0");
+        }
     }
     ;
 
@@ -7248,7 +7097,7 @@ multiset_value_type
     }
     ;
 
-// TODO: GLR: set stateme
+// TODO: GLR: conflict with set statement
 set_value_type
     : value_type SET {
       
@@ -7314,17 +7163,17 @@ object_name
     }
     ;
 
-schema_name
-    : identifier {
+// schema_name
+//     : identifier {
 
-    }
-    ;
+//     }
+//     ;
 
-graph_name
-    : identifier {
+// graph_name
+//     : identifier {
 
-    }
-    ;
+//     }
+//     ;
 
 element_type_name
     : type_name {
@@ -7332,11 +7181,11 @@ element_type_name
     }
     ;
 
-graph_type_name
-    : identifier {
+// graph_type_name
+//     : identifier {
       
-    }
-    ;
+//     }
+//     ;
 
 type_name
     : identifier {
@@ -7344,11 +7193,11 @@ type_name
     }
     ;
 
-binding_table_name
-    : identifier {
+// binding_table_name
+//     : identifier {
       
-    }
-    ;
+//     }
+//     ;
 
 // INACTIVE PARSING RULES
 // value_name
@@ -7357,23 +7206,23 @@ binding_table_name
 //     }
 //     ;
 
-procedure_name
-    : identifier {
+// procedure_name
+//     : identifier {
       
-    }
-    ;
+//     }
+//     ;
 
-query_name
-    : identifier {
+// query_name
+//     : identifier {
       
-    }
-    ;
+//     }
+//     ;
 
-function_name
-    : identifier {
+// function_name
+//     : identifier {
       
-    }
-    ;
+//     }
+//     ;
 
 label_name
     : identifier {
@@ -7448,11 +7297,13 @@ identifier
     ;
 
 delimited_identifier
-    : double_quoted_character_sequence {
-
-    }
+    : double_quoted_character_sequence
     | UNBROKEN_ACCENT_QUOTED_CHARACTER_SEQUENCE {
-
+      // TODO: check size and truncate the identifier
+      if ($1.empty()) {
+        throw GraphParser::syntax_error(@1, "Zero-length delimited identifier: ");
+      }
+      scanner.truncateIdentifier($1);
     }
     ;
 
@@ -7460,7 +7311,7 @@ single_quoted_character_sequence
     : UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE {
 
     }
-    | single_quoted_character_sequence UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE {
+    | BROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE {
 
     }
     ;
@@ -7469,7 +7320,7 @@ double_quoted_character_sequence
     : UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE {
 
     }
-    | double_quoted_character_sequence UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE {
+    | BROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE {
 
     }
     ;
@@ -7501,7 +7352,6 @@ decimal_synonym
     }
     ;
 
-// moved_from_gql.ll
 GREATER_THAN_OPERATOR
     : RIGHT_ANGLE_BRACKET
     ;

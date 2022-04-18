@@ -22,11 +22,49 @@
 
 namespace nebula {
 
+using Token = nebula::GraphParser::token;
+using TokenType = nebula::GraphParser::token::token_kind_type;
+
+struct Keyword {
+  enum class Category : int8_t {
+    INVALID_KEYWORD,
+    RESERVED_KEYWORD,
+    NON_RESERVED_KEYWORD,
+  };
+  Keyword(TokenType t, Category c) : token(t), category(c) {}
+
+  bool operator==(const Keyword &rhs) const {
+    return category == rhs.category && token == rhs.token;
+  }
+  bool operator!=(const Keyword &rhs) const {
+    return !(*this == rhs);
+  }
+
+  TokenType token;
+  Category category;
+};
+static const Keyword kInvalidKeyword{TokenType{}, Keyword::Category::INVALID_KEYWORD};
+
+#define NG_RESERVED_KEYWORD(a, b) {a, {Token::TOK_##b, Keyword::Category::RESERVED_KEYWORD}},
+#define NG_NON_RESERVED_KEYWORD(a, b) \
+  {a, {Token::TOK_##b, Keyword::Category::NON_RESERVED_KEYWORD}},
+#define NG_RETURN_TOKEN(a) return Token::TOK_##a;
+
+const std::unordered_map<std::string, Keyword> kCaseSensitiveKeywords{
+#include "parser/CaseSensitiveKeywords.h"
+};
+
+const std::unordered_map<std::string, Keyword> kCaseInsensitiveKeywords{
+#include "parser/CaseInsensitiveKeywords.h"
+};
+
 class GraphScanner : public yyFlexLexer {
  public:
   int yylex(nebula::GraphParser::semantic_type *lval, nebula::GraphParser::location_type *loc) {
     yylval = lval;
     yylloc = loc;
+    // TODO: move to a better place
+    str_.clear();
     return yylex();
   }
 
@@ -71,33 +109,75 @@ class GraphScanner : public yyFlexLexer {
     return isIntMin_;
   }
 
+  bool isValidUnicodeIdentifier(const std::string &text) {
+    // TODO
+    UNUSED(text);
+    return true;
+  }
+
+  void truncateIdentifier(std::string &text, bool warn = false) {
+    size_t kMaxIdentifierLength = 16383;  // 2^14 - 1
+    if (text.size() <= kMaxIdentifierLength) {
+      return;
+    }
+    if (warn) {
+      LOG(WARNING) << "Identifier '" << text << "' is too long. Truncated to '"
+                   << text.substr(0, kMaxIdentifierLength) << "'";
+    }
+    text.resize(kMaxIdentifierLength);
+  }
+
  protected:
   // Called when YY_INPUT is invoked
   int LexerInput(char *buf, int maxSize) override {
     return readBuffer_(buf, maxSize);
   }
 
-  void makeSpaceForString(size_t len) {
-    constexpr auto defaultSize = 256UL;
-    if (sbuf_ == nullptr) {
-      sbufSize_ = defaultSize > len ? defaultSize : len;
-      sbuf_ = std::make_unique<char[]>(sbufSize_);
-      return;
+  // void makeSpaceForString(size_t len) {
+  //   constexpr auto defaultSize = 256UL;
+  //   if (sbuf_ == nullptr) {
+  //     sbufSize_ = defaultSize > len ? defaultSize : len;
+  //     sbuf_ = std::make_unique<char[]>(sbufSize_);
+  //     return;
+  //   }
+
+  //   if (sbufSize_ - sbufPos_ >= len) {
+  //     return;
+  //   }
+
+  //   auto newSize = sbufSize_ * 2 + len;
+  //   auto newBuffer = std::make_unique<char[]>(newSize);
+  //   ::memcpy(newBuffer.get(), sbuf_.get(), sbufPos_);
+  //   sbuf_ = std::move(newBuffer);
+  //   sbufSize_ = newSize;
+  // }
+
+  // char *sbuf() {
+  //   return sbuf_.get();
+  // }
+
+  // Check against the keyword list.
+  const Keyword &keywordLookup(const std::unordered_map<std::string, Keyword> &keywords,
+                               std::string text,
+                               bool caseSensitivity) {
+    if (!caseSensitivity) {
+      std::transform(
+          text.begin(), text.end(), text.begin(), [](unsigned char c) { return std::toupper(c); });
     }
 
-    if (sbufSize_ - sbufPos_ >= len) {
-      return;
+    auto iter = keywords.find(text);
+    if (iter != keywords.end()) {
+      return iter->second;
     }
-
-    auto newSize = sbufSize_ * 2 + len;
-    auto newBuffer = std::make_unique<char[]>(newSize);
-    ::memcpy(newBuffer.get(), sbuf_.get(), sbufPos_);
-    sbuf_ = std::move(newBuffer);
-    sbufSize_ = newSize;
+    return kInvalidKeyword;
   }
 
-  char *sbuf() {
-    return sbuf_.get();
+  const Keyword &keywordLookup(const std::string &text) {
+    auto &keyword = keywordLookup(kCaseSensitiveKeywords, text, true);
+    if (keyword != kInvalidKeyword) {
+      return keyword;
+    }
+    return keywordLookup(kCaseInsensitiveKeywords, text, false);
   }
 
   // std::string parseDelimitedIdentifier(const std::string& text) {
@@ -220,9 +300,9 @@ class GraphScanner : public yyFlexLexer {
   bool isIntMin_{false};
   nebula::GraphParser::semantic_type *yylval{nullptr};
   nebula::GraphParser::location_type *yylloc{nullptr};
-  std::unique_ptr<char[]> sbuf_{nullptr};
-  size_t sbufSize_{0};
-  size_t sbufPos_{0};
+  std::string str_;
+  bool sqcsSeparated_{false};
+  bool dqcsSeparated_{false};
   std::function<int(char *, int)> readBuffer_;
   std::string *query_{nullptr};
 };

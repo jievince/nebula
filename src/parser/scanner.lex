@@ -6,6 +6,8 @@
 %option yylineno
 %option warn
 %option debug
+%option backup
+%option perf-report
 
 %{
 #include "parser/GQLParser.h"
@@ -13,423 +15,42 @@
 #include "GraphParser.hpp"
 #include "graph/service/GraphFlags.h"
 
-extern bool inUBSLC;
-
 #define YY_USER_ACTION                  \
     yylloc->step();                     \
     yylloc->columns(yyleng);
-
-using Token = nebula::GraphParser::token;
-using TokenType = nebula::GraphParser::token::token_kind_type;
-
-struct Keyword {
-  enum class Category : int8_t {
-    INVALID_KEYWORD,
-    RESERVED_KEYWORD,
-    UNRESERVED_KEYWORD,
-  };
-  Keyword(TokenType t, Category c)
-      : token(t), category(c) {}
-
-  bool operator==(const Keyword& rhs) const {
-    return category == rhs.category && token == rhs.token;
-  }
-  bool operator!=(const Keyword& rhs) const {
-    return !(*this == rhs);
-  }
-
-  TokenType token;
-  Category category;
-};
-static const Keyword kInvalidKeyword{TokenType{}, Keyword::Category::INVALID_KEYWORD};
-
-#define NG_RESERVED_KEYWORD(a, b) {a, {Token::TOK_##b, Keyword::Category::RESERVED_KEYWORD}},
-#define NG_UNRESERVED_KEYWORD(a, b) {a, {Token::TOK_##b, Keyword::Category::UNRESERVED_KEYWORD}},
-#define NG_RETURN_TOKEN(a) return Token::TOK_##a;
-
-const std::unordered_map<std::string, Keyword> kCaseSensitiveKeywords {
-/* reserved keyword */
-// case-sensitive reserved keyword
-NG_RESERVED_KEYWORD("endNode", endNode)
-NG_RESERVED_KEYWORD("inDegree", inDegree)
-NG_RESERVED_KEYWORD("lTrim", lTrim)
-NG_RESERVED_KEYWORD("outDegree", outDegree)
-NG_RESERVED_KEYWORD("percentileCont", percentileCont)
-NG_RESERVED_KEYWORD("percentileDist", percentileDist)
-NG_RESERVED_KEYWORD("rTrim", rTrim)
-NG_RESERVED_KEYWORD("startNode", startNode)
-NG_RESERVED_KEYWORD("stDev", stDev)
-NG_RESERVED_KEYWORD("stDevP", stDevP)
-NG_RESERVED_KEYWORD("tail", tail)
-NG_RESERVED_KEYWORD("toLower", toLower)
-NG_RESERVED_KEYWORD("toUpper", toUpper)
-};
-
-const std::unordered_map<std::string, Keyword> kCaseInsensitiveKeywords {
-// case-insensitive reserved keyword
-NG_RESERVED_KEYWORD("ABS", ABS)
-NG_RESERVED_KEYWORD("ACOS", ACOS)
-NG_RESERVED_KEYWORD("ADD", ADD)
-NG_RESERVED_KEYWORD("AGGREGATE", AGGREGATE)
-NG_RESERVED_KEYWORD("ALIAS", ALIAS)
-NG_RESERVED_KEYWORD("ALL", ALL)
-NG_RESERVED_KEYWORD("ALL_DIFFERENT", ALL_DIFFERENT)
-NG_RESERVED_KEYWORD("AND", AND)
-NG_RESERVED_KEYWORD("ANY", ANY)
-NG_RESERVED_KEYWORD("ARRAY", ARRAY)
-NG_RESERVED_KEYWORD("AS", AS)
-NG_RESERVED_KEYWORD("ASC", ASC)
-NG_RESERVED_KEYWORD("ASCENDING", ASCENDING)
-NG_RESERVED_KEYWORD("ASIN", ASIN)
-NG_RESERVED_KEYWORD("AT", AT)
-NG_RESERVED_KEYWORD("ATAN", ATAN)
-NG_RESERVED_KEYWORD("AVG", AVG)
-NG_RESERVED_KEYWORD("BINARY", BINARY)
-NG_RESERVED_KEYWORD("BIGINT", BIGINT)
-NG_RESERVED_KEYWORD("BOOL", BOOL)
-NG_RESERVED_KEYWORD("BOOLEAN", BOOLEAN)
-NG_RESERVED_KEYWORD("BOTH", BOTH)
-NG_RESERVED_KEYWORD("BY", BY)
-NG_RESERVED_KEYWORD("BYTE_LENGTH", BYTE_LENGTH)
-NG_RESERVED_KEYWORD("BYTES", BYTES)
-NG_RESERVED_KEYWORD("CALL", CALL)
-NG_RESERVED_KEYWORD("CASE", CASE)
-NG_RESERVED_KEYWORD("CAST", CAST)
-NG_RESERVED_KEYWORD("CATALOG", CATALOG)
-NG_RESERVED_KEYWORD("CEIL", CEIL)
-NG_RESERVED_KEYWORD("CEILING", CEILING)
-NG_RESERVED_KEYWORD("CHARACTER", CHARACTER)
-NG_RESERVED_KEYWORD("CHARACTER_LENGTH", CHARACTER_LENGTH)
-NG_RESERVED_KEYWORD("CLEAR", CLEAR)
-NG_RESERVED_KEYWORD("CLONE", CLONE)
-NG_RESERVED_KEYWORD("CLOSE", CLOSE)
-NG_RESERVED_KEYWORD("COALESCE", COALESCE)
-NG_RESERVED_KEYWORD("COLLECT", COLLECT)
-NG_RESERVED_KEYWORD("COMMIT", COMMIT)
-NG_RESERVED_KEYWORD("CONSTRAINT", CONSTRAINT)
-NG_RESERVED_KEYWORD("CONSTANT", CONSTANT)
-NG_RESERVED_KEYWORD("CONSTRUCT", CONSTRUCT)
-NG_RESERVED_KEYWORD("COPY", COPY)
-NG_RESERVED_KEYWORD("COS", COS)
-NG_RESERVED_KEYWORD("COSH", COSH)
-NG_RESERVED_KEYWORD("COST", COST)
-NG_RESERVED_KEYWORD("COT", COT)
-NG_RESERVED_KEYWORD("COUNT", COUNT)
-NG_RESERVED_KEYWORD("CURRENT_DATE", CURRENT_DATE)
-NG_RESERVED_KEYWORD("CURRENT_GRAPH", CURRENT_GRAPH)
-NG_RESERVED_KEYWORD("CURRENT_PROPERTY_GRAPH", CURRENT_PROPERTY_GRAPH)
-NG_RESERVED_KEYWORD("CURRENT_ROLE", CURRENT_ROLE)
-NG_RESERVED_KEYWORD("CURRENT_SCHEMA", CURRENT_SCHEMA)
-NG_RESERVED_KEYWORD("CURRENT_TIME", CURRENT_TIME)
-NG_RESERVED_KEYWORD("CURRENT_TIMESTAMP", CURRENT_TIMESTAMP)
-NG_RESERVED_KEYWORD("CURRENT_USER", CURRENT_USER)
-NG_RESERVED_KEYWORD("CREATE", CREATE)
-NG_RESERVED_KEYWORD("DATA", DATA)
-NG_RESERVED_KEYWORD("DATE", DATE)
-NG_RESERVED_KEYWORD("DATETIME", DATETIME)
-NG_RESERVED_KEYWORD("DAY", DAY)  // Newly added for <SQL_interval_literal>
-NG_RESERVED_KEYWORD("DEC", DEC)
-NG_RESERVED_KEYWORD("DECIMAL", DECIMAL)
-NG_RESERVED_KEYWORD("DEFAULT", DEFAULT)
-NG_RESERVED_KEYWORD("DEGREES", DEGREES)
-NG_RESERVED_KEYWORD("DELETE", DELETE)
-NG_RESERVED_KEYWORD("DETACH", DETACH)
-NG_RESERVED_KEYWORD("DESC", DESC)
-NG_RESERVED_KEYWORD("DESCENDING", DESCENDING)
-NG_RESERVED_KEYWORD("DIRECTORIES", DIRECTORIES)
-NG_RESERVED_KEYWORD("DIRECTORY", DIRECTORY)
-NG_RESERVED_KEYWORD("DISTINCT", DISTINCT)
-NG_RESERVED_KEYWORD("DO", DO)
-NG_RESERVED_KEYWORD("DOUBLE", DOUBLE)
-NG_RESERVED_KEYWORD("DROP", DROP)
-NG_RESERVED_KEYWORD("DURATION", DURATION)
-NG_RESERVED_KEYWORD("ELEMENT_ID", ELEMENT_ID)
-NG_RESERVED_KEYWORD("ELSE", ELSE)
-NG_RESERVED_KEYWORD("END", END)
-NG_RESERVED_KEYWORD("ENDS", ENDS)
-NG_RESERVED_KEYWORD("EMPTY_BINDING_TABLE", EMPTY_BINDING_TABLE)
-NG_RESERVED_KEYWORD("EMPTY_GRAPH", EMPTY_GRAPH)
-NG_RESERVED_KEYWORD("EMPTY_PROPERTY_GRAPH", EMPTY_PROPERTY_GRAPH)
-NG_RESERVED_KEYWORD("EMPTY_TABLE", EMPTY_TABLE)
-NG_RESERVED_KEYWORD("EXCEPT", EXCEPT)
-NG_RESERVED_KEYWORD("EXISTS", EXISTS)
-NG_RESERVED_KEYWORD("EXISTING", EXISTING)
-NG_RESERVED_KEYWORD("EXP", EXP)
-NG_RESERVED_KEYWORD("EXPLAIN", EXPLAIN)
-NG_RESERVED_KEYWORD("FALSE", FALSE)
-NG_RESERVED_KEYWORD("FILTER", FILTER)
-NG_RESERVED_KEYWORD("FLOAT", FLOAT)
-NG_RESERVED_KEYWORD("FLOAT16", FLOAT16)
-NG_RESERVED_KEYWORD("FLOAT32", FLOAT32)
-NG_RESERVED_KEYWORD("FLOAT64", FLOAT64)
-NG_RESERVED_KEYWORD("FLOAT128", FLOAT128)
-NG_RESERVED_KEYWORD("FLOAT256", FLOAT256)
-NG_RESERVED_KEYWORD("FLOOR", FLOOR)
-NG_RESERVED_KEYWORD("FOR", FOR)
-NG_RESERVED_KEYWORD("FROM", FROM)
-NG_RESERVED_KEYWORD("FUNCTION", FUNCTION)
-NG_RESERVED_KEYWORD("FUNCTIONS", FUNCTIONS)
-NG_RESERVED_KEYWORD("GQLSTATUS", GQLSTATUS)
-NG_RESERVED_KEYWORD("GRANT", GRANT)
-NG_RESERVED_KEYWORD("GROUP", GROUP)
-NG_RESERVED_KEYWORD("HAVING", HAVING)
-NG_RESERVED_KEYWORD("HOME_GRAPH", HOME_GRAPH)
-NG_RESERVED_KEYWORD("HOME_PROPERTY_GRAPH", HOME_PROPERTY_GRAPH)
-NG_RESERVED_KEYWORD("HOME_SCHEMA", HOME_SCHEMA)
-NG_RESERVED_KEYWORD("HOUR", HOUR)  // Newly added for <SQL_interval_literal>
-NG_RESERVED_KEYWORD("IN", IN)
-NG_RESERVED_KEYWORD("INSERT", INSERT)
-NG_RESERVED_KEYWORD("INT", INT)
-NG_RESERVED_KEYWORD("INTEGER", INTEGER)
-NG_RESERVED_KEYWORD("INT8", INT8)
-NG_RESERVED_KEYWORD("INTEGER8", INTEGER8)
-NG_RESERVED_KEYWORD("INT16", INT16)
-NG_RESERVED_KEYWORD("INTEGER16", INTEGER16)
-NG_RESERVED_KEYWORD("INT32", INT32)
-NG_RESERVED_KEYWORD("INTEGER32", INTEGER32)
-NG_RESERVED_KEYWORD("INTERVAL", INTERVAL)  // Newly added for <SQL_interval_literal>
-NG_RESERVED_KEYWORD("INT64", INT64)
-NG_RESERVED_KEYWORD("INTEGER64", INTEGER64)
-NG_RESERVED_KEYWORD("INT128", INT128)
-NG_RESERVED_KEYWORD("INTEGER128", INTEGER128)
-NG_RESERVED_KEYWORD("INT256", INT256)
-NG_RESERVED_KEYWORD("INTEGER256", INTEGER256)
-NG_RESERVED_KEYWORD("INTERSECT", INTERSECT)
-NG_RESERVED_KEYWORD("IF", IF)
-NG_RESERVED_KEYWORD("IS", IS)
-NG_RESERVED_KEYWORD("KEEP", KEEP)
-NG_RESERVED_KEYWORD("LEADING", LEADING)
-NG_RESERVED_KEYWORD("LEFT", LEFT)
-NG_RESERVED_KEYWORD("LENGTH", LENGTH)
-NG_RESERVED_KEYWORD("LET", LET)
-NG_RESERVED_KEYWORD("LIKE", LIKE)
-NG_RESERVED_KEYWORD("LIKE_REGEX", LIKE_REGEX)
-NG_RESERVED_KEYWORD("LIMIT", LIMIT)
-NG_RESERVED_KEYWORD("LIST", LIST)
-NG_RESERVED_KEYWORD("LN", LN)
-NG_RESERVED_KEYWORD("LOCALDATETIME", LOCALDATETIME)
-NG_RESERVED_KEYWORD("LOCALTIME", LOCALTIME)
-NG_RESERVED_KEYWORD("LOCALTIMESTAMP", LOCALTIMESTAMP)
-NG_RESERVED_KEYWORD("LOG", LOG)
-NG_RESERVED_KEYWORD("LOG10", LOG10)
-NG_RESERVED_KEYWORD("LOWER", LOWER)
-NG_RESERVED_KEYWORD("MANDATORY", MANDATORY)
-NG_RESERVED_KEYWORD("MAP", MAP)
-NG_RESERVED_KEYWORD("MATCH", MATCH)
-NG_RESERVED_KEYWORD("MERGE", MERGE)
-NG_RESERVED_KEYWORD("MAX", MAX)
-NG_RESERVED_KEYWORD("MIN", MIN)
-NG_RESERVED_KEYWORD("MINUTE", MINUTE)  // Newly added for <SQL_interval_literal>
-NG_RESERVED_KEYWORD("MOD", MOD)
-NG_RESERVED_KEYWORD("MONTH", MONTH)  // Newly added for <SQL_interval_literal>
-NG_RESERVED_KEYWORD("MULTI", MULTI)
-NG_RESERVED_KEYWORD("MULTIPLE", MULTIPLE)
-NG_RESERVED_KEYWORD("MULTISET", MULTISET)
-NG_RESERVED_KEYWORD("NEW", NEW)
-NG_RESERVED_KEYWORD("NOT", NOT)
-NG_RESERVED_KEYWORD("NORMALIZE", NORMALIZE)
-NG_RESERVED_KEYWORD("NOTHING", NOTHING)
-NG_RESERVED_KEYWORD("NULL", NULL)
-NG_RESERVED_KEYWORD("NULLS", NULLS)
-NG_RESERVED_KEYWORD("NULLIF", NULLIF)
-NG_RESERVED_KEYWORD("NUMERIC", NUMERIC)
-NG_RESERVED_KEYWORD("OCCURRENCES_REGEX", OCCURRENCES_REGEX)
-NG_RESERVED_KEYWORD("OCTET_LENGTH", OCTET_LENGTH)
-NG_RESERVED_KEYWORD("OF", OF)
-NG_RESERVED_KEYWORD("OFFSET", OFFSET)
-NG_RESERVED_KEYWORD("ON", ON)
-NG_RESERVED_KEYWORD("OPTIONAL", OPTIONAL)
-NG_RESERVED_KEYWORD("OR", OR)
-NG_RESERVED_KEYWORD("ORDER", ORDER)
-NG_RESERVED_KEYWORD("ORDERED", ORDERED)
-NG_RESERVED_KEYWORD("OTHERWISE", OTHERWISE)
-NG_RESERVED_KEYWORD("PARAMETER", PARAMETER)
-NG_RESERVED_KEYWORD("PATH", PATH)
-NG_RESERVED_KEYWORD("PATHS", PATHS)
-NG_RESERVED_KEYWORD("PARTITION", PARTITION)
-NG_RESERVED_KEYWORD("POSITION_REGEX", POSITION_REGEX)
-NG_RESERVED_KEYWORD("POWER", POWER)
-NG_RESERVED_KEYWORD("PRECISION", PRECISION)
-NG_RESERVED_KEYWORD("PROCEDURE", PROCEDURE)
-NG_RESERVED_KEYWORD("PROCEDURES", PROCEDURES)
-NG_RESERVED_KEYWORD("PRODUCT", PRODUCT)
-NG_RESERVED_KEYWORD("PROFILE", PROFILE)
-NG_RESERVED_KEYWORD("PROJECT", PROJECT)
-NG_RESERVED_KEYWORD("QUERIES", QUERIES)
-NG_RESERVED_KEYWORD("QUERY", QUERY)
-NG_RESERVED_KEYWORD("RADIANS", RADIANS)
-NG_RESERVED_KEYWORD("REAL", REAL)
-NG_RESERVED_KEYWORD("RECORD", RECORD)
-NG_RESERVED_KEYWORD("RECORDS", RECORDS)
-NG_RESERVED_KEYWORD("REFERENCE", REFERENCE)
-NG_RESERVED_KEYWORD("REMOVE", REMOVE)
-NG_RESERVED_KEYWORD("RENAME", RENAME)
-NG_RESERVED_KEYWORD("REPLACE", REPLACE)
-NG_RESERVED_KEYWORD("REQUIRE", REQUIRE)
-NG_RESERVED_KEYWORD("RESET", RESET)
-NG_RESERVED_KEYWORD("RESULT", RESULT)
-NG_RESERVED_KEYWORD("RETURN", RETURN)
-NG_RESERVED_KEYWORD("REVOKE", REVOKE)
-NG_RESERVED_KEYWORD("RIGHT", RIGHT)
-NG_RESERVED_KEYWORD("ROLLBACK", ROLLBACK)
-NG_RESERVED_KEYWORD("SAME", SAME)
-NG_RESERVED_KEYWORD("SCALAR", SCALAR)
-NG_RESERVED_KEYWORD("SCHEMA", SCHEMA)
-NG_RESERVED_KEYWORD("SCHEMAS", SCHEMAS)
-NG_RESERVED_KEYWORD("SCHEMATA", SCHEMATA)
-NG_RESERVED_KEYWORD("SECOND", SECOND)  // Newly added for <SQL_interval_literal>
-NG_RESERVED_KEYWORD("SELECT", SELECT)
-NG_RESERVED_KEYWORD("SESSION", SESSION)
-NG_RESERVED_KEYWORD("SET", SET)
-NG_RESERVED_KEYWORD("SKIP", SKIP)
-NG_RESERVED_KEYWORD("SIGNED", SIGNED)
-NG_RESERVED_KEYWORD("SIN", SIN)
-NG_RESERVED_KEYWORD("SINGLE", SINGLE)
-NG_RESERVED_KEYWORD("SINH", SINH)
-NG_RESERVED_KEYWORD("SMALLINT", SMALLINT)
-NG_RESERVED_KEYWORD("SQRT", SQRT)
-NG_RESERVED_KEYWORD("START", START)
-NG_RESERVED_KEYWORD("STARTS", STARTS)
-NG_RESERVED_KEYWORD("STRING", STRING)
-NG_RESERVED_KEYWORD("SUBSTRING", SUBSTRING)
-NG_RESERVED_KEYWORD("SUBSTRING_REGEX", SUBSTRING_REGEX)
-NG_RESERVED_KEYWORD("SUM", SUM)
-NG_RESERVED_KEYWORD("TAN", TAN)
-NG_RESERVED_KEYWORD("TANH", TANH)
-NG_RESERVED_KEYWORD("THEN", THEN)
-NG_RESERVED_KEYWORD("TIME", TIME)
-NG_RESERVED_KEYWORD("TIMESTAMP", TIMESTAMP)
-NG_RESERVED_KEYWORD("TRAILING", TRAILING)
-NG_RESERVED_KEYWORD("TRANSLATE_REGEX", TRANSLATE_REGEX)
-NG_RESERVED_KEYWORD("TRIM", TRIM)
-NG_RESERVED_KEYWORD("TRUE", TRUE)
-NG_RESERVED_KEYWORD("TRUNCATE", TRUNCATE)
-NG_RESERVED_KEYWORD("UINT", UINT)
-NG_RESERVED_KEYWORD("UINT8", UINT8)
-NG_RESERVED_KEYWORD("UINT16", UINT16)
-NG_RESERVED_KEYWORD("UINT32", UINT32)
-NG_RESERVED_KEYWORD("UINT64", UINT64)
-NG_RESERVED_KEYWORD("UINT128", UINT128)
-NG_RESERVED_KEYWORD("UINT256", UINT256)
-NG_RESERVED_KEYWORD("UNION", UNION)
-NG_RESERVED_KEYWORD("UNIT", UNIT)
-NG_RESERVED_KEYWORD("UNIT_BINDING_TABLE", UNIT_BINDING_TABLE)
-NG_RESERVED_KEYWORD("UNIT_TABLE", UNIT_TABLE)
-NG_RESERVED_KEYWORD("UNIQUE", UNIQUE)
-NG_RESERVED_KEYWORD("UNNEST", UNNEST)
-NG_RESERVED_KEYWORD("UNKNOWN", UNKNOWN)
-NG_RESERVED_KEYWORD("UNSIGNED", UNSIGNED)
-NG_RESERVED_KEYWORD("UNWIND", UNWIND)
-NG_RESERVED_KEYWORD("UPPER", UPPER)
-NG_RESERVED_KEYWORD("USE", USE)
-NG_RESERVED_KEYWORD("VALUE", VALUE)
-NG_RESERVED_KEYWORD("VALUES", VALUES)
-NG_RESERVED_KEYWORD("VARBINARY", VARBINARY)
-NG_RESERVED_KEYWORD("VARCHAR", VARCHAR)
-NG_RESERVED_KEYWORD("WHEN", WHEN)
-NG_RESERVED_KEYWORD("WHERE", WHERE)
-NG_RESERVED_KEYWORD("WITH", WITH)
-NG_RESERVED_KEYWORD("WITHOUT", WITHOUT)
-NG_RESERVED_KEYWORD("XOR", XOR)
-NG_RESERVED_KEYWORD("YEAR", YEAR)  // Newly added for <SQL_interval_literal>
-NG_RESERVED_KEYWORD("YIELD", YIELD)
-NG_RESERVED_KEYWORD("ZERO", ZERO)
-/* unreserved keyword */
-// case-insensitive non-reserved keyword
-NG_UNRESERVED_KEYWORD("ACYCLIC", ACYCLIC)
-NG_UNRESERVED_KEYWORD("BINDING", BINDING)
-NG_UNRESERVED_KEYWORD("CLASS_ORIGIN", CLASS_ORIGIN)
-NG_UNRESERVED_KEYWORD("COMMAND_FUNCTION", COMMAND_FUNCTION)
-NG_UNRESERVED_KEYWORD("COMMAND_FUNCTION_CODE", COMMAND_FUNCTION_CODE)
-NG_UNRESERVED_KEYWORD("CONDITION_NUMBER", CONDITION_NUMBER)
-NG_UNRESERVED_KEYWORD("CONNECTING", CONNECTING)
-NG_UNRESERVED_KEYWORD("DESTINATION", DESTINATION)
-NG_UNRESERVED_KEYWORD("DIRECTED", DIRECTED)
-NG_UNRESERVED_KEYWORD("EDGE", EDGE_SYNONYM)
-NG_UNRESERVED_KEYWORD("EDGES", EDGES)
-NG_UNRESERVED_KEYWORD("FINAL", FINAL)
-NG_UNRESERVED_KEYWORD("FIRST", FIRST)
-NG_UNRESERVED_KEYWORD("GRAPH", GRAPH_SYNONYM)  // TODO
-NG_UNRESERVED_KEYWORD("GRAPHS", GRAPHS)
-NG_UNRESERVED_KEYWORD("GROUPS", GROUPS)
-NG_UNRESERVED_KEYWORD("INDEX", INDEX)
-NG_UNRESERVED_KEYWORD("LAST", LAST)
-NG_UNRESERVED_KEYWORD("LABEL", LABEL)
-NG_UNRESERVED_KEYWORD("LABELED", LABELED)
-NG_UNRESERVED_KEYWORD("LABELS", LABELS)
-NG_UNRESERVED_KEYWORD("MESSAGE_TEXT", MESSAGE_TEXT)
-NG_UNRESERVED_KEYWORD("MORE", MORE)
-NG_UNRESERVED_KEYWORD("MUTABLE", MUTABLE)
-NG_UNRESERVED_KEYWORD("NFC", NFC)
-NG_UNRESERVED_KEYWORD("NFD", NFD)
-NG_UNRESERVED_KEYWORD("NFKC", NFKC)
-NG_UNRESERVED_KEYWORD("NFKD", NFKD)
-NG_UNRESERVED_KEYWORD("NODE", NODE_SYNONYM)
-NG_UNRESERVED_KEYWORD("NODES", NODES)
-NG_UNRESERVED_KEYWORD("NORMALIZED", NORMALIZED)
-NG_UNRESERVED_KEYWORD("NUMBER", NUMBER)
-NG_UNRESERVED_KEYWORD("ONLY", ONLY)
-NG_UNRESERVED_KEYWORD("ORDINALITY", ORDINALITY)
-NG_UNRESERVED_KEYWORD("PATTERN", PATTERN)
-NG_UNRESERVED_KEYWORD("PATTERNS", PATTERNS)
-NG_UNRESERVED_KEYWORD("PROPERTY", PROPERTY)
-NG_UNRESERVED_KEYWORD("PROPERTIES", PROPERTIES)
-NG_UNRESERVED_KEYWORD("READ", READ)
-NG_UNRESERVED_KEYWORD("RELATIONSHIP", EDGE_SYNONYM)
-NG_UNRESERVED_KEYWORD("RELATIONSHIPS", RELATIONSHIPS)
-NG_UNRESERVED_KEYWORD("RETURNED_GQLSTATUS", RETURNED_GQLSTATUS)
-NG_UNRESERVED_KEYWORD("SHORTEST", SHORTEST)
-NG_UNRESERVED_KEYWORD("SIMPLE", SIMPLE)
-NG_UNRESERVED_KEYWORD("SOURCE", SOURCE)
-NG_UNRESERVED_KEYWORD("SUBCLASS_ORIGIN", SUBCLASS_ORIGIN)
-NG_UNRESERVED_KEYWORD("TABLE", TABLE)
-NG_UNRESERVED_KEYWORD("TABLES", TABLES)
-NG_UNRESERVED_KEYWORD("TIES", TIES)
-NG_UNRESERVED_KEYWORD("TO", TO)
-NG_UNRESERVED_KEYWORD("TRAIL", TRAIL)
-NG_UNRESERVED_KEYWORD("TRANSACTION", TRANSACTION)
-NG_UNRESERVED_KEYWORD("TYPE", TYPE)
-NG_UNRESERVED_KEYWORD("TYPES", TYPES)
-NG_UNRESERVED_KEYWORD("UNDIRECTED", UNDIRECTED)
-NG_UNRESERVED_KEYWORD("VERTEX", NODE_SYNONYM)
-NG_UNRESERVED_KEYWORD("VERTICES", VERTICES)
-NG_UNRESERVED_KEYWORD("WALK", WALK)
-NG_UNRESERVED_KEYWORD("WRITE", WRITE)
-NG_UNRESERVED_KEYWORD("ZONE", ZONE)
-};
-
-// Check against the keyword list.
-const Keyword& keywordLookup(const std::unordered_map<std::string, Keyword>& keywords,
-                   std::string text,
-                   bool caseSensitivity) {
-  if (!caseSensitivity) {
-    std::transform(
-        text.begin(), text.end(), text.begin(), [](unsigned char c) { return std::toupper(c); });
-  }
-
-  auto iter = keywords.find(text);
-  if (iter != keywords.end()) {
-    return iter->second;
-  }
-  return kInvalidKeyword;
-}
-
-const Keyword& keywordLookup(const std::string& text) {
-  auto& keyword = keywordLookup(kCaseSensitiveKeywords, text, true);
-  if (keyword != kInvalidKeyword) {
-    return keyword;
-  }
-  return keywordLookup(kCaseInsensitiveKeywords, text, false);
-}
-
 %}
 
+/* How does the input is matched?
+ * When the generated scanner is run, it analyzes its input looking for strings which match any of its patterns.
+ * If it finds more than one match, it takes the one matching the most text.
+ * If it finds two or more matches of the same length, the rule listed first in the flex input file is chosen.
+ *
+ * What is a start condition?
+ * flex provides a mechanism for conditionally activating rules. 
+ * Any rule whose pattern is prefixed with ‘<sc>’ will only be active when the scanner
+ * is in the start condition named sc.
+ * `%s` is used to declare an inclusive start condition,
+ * `%x` is used to declare an exclusive start condition.
+ * A start condition is activated using the BEGIN action. Until the next BEGIN action is
+ * executed, rules with the given start condition will be active and rules with other start
+ * conditions will be inactive. If the start condition is inclusive, then rules with no start
+ * conditions at all will also be active. If it is exclusive, then only rules qualified with
+ * the start condition will be active. INITIAL is the default start condition.
+ *
+ * We use exclusive start conditions for single quoted character sequence,
+ * double quoted character sequence, unbroken accent quoted character sequence,
+ * and byte string literal.
+ * Exclusive states:
+ *  <SQCS> single quoted character sequence
+ *  <DQCS> double quoted character sequence
+ *  <UAQCS> unbroken accent quoted character sequence
+ *  <BSL> byte string literal
+ */
 
-%x USQCS
-%x UDQCS
+%x SQCS
+%x DQCS
 %x UAQCS
-%s UBSLC
-
+%x BSL
 
 /* delimiter token */
 /* GQL special character */
@@ -500,6 +121,59 @@ multiset_alternation_operator "|+|"
 /* doubled_grave_accent "``" */
 /* escaped_grave_accent {reverse_solidus}{grave_accent}|{doubled_grave_accent} */
 
+escaped_reverse_solidus \\\\
+escaped_quote \\'
+escaped_double_quote \\\"
+escaped_tab \\t
+escaped_backspace \\b
+escaped_newline \\n
+escaped_carriage_return \\r
+escaped_form_feed \\f
+unicode_4_digit_escape_value \\u{hex_digit}{4}
+unicode_6_digit_escape_value \\U{hex_digit}{6}
+unicode_escape_value {unicode_4_digit_escape_value}|{unicode_6_digit_escape_value}
+
+/* <whitespace> is any consecutive sequence of Unicode characters with the property White_Space.
+NOTE 154 — These are the characters the Unicode General Category classes “Zs”, “Zl” and “Zp” together with the
+characters: \u0009 (Horizontal Tabulation), \u000A (Line Feed), \u000B (Vertical Tabulation), \u000C (Form Feed),
+\u000D (Carriage Return), and \u0085 (Next Line). */
+white_space [ \t\n\v\f\r]
+whitespace {white_space}+
+newline [\n\r]
+non_newline [^\n\r]
+
+simple_comment_introducer {double_solidus}|{double_minus_sign}
+simple_comment_character {non_newline}
+/* TODO: maybe need to remove the last newline or make it be optional */
+/* simple_comment {simple_comment_introducer}{simple_comment_character}*{newline} */
+simple_comment {simple_comment_introducer}{simple_comment_character}*
+/* bracketed_comment {bracketed_comment_introducer}{bracketed_comment_contents}{bracketed_comment_terminator} */
+bracketed_comment "/*"([^*]|(\*+[^*/]))*\*+\/
+/* We don't use flex state to match comment currently */
+/* TODO: try to implenment comment by start condition */
+comment {simple_comment}|{bracketed_comment}
+separator ({whitespace}|{comment})+
+/* TODO: In a <character string literal>, or <byte string literal>, a <separator> shall contain a <newline>(???) */
+separator_with_newline {separator}
+
+sqcs_start {quote}
+sqcs_inside ([^\\\'])*
+sqcs_stop {quote}
+sqcs_continue {quote}{separator_with_newline}{quote}
+
+dqcs_start {double_quote}
+dqcs_inside ([^\\\"])*
+dqcs_stop {double_quote}
+dqcs_continue {double_quote}{separator_with_newline}{double_quote}
+
+uaqcs_start {grave_accent}
+uaqcs_inside ([^\\`])* 
+uaqcs_stop {grave_accent}
+
+bsl_start [Xx]{quote}
+bsl_inside {space}*(({hex_digit}{space}*){2})*
+bsl_stop {quote}
+bsl_continue {quote}{separator_with_newline}{quote}
 
 /* refer to https://www.fileformat.info/info/unicode/category/Nd/list.htm */
 /* other_digit */
@@ -514,80 +188,47 @@ unsigned_octal_integer 0o({underscore}?{octal_digit})+
 unsigned_binary_integer 0b({underscore}?{binary_digit})+
 unsigned_integer {unsigned_decimal_integer}|{unsigned_hexadecimal_integer}|{unsigned_octal_integer}|{unsigned_binary_integer}
 /* a little change here */
-exact_numeric_literal {unsigned_integer}|{unsigned_decimal_integer}{period}{unsigned_decimal_integer}?|{period}{unsigned_decimal_integer}
+exact_numeric_literal_with_period {unsigned_decimal_integer}{period}{unsigned_decimal_integer}?|{period}{unsigned_decimal_integer}
+/* exact_numeric_literal {unsigned_integer}|{unsigned_decimal_integer}{period}{unsigned_decimal_integer}?|{period}{unsigned_decimal_integer} */
 sign [+-]
 signed_decimal_integer {sign}?{unsigned_decimal_integer}
-restricted_exact_numeric_literal {unsigned_decimal_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
-mantissa {restricted_exact_numeric_literal}
+exact_decimal_numeric_literal {unsigned_decimal_integer}|{unsigned_decimal_integer}({period}{unsigned_decimal_integer}?)?|{period}{unsigned_decimal_integer}
+mantissa {exact_decimal_numeric_literal}
 exponent {signed_decimal_integer}
 approximate_numeric_literal {mantissa}[Ee]{exponent}
-
-unsigned_numeric_literal {exact_numeric_literal}|{approximate_numeric_literal}
-/* TODO: This pattern is strange */
-byte_string_literal_introducer [Xx]
-unbroken_byte_string_literal_contents {quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote}
-byte_string_literal [Xx]{unbroken_byte_string_literal_contents}({separator}{unbroken_byte_string_literal_contents})*
-
+unsigned_floating_point {exact_numeric_literal_with_period}|{approximate_numeric_literal}
 
 identifier_start [A-Za-z\x80-\xff_]
 identifier_extend [A-Za-z\x80-\xff_0-9\$]
 /* The pattern regular_identifier could match a keyword or an unverified regular identifier */
 regular_identifier {identifier_start}{identifier_extend}*
 extended_identifier {identifier_extend}*
-/* identifier {regular_identifier}|{delimited_identifier} */
-
-simple_comment_introducer {double_solidus}|{double_minus_sign}
-/* TODO: [^\n] */
-simple_comment_character [^\n\r]
-/* TODO: maybe need to remove the last newline or make it be optional */
-simple_comment {simple_comment_introducer}{simple_comment_character}*{newline}
-/* bracketed_comment {bracketed_comment_introducer}{bracketed_comment_contents}{bracketed_comment_terminator} */
-bracketed_comment "/*"([^*]|(\*+[^*/]))*\*+\/
-/* We don't use flex state to match comment currently */
-comment {simple_comment}|{bracketed_comment}
-
-
-/* string_literal_character [^{escaped_character}] */
-escaped_reverse_solidus \\\\
-escaped_quote \\'
-escaped_double_quote \\\"
-escaped_tab \\t
-escaped_backspace \\b
-escaped_newline \\n
-escaped_carriage_return \\r
-escaped_form_feed \\f
-unicode_4_digit_escape_value \\u{hex_digit}{4}
-unicode_6_digit_escape_value \\U{hex_digit}{6}
-unicode_escape_value {unicode_4_digit_escape_value}|{unicode_6_digit_escape_value}
-/* Why doesn't escaped_character contains escaped accent(\`)? */
-escaped_character {escaped_reverse_solidus}|{escaped_quote}|{escaped_double_quote}|{escaped_tab}|{escaped_backspace}|{escaped_newline}|{escaped_carriage_return}|{escaped_form_feed}|{unicode_escape_value}
-unbroken_single_quoted_character_sequence \'([^\\\']|{escaped_character})*\'
-unbroken_double_quoted_character_sequence \"([^\\\"]|{escaped_character})*\"
-unbroken_accent_quoted_character_sequence `([^\\`]|{escaped_character})*`
-/* TODO: Consider to restrict the following two patterns to let them just match the single_quoted_character_sequence which contains seprator. */
-single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
-double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
-delimited_identifier {double_quoted_character_sequence}|{unbroken_accent_quoted_character_sequence}
-
-/* <whitespace> is any consecutive sequence of Unicode characters with the property White_Space.
-NOTE 154 — These are the characters the Unicode General Category classes “Zs”, “Zl” and “Zp” together with the
-characters: \u0009 (Horizontal Tabulation), \u000A (Line Feed), \u000B (Vertical Tabulation), \u000C (Form Feed),
-\u000D (Carriage Return), and \u0085 (Next Line). */
-whitespace [ \t\n\v\f\r]+
-/* <newline> is the implementation-defined end-of-line indicator.
-NOTE 155—<newline> is typically represented by\u000A (“Line Feed”) and/or \u000D(“Carriage Return”); however,
-this representation is not required by the GQL document. */
-newline \r|\n|\r\n
-separator ({whitespace}|{comment})+
-
-separated_identifier {extended_identifier}|{delimited_identifier}
-parameter_name \${separated_identifier}
 parameter_name_1 \${extended_identifier}
 
+/* string_literal_character [^{escaped_character}] */
+/* Why doesn't escaped_character contains escaped accent(\`)? */
+/* escaped_character {escaped_reverse_solidus}|{escaped_quote}|{escaped_double_quote}|{escaped_tab}|{escaped_backspace}|{escaped_newline}|{escaped_carriage_return}|{escaped_form_feed}|{unicode_escape_value} */
+/* unbroken_single_quoted_character_sequence \'([^\\\']|{escaped_character})*\'
+unbroken_double_quoted_character_sequence \"([^\\\"]|{escaped_character})*\"
+unbroken_accent_quoted_character_sequence `([^\\`]|{escaped_character})*` */
+/* TODO: Consider to restrict the following two patterns to let them just match the single_quoted_character_sequence which contains seprator. */
+/* single_quoted_character_sequence {unbroken_single_quoted_character_sequence}({separator}{unbroken_single_quoted_character_sequence})*
+double_quoted_character_sequence {unbroken_double_quoted_character_sequence}({separator}{unbroken_double_quoted_character_sequence})*
 unbroken_character_string_literal {unbroken_single_quoted_character_sequence}|{unbroken_double_quoted_character_sequence}
 character_string_literal {single_quoted_character_sequence}|{double_quoted_character_sequence}
+byte_string_literal_introducer [Xx] */
+/* unbroken_byte_string_literal_contents {quote}{space}*({hex_digit}{space}*{hex_digit}{space}*)*{quote} */
+/* unbroken_byte_string_literal_contents {space}*(({hex_digit}{space}*){2})* */
+/* byte_string_literal [Xx]{unbroken_byte_string_literal_contents}({separator}{unbroken_byte_string_literal_contents})* */
 
-/* special */
+/* delimited_identifier {double_quoted_character_sequence}|{unbroken_accent_quoted_character_sequence} */
+/* separated_identifier {extended_identifier}|{delimited_identifier} */
+/* identifier {regular_identifier}|{delimited_identifier} */
+
+/* parameter_name \${separated_identifier} */
+
+
+/* Many of them coudl be eliminated if glr is ready */
 is_source (?i:IS{separator}SOURCE)
 is_not_source (?i:IS{separator}NOT{separator}SOURCE)
 is_destination (?i:IS{separator}DESTINATION)
@@ -600,37 +241,23 @@ is_not_directed (?i:IS{separator}NOT{separator}DIRECTED)
 is_labeled (?i:IS{separator}LABELED)
 is_not_labeled (?i:IS{separator}NOT{separator}LABELED)
 session_close (?i:SESSION{separator}CLOSE)
-comma_optional (?i:{comma}{separator}OPTIONAL)
+/* comma_optional (?i:{comma}{separator}OPTIONAL) */
 group_by (?i:GROUP{separator}BY)
-graph_synonym (?i:(PROPERTY{separator})?GRAPH)
+graph_synonym (?i:PROPERTY{separator}GRAPH)
 graph_type_synonym (?i:(PROPERTY{separator})?GRAPH{separator}TYPE)
-binding_table_synonym (?i:(BINDING{separator})?TABLE)
+binding_table_synonym (?i:BINDING{separator}TABLE)
 solidus_double_period (?i:{solidus}{separator}?{double_period})
 
 
 %%
 
  /* Flex rules section */
- /* How Does the input is matched?
-  * When the generated scanner is run, it analyzes its input looking for strings which match any of its patterns.
-  * Principle 1: If it finds more than one match, it takes the one matching the most text.
-  * Principle 2: If it finds two or more matches of the same length, the rule listed first in the flex input file is chosen.
-  * Once the match is determined, the text corresponding to the match is made available in the global character pointer yytext, and its length in the global integer yyleng.
-  * The action corresponding to the matched pattern is then executed, and then the remaining input is scanned for another match.
-  * The last rule `.` could match any single character except `\n`.
-  */
 
 %{
   /* FLEX:  initial code: The following code block is executed every time yylex is called.
    * Reset the current scanning locations each time yylex is called to match new pattern.
    */
   // std::cerr << "FLEX: YYTEXT: " << string(yytext, yyleng) << std::endl;
-  // 词法反馈, 当[Xx]时, BEGIN(UNBROKEN_BYTE_STRING_LITERAL);
-  if (inUBSLC) {
-    BEGIN(UBSLC);
-  } else if (YY_START == UBSLC) {
-    BEGIN(INITIAL);
-  }
 
 %}
 
@@ -819,14 +446,14 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
   NG_RETURN_TOKEN(MULTISET_ALTERNATION_OPERATOR);
 }
 
- /* TODO: warning, rule cannot be matched */
+ /* <*>{newline} */
 {newline} {
   yylineno++;
   yylloc->lines(yyleng);
 }
 
 {whitespace} { }
-
+ /* TODO: comment leads to a lot of backing up */
 {comment} { }
 
 {is_source} {
@@ -884,96 +511,159 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
   NG_RETURN_TOKEN(SOLIDUS_DOUBLE_PERIOD);
 }
 
-{byte_string_literal_introducer} {
-  NG_RETURN_TOKEN(BYTE_STRING_LITERAL_INTRODUCER);
-}
-
 {regular_identifier} {
   /* Check against the keyword lists. */
-  auto& keyword = keywordLookup(std::string(yytext, yyleng));
+  std::string text(yytext, yyleng);
+  auto& keyword = keywordLookup(text);
   if (keyword != kInvalidKeyword) {
-    std::cerr << "FLEX: regular_identifier, keyword: " << std::string(yytext, yyleng) << std::endl;
-    if (keyword.category == Keyword::Category::UNRESERVED_KEYWORD) {
-      // yylval->build(std::string(yytext, yyleng));
+    if (keyword.category == Keyword::Category::NON_RESERVED_KEYWORD) {
+      yylval->build(text);
     }
     return keyword.token;
   }
 
   /* Not a keyword. Check if it is a legal unicode identifier. */
-  //if (isValidUnicodeIdentifier(yytext, yyleng)) {
-    std::cerr << "FLEX: regular_identifier, normal identifier: " << std::string(yytext, yyleng) << std::endl;
-    // yylval->build(std::string(yytext, yyleng));
-    NG_RETURN_TOKEN(REGULAR_IDENTIFIER);
-  //}
-  // Don't throw exception. Just return an error token to the parser.
-  // throw GraphParser::syntax_error(*yylloc, "illegal unicode identifier");
-  NG_RETURN_TOKEN(INVALID_KEYWORD); 
+  if (text.empty()) {
+    throw GraphParser::syntax_error(*yylloc, "Zero-length regular identifier: ");
+  }
+  truncateIdentifier(text);
+  if (!isValidUnicodeIdentifier(text)) {
+    throw GraphParser::syntax_error(*yylloc, "illegal regular identifier");
+  }
+  yylval->build(text);
+  NG_RETURN_TOKEN(REGULAR_IDENTIFIER);
 }
 
 {parameter_name_1} {
+  std::string text(yytext+1, yyleng-1);
+  if (text.empty()) {
+    throw GraphParser::syntax_error(*yylloc, "Zero-length extended identifier: ");
+  }
+  truncateIdentifier(text);
+  yylval->build(text);
   NG_RETURN_TOKEN(PARAMETER_NAME_1);
 }
 
-{quote} {
-  BEGIN(USQCS);
+{sqcs_start} {
+  BEGIN(SQCS);
 }
-{double_quote} {
-  BEGIN(UDQCS);
+{dqcs_start} {
+  BEGIN(DQCS);
 }
-{grave_accent} {
+{uaqcs_start} {
   BEGIN(UAQCS);
 }
-<USQCS>([^\\\'])* {
-  // str.append(yytext, yyleng);
+{bsl_start} {
+  BEGIN(BSL);
 }
-<UDQCS>([^\\\"])* {
-  // str.append(yytext, yyleng);
+<SQCS>{sqcs_inside} {
+  str_.append(yytext, yyleng);
 }
-<UAQCS>([^\\`])* {
-  // str.append(yytext, yyleng);
+<DQCS>{dqcs_inside} {
+  str_.append(yytext, yyleng);
 }
-<USQCS,UDQCS,UAQCS>{escaped_reverse_solidus} {
-  // str.push_back('\\');
+<UAQCS>{uaqcs_inside} {
+  str_.append(yytext, yyleng);
 }
-<USQCS,UDQCS,UAQCS>{escaped_quote} {
-  // str.push_back('\'');
+<BSL>{bsl_inside} {
+  std::string text(yytext, yyleng);
+  boost::erase_all(text, " ");
+  DCHECK_EQ(text.size() % 2, 0);
+  std::string result(text.size() / 2, '\0');
+  for (size_t i = 0; i < text.size() - 1; i += 2) {
+    result[i / 2] = (std::strtoul(text.substr(i, 2).c_str(), nullptr, 16) & 0xFF);
+  }
+  str_.append(result);
 }
-<USQCS,UDQCS,UAQCS>{escaped_double_quote} {
-  // str.push_back('\"');
+<SQCS,DQCS,UAQCS>{escaped_reverse_solidus} {
+  str_.push_back('\\');
 }
-<USQCS,UDQCS,UAQCS>{escaped_tab} {
-  // str.push_back('\t');
+<SQCS,DQCS,UAQCS>{escaped_quote} {
+  str_.push_back('\'');
 }
-<USQCS,UDQCS,UAQCS>{escaped_backspace} {
-  // str.push_back('\b');
+<SQCS,DQCS,UAQCS>{escaped_double_quote} {
+  str_.push_back('\"');
 }
-<USQCS,UDQCS,UAQCS>{escaped_newline} {
-  // str.push_back('\n');
+<SQCS,DQCS,UAQCS>{escaped_tab} {
+  str_.push_back('\t');
 }
-<USQCS,UDQCS,UAQCS>{escaped_carriage_return} {
-  // str.push_back('\r');
+<SQCS,DQCS,UAQCS>{escaped_backspace} {
+  str_.push_back('\b');
 }
-<USQCS,UDQCS,UAQCS>{escaped_form_feed} {
-  // str.push_back('\f');
+<SQCS,DQCS,UAQCS>{escaped_newline} {
+  str_.push_back('\n');
 }
-<USQCS,UDQCS,UAQCS>{unicode_escape_value} {
-  // auto encoded = folly::codePointToUtf8(std::strtoul(yytext+2, nullptr, 16));
-  // str.append(encoded);
+<SQCS,DQCS,UAQCS>{escaped_carriage_return} {
+  str_.push_back('\r');
 }
-<USQCS>{quote} {
-  // yylval->build(str);
+<SQCS,DQCS,UAQCS>{escaped_form_feed} {
+  str_.push_back('\f');
+}
+<SQCS,DQCS,UAQCS>{unicode_escape_value} {
+  std::string text(yytext+2, yyleng-2);
+  auto encoded = folly::codePointToUtf8(stoul(text, nullptr, 16));
+  str_.append(encoded);
+}
+<SQCS>{sqcs_continue} {
+  sqcsSeparated_ = true;
+}
+<DQCS>{dqcs_continue} {
+  dqcsSeparated_ = true;
+}
+<BSL>{bsl_continue} {
+
+}
+<SQCS>{sqcs_stop} {
+  yylval->build(str_);
   BEGIN(INITIAL);
+  if (sqcsSeparated_) {
+    sqcsSeparated_ = false;
+    NG_RETURN_TOKEN(BROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE);
+  }
   NG_RETURN_TOKEN(UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE);
 }
-<UDQCS>{double_quote} {
-  // yylval->build(str);
+<DQCS>{dqcs_stop} {
+  yylval->build(str_);
   BEGIN(INITIAL);
+  if (dqcsSeparated_) {
+    dqcsSeparated_ = false;
+    NG_RETURN_TOKEN(BROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE);
+  }
   NG_RETURN_TOKEN(UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE);
 }
-<UAQCS>{grave_accent} {
-  // yylval->build(str);
+<UAQCS>{uaqcs_stop} {
+  yylval->build(str_);
   BEGIN(INITIAL);
   NG_RETURN_TOKEN(UNBROKEN_ACCENT_QUOTED_CHARACTER_SEQUENCE);
+}
+<BSL>{bsl_stop} {
+  yylval->build(str_);
+  BEGIN(INITIAL);
+  NG_RETURN_TOKEN(BYTE_STRING_LITERAL);
+}
+<SQCS>[^'] {
+  throw GraphParser::syntax_error(*yylloc, "Invalid unbroken single quoted character sequence: ");
+}
+<DQCS>[^"] {
+  throw GraphParser::syntax_error(*yylloc, "Invalid unbroken double quoted character sequence: ");
+}
+<UAQCS>[^`] {
+  throw GraphParser::syntax_error(*yylloc, "Invalid unbroken accent quoted character sequence: ");
+}
+<BSL>[^'] {
+  throw GraphParser::syntax_error(*yylloc, "Invalid byte string literal: ");
+}
+<SQCS><<EOF>> {
+  throw GraphParser::syntax_error(*yylloc, "Unterminated single quoted character sequence: ");
+}
+<DQCS><<EOF>> {
+  throw GraphParser::syntax_error(*yylloc, "Unterminated double quoted character sequence: ");
+}
+<UAQCS><<EOF>> {
+  throw GraphParser::syntax_error(*yylloc, "Unterminated accent quoted character sequence: ");
+}
+<BSL><<EOF>> {
+  throw GraphParser::syntax_error(*yylloc, "Unterminated byte string literal: ");
 }
 
   /* {delimited_identifier} {
@@ -985,13 +675,6 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
     // yylval->build(parseSeparatedIdentifier(std::strign(yytext+1, yyleng-1)));
     NG_RETURN_TOKEN(PARAMETER_NAME);
   } */
-
-<UBSLC>{unbroken_byte_string_literal_contents} {
-  std::string text(yytext+1, yytext-2);
-  boost::erase_all(text, " ");
-  // yylval->build(parseUnbrokenByteStringLiteral(text));
-  NG_RETURN_TOKEN(UNBROKEN_BYTE_STRING_LITERAL);
-}
 
  /* Both of the following two patterns can match an <unbroken character string literal>,
   * but flex will choose the first pattern because it's listed first.
@@ -1007,40 +690,62 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
     NG_RETURN_TOKEN(CHARACTER_STRING_LITERAL);
   } */
 
- /* The pattern unsigned_numeric_literal could also match an <unsigned integer>.
+ /* The pattern unsigned_floating_point could also match an <unsigned integer>.
   * Similar to what was said in the previous comment.
   */
 {unsigned_decimal_integer} {
   std::string text(yytext, yyleng);
   boost::erase_all(text, "_");
-  // uint256_t val = parseUnsignedDecimalInteger(text);
-  // yylval->build(val);
+  // TODO: GQL supports up to UINT256
+  uint64_t val = folly::to<uint64_t>(text);
+  yylval->build(val);
+  std::cerr << "dec:" << val << std::endl;
   NG_RETURN_TOKEN(UNSIGNED_INTEGER);
 }
 {unsigned_hexadecimal_integer} {
   std::string text(yytext + 2, yyleng - 2);
+  std::cerr << "hex: " << text << std::endl;
   boost::erase_all(text, "_");
-  // uint256_t val = parseUnsignedHexadecimalInteger(text);
-  // yylval->build(val);
+  std::cerr << "hex2: " << text << std::endl;
+  // TODO: GQL supports up to UINT256
+  uint64_t val = 0;
+  sscanf(text.c_str(), "%lx", &val);
+  yylval->build(val);
+  std::cerr << "hex:" << val << std::endl;
   NG_RETURN_TOKEN(UNSIGNED_INTEGER);
 }
 {unsigned_octal_integer} {
   std::string text(yytext + 2, yyleng - 2);
+  std::cerr << "oct: " << text << std::endl;
   boost::erase_all(text, "_");
-  // uint256_t val = parseUnsignedOctalInteger(text);
-  // yylval->build(val);
+  std::cerr << "oct2: " << text << std::endl;
+  // TODO: GQL supports up to UINT256
+  uint64_t val = 0;
+  sscanf(text.c_str(), "%lo", &val);
+  yylval->build(val);
+  std::cerr << "oct:" << val << std::endl;
   NG_RETURN_TOKEN(UNSIGNED_INTEGER);
 }
 {unsigned_binary_integer} {
   std::string text(yytext + 2, yyleng - 2);
   boost::erase_all(text, "_");
-  // uint256_t val = parseUnsignedBinaryInteger(text);
-  // yylval->build(val);
+  // TODO: GQL supports up to UINT256
+  uint64_t val = std::stoull(text, nullptr, 2);
+  yylval->build(val);
+  std::cerr << "bin:" << val << std::endl;
   NG_RETURN_TOKEN(UNSIGNED_INTEGER);
 }
-{unsigned_numeric_literal} {
-  // yylval->build(parseUnsignedNumericLiteral(std::string(yytext, yyleng)));
-  NG_RETURN_TOKEN(UNSIGNED_NUMERIC_LITERAL);
+{unsigned_floating_point} {
+  std::string text(yytext, yyleng);
+  try {
+    // TODO: GQL supports up to FLOAT256
+    double val = folly::to<double>(text);
+    yylval->build(val);
+    std::cerr << "float:" << val << std::endl;
+  } catch (...) {
+    throw GraphParser::syntax_error(*yylloc, "Out of range:");
+  }
+  NG_RETURN_TOKEN(UNSIGNED_FLOATING_POINT);
 }
 
 .                           {
