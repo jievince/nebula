@@ -63,8 +63,6 @@ class GraphScanner : public yyFlexLexer {
   int yylex(nebula::GraphParser::semantic_type *lval, nebula::GraphParser::location_type *loc) {
     yylval = lval;
     yylloc = loc;
-    // TODO: move to a better place
-    str_.clear();
     return yylex();
   }
 

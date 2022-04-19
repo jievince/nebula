@@ -254,10 +254,8 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
  /* Flex rules section */
 
 %{
-  /* FLEX:  initial code: The following code block is executed every time yylex is called.
-   * Reset the current scanning locations each time yylex is called to match new pattern.
-   */
-  // std::cerr << "FLEX: YYTEXT: " << string(yytext, yyleng) << std::endl;
+  // This code block is executed every time yylex is called.
+  str_.clear();
 
 %}
 
@@ -601,7 +599,7 @@ solidus_double_period (?i:{solidus}{separator}?{double_period})
 }
 <SQCS,DQCS,UAQCS>{unicode_escape_value} {
   std::string text(yytext+2, yyleng-2);
-  auto encoded = folly::codePointToUtf8(stoul(text, nullptr, 16));
+  auto encoded = folly::codePointToUtf8(std::stoul(text, nullptr, 16));
   str_.append(encoded);
 }
 <SQCS>{sqcs_continue} {

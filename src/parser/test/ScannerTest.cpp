@@ -29,10 +29,16 @@ namespace nebula {
     consumeZero();                                   \
   }
 
-#define CHECK_LEXICAL_ERROR(STR)          \
-  {                                       \
-    auto result = checkLexicalError(STR); \
-    ASSERT_TRUE(result.ok()) << result;   \
+#define CHECK_LEXICAL_ERROR(STR, MSG)          \
+  {                                            \
+    auto result = checkLexicalError(STR, MSG); \
+    ASSERT_TRUE(result.ok()) << result;        \
+  }
+
+#define CHECK_SEMANTIC_TYPES(STR, TOKS)          \
+  {                                              \
+    auto result = checkSemanticTypes(STR, TOKS); \
+    ASSERT_TRUE(result.ok()) << result;          \
   }
 
 class ScannerTest : public ::testing::Test {
@@ -65,6 +71,25 @@ class ScannerTest : public ::testing::Test {
       std::ostringstream ss;
       ss << "Token not match for `" << text << "', expected: " << static_cast<TokenType>(token)
          << ", actual: " << static_cast<TokenType>(actual);
+      return Status::Error(ss.str());
+    }
+    return Status::OK();
+  }
+
+  Status checkSemanticTypes(const std::string& text, const std::vector<TokenType>& expected) {
+    stream_ += text;
+    size_t i = 0;
+    int token = 0;
+    std::vector<TokenType> actual;
+    do {
+      token = scanner_.yylex(&yylval_, &yyloc_);
+      actual.push_back(static_cast<TokenType>(token));
+      ++i;
+    } while (token != 0);
+    if (expected != actual) {
+      std::ostringstream ss;
+      ss << "Tokens not match for `" << text << "', \nexpected: " << folly::join(",", expected)
+         << ", \nactual: " << folly::join(",", actual);
       return Status::Error(ss.str());
     }
     return Status::OK();
@@ -111,7 +136,7 @@ class ScannerTest : public ::testing::Test {
     return Status::OK();
   }
 
-  Status checkLexicalError(const string& text) {
+  Status checkLexicalError(const string& text, const std::string& errMsg) {
     auto input = [&text](char* buf, int) -> int {
       static bool first = true;
       if (!first) {
@@ -135,7 +160,13 @@ class ScannerTest : public ::testing::Test {
         return Status::Error(ss.str());
       }
     } catch (const std::exception& e) {
-      LOG(INFO) << e.what() << text;
+      auto actualErrMsg = e.what();
+      if (errMsg != actualErrMsg) {
+        std::ostringstream ss;
+        ss << "Error message not match, "
+           << "expected: " << errMsg << ", actual: " << actualErrMsg;
+        return Status::Error(ss.str());
+      }
     }
     return Status::OK();
   }
@@ -1240,8 +1271,12 @@ TEST_F(ScannerTest, RegularIdentifier) {
   CHECK_SEMANTIC_VALUE("abc", Token::TOK_REGULAR_IDENTIFIER, "abc");
   CHECK_SEMANTIC_VALUE("a_b_c", Token::TOK_REGULAR_IDENTIFIER, "a_b_c");
   CHECK_SEMANTIC_VALUE("a123", Token::TOK_REGULAR_IDENTIFIER, "a123");
-  // The case-sensitive keywords are regarded as regular identifiers
-  // if they are not the specified case form
+  CHECK_SEMANTIC_VALUE("中国", Token::TOK_REGULAR_IDENTIFIER, "中国");
+  CHECK_SEMANTIC_VALUE("a中国", Token::TOK_REGULAR_IDENTIFIER, "a中国");
+  CHECK_SEMANTIC_VALUE("中国a", Token::TOK_REGULAR_IDENTIFIER, "中国a");
+  CHECK_SEMANTIC_VALUE("a中b国c", Token::TOK_REGULAR_IDENTIFIER, "a中b国c");
+  // The case-sensitive keywords are regarded as regular identifiers if they
+  // are not the specified case form
   CHECK_SEMANTIC_VALUE("ENDNODE", Token::TOK_REGULAR_IDENTIFIER, "ENDNODE");
   CHECK_SEMANTIC_VALUE("endnode", Token::TOK_REGULAR_IDENTIFIER, "endnode");
   CHECK_SEMANTIC_VALUE("endNoDe", Token::TOK_REGULAR_IDENTIFIER, "endNoDe");
@@ -1286,14 +1321,36 @@ TEST_F(ScannerTest, RegularIdentifier) {
 TEST_F(ScannerTest, ParameterName1) {
   CHECK_SEMANTIC_VALUE("$param", Token::TOK_PARAMETER_NAME_1, "param");
   CHECK_SEMANTIC_VALUE("$param123", Token::TOK_PARAMETER_NAME_1, "param123");
+  CHECK_SEMANTIC_VALUE("$LALALAND", Token::TOK_PARAMETER_NAME_1, "LALALAND");
   CHECK_SEMANTIC_VALUE("$123", Token::TOK_PARAMETER_NAME_1, "123");
   CHECK_SEMANTIC_VALUE("$_", Token::TOK_PARAMETER_NAME_1, "_");
   CHECK_SEMANTIC_VALUE("$__abc", Token::TOK_PARAMETER_NAME_1, "__abc");
+  CHECK_SEMANTIC_VALUE("$美利坚", Token::TOK_PARAMETER_NAME_1, "美利坚");
+  CHECK_SEMANTIC_VALUE("$__中国abc", Token::TOK_PARAMETER_NAME_1, "__中国abc");
 }
 
 TEST_F(ScannerTest, SingleQuotedCharacterSequence) {
   // unbroken single quoted character sequence
   CHECK_SEMANTIC_VALUE("'abc'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "abc");
+  CHECK_SEMANTIC_VALUE("'ab\\\\c'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\\c");
+  CHECK_SEMANTIC_VALUE("'ab\\\'c'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab'c");
+  CHECK_SEMANTIC_VALUE("'ab\\\"c'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\"c");
+  CHECK_SEMANTIC_VALUE("'ab\"c'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\"c");
+  CHECK_SEMANTIC_VALUE("'ab\\tc'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\tc");
+  CHECK_SEMANTIC_VALUE("'ab\\bc'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\bc");
+  CHECK_SEMANTIC_VALUE("'ab\\nc'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\nc");
+  CHECK_SEMANTIC_VALUE("'ab\\rc'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\rc");
+  CHECK_SEMANTIC_VALUE("'ab\\fc'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\fc");
+  CHECK_SEMANTIC_VALUE(
+      "'ab\\u4e2d\\u56fdc'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab中国c");
+  CHECK_SEMANTIC_VALUE("'ab😀😉c'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab😀😉c");
+  CHECK_SEMANTIC_VALUE(
+      "'ab\\U01f525c'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab🔥c");
+  CHECK_SEMANTIC_VALUE(
+      "'ab\\U01F600c'", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab😀c");
+  CHECK_SEMANTIC_VALUE("'ab\\u007Bxyz\\U01F609\\U01F600c'",
+                       Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE,
+                       "ab{xyz😉😀c");
   // broken single quoted character sequence
   CHECK_SEMANTIC_VALUE(
       "'abc' \n 'def'", Token::TOK_BROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "abcdef");
@@ -1305,14 +1362,35 @@ TEST_F(ScannerTest, SingleQuotedCharacterSequence) {
   CHECK_SEMANTIC_VALUE("'abc' // some comment \n 'def'",
                        Token::TOK_BROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE,
                        "abcdef");
-  CHECK_SEMANTIC_VALUE("'abc' // some comment \n 'def'    \n\r\t\f 'wxyz'",
+  CHECK_SEMANTIC_VALUE("'ab\\u4e2dc' // some comment \n 'def'    \n\r\t\f '\\u56fd\\U01F600wxyz'",
                        Token::TOK_BROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE,
-                       "abcdefwxyz");
+                       "ab中cdef国😀wxyz");
 }
 
 TEST_F(ScannerTest, DoubleQuotedCharacterSequence) {
   // unbroken double quoted character sequence
   CHECK_SEMANTIC_VALUE("\"abc\"", Token::TOK_UNBROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE, "abc");
+  CHECK_SEMANTIC_VALUE(
+      "\"ab\\\\c\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\\c");
+  CHECK_SEMANTIC_VALUE("\"ab\\\'c\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab'c");
+  CHECK_SEMANTIC_VALUE(
+      "\"ab\\\"c\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\"c");
+  CHECK_SEMANTIC_VALUE("\"ab\'c\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\'c");
+  CHECK_SEMANTIC_VALUE("\"ab\\tc\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\tc");
+  CHECK_SEMANTIC_VALUE("\"ab\\bc\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\bc");
+  CHECK_SEMANTIC_VALUE("\"ab\\nc\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\nc");
+  CHECK_SEMANTIC_VALUE("\"ab\\rc\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\rc");
+  CHECK_SEMANTIC_VALUE("\"ab\\fc\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\fc");
+  CHECK_SEMANTIC_VALUE(
+      "\"ab\\u4e2d\\u56fdc\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab中国c");
+  CHECK_SEMANTIC_VALUE("\"ab😀😉c\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab😀😉c");
+  CHECK_SEMANTIC_VALUE(
+      "\"ab\\U01f525c\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab🔥c");
+  CHECK_SEMANTIC_VALUE(
+      "\"ab\\U01F600c\"", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab😀c");
+  CHECK_SEMANTIC_VALUE("\"ab\\u007Bxyz\\U01F609\\U01F600c\"",
+                       Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE,
+                       "ab{xyz😉😀c");
   // broken double quoted character sequence
   CHECK_SEMANTIC_VALUE(
       "\"abc\" \n \"def\"", Token::TOK_BROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE, "abcdef");
@@ -1324,16 +1402,35 @@ TEST_F(ScannerTest, DoubleQuotedCharacterSequence) {
   CHECK_SEMANTIC_VALUE("\"abc\" // some comment \n \"def\"",
                        Token::TOK_BROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE,
                        "abcdef");
-  CHECK_SEMANTIC_VALUE("\"abc\" // some comment \n \"def\"    \n\r\t\f \"wxyz\"",
-                       Token::TOK_BROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE,
-                       "abcdefwxyz");
+  CHECK_SEMANTIC_VALUE(
+      "\"ab\\u4e2dc\" // some comment \n \"def\"    \n\r\t\f \"\\u56fd\\U01F600wxyz\"",
+      Token::TOK_BROKEN_DOUBLE_QUOTED_CHARACTER_SEQUENCE,
+      "ab中cdef国😀wxyz");
 }
 
 TEST_F(ScannerTest, UnbrokenAccentQuotedString) {
   // unbroken accent quoted character sequence
   CHECK_SEMANTIC_VALUE("`abc`", Token::TOK_UNBROKEN_ACCENT_QUOTED_CHARACTER_SEQUENCE, "abc");
-  // TODO: add some escaped character sequences
-  // TODO: add some illegal character sequences
+  CHECK_SEMANTIC_VALUE("`ab\\\\c`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\\c");
+  CHECK_SEMANTIC_VALUE("`ab\\\'c`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab'c");
+  CHECK_SEMANTIC_VALUE("`ab\\\"c`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\"c");
+  CHECK_SEMANTIC_VALUE("`ab\'c`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\'c");
+  CHECK_SEMANTIC_VALUE("`ab\"c`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\"c");
+  CHECK_SEMANTIC_VALUE("`ab\\tc`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\tc");
+  CHECK_SEMANTIC_VALUE("`ab\\bc`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\bc");
+  CHECK_SEMANTIC_VALUE("`ab\\nc`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\nc");
+  CHECK_SEMANTIC_VALUE("`ab\\rc`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\rc");
+  CHECK_SEMANTIC_VALUE("`ab\\fc`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab\fc");
+  CHECK_SEMANTIC_VALUE(
+      "`ab\\u4e2d\\u56fdc`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab中国c");
+  CHECK_SEMANTIC_VALUE("`ab😀😉c`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab😀😉c");
+  CHECK_SEMANTIC_VALUE(
+      "`ab\\U01f525c`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab🔥c");
+  CHECK_SEMANTIC_VALUE(
+      "`ab\\U01F600c`", Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE, "ab😀c");
+  CHECK_SEMANTIC_VALUE("`ab\\u007Bxyz\\U01F609\\U01F600c`",
+                       Token::TOK_UNBROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE,
+                       "ab{xyz😉😀c");
 }
 
 TEST_F(ScannerTest, ByteStringLiteral) {
@@ -1360,7 +1457,7 @@ TEST_F(ScannerTest, ByteStringLiteral) {
   CHECK_SEMANTIC_VALUE("x'  01 23 '/* some comment \n ***/  '45 67 89 ab cd    ef' \n\r\t\f'a8ff'",
                        Token::TOK_BYTE_STRING_LITERAL,
                        "\x01\x23\x45\x67\x89\xab\xcd\xef\xa8\xff");
-  // TODO: add some illegal byte string literals
+  CHECK_LEXICAL_ERROR("x'01 2'", "Invalid byte string literal: ");
 }
 
 TEST_F(ScannerTest, UnsignedDecimalInteger) {
@@ -1408,6 +1505,48 @@ TEST_F(ScannerTest, UnsignedFloatingPoint) {
   CHECK_SEMANTIC_VALUE(".123e7", Token::TOK_UNSIGNED_FLOATING_POINT, 0.123e7);
   CHECK_SEMANTIC_VALUE(".123E7", Token::TOK_UNSIGNED_FLOATING_POINT, 0.123e7);
   // TODO: test some overfloat numeric
+}
+
+TEST_F(ScannerTest, Tokens) {
+  CHECK_SEMANTIC_TYPES("MATCH (v:player) RETURN v.age + 1",
+                       (std::vector<TokenType>{Token::TOK_MATCH,
+                                               Token::TOK_LEFT_PAREN,
+                                               Token::TOK_REGULAR_IDENTIFIER,
+                                               Token::TOK_COLON,
+                                               Token::TOK_REGULAR_IDENTIFIER,
+                                               Token::TOK_RIGHT_PAREN,
+                                               Token::TOK_RETURN,
+                                               Token::TOK_REGULAR_IDENTIFIER,
+                                               Token::TOK_PERIOD,
+                                               Token::TOK_REGULAR_IDENTIFIER,
+                                               Token::TOK_PLUS_SIGN,
+                                               Token::TOK_UNSIGNED_INTEGER,
+                                               Token::TOK_YYEOF}));
+  CHECK_SEMANTIC_TYPES("INSERT (v:player&team{name: 'Tony '\n'Parker'}) WHEN TRUE",
+                       (std::vector<TokenType>{Token::TOK_INSERT,
+                                               Token::TOK_LEFT_PAREN,
+                                               Token::TOK_REGULAR_IDENTIFIER,
+                                               Token::TOK_COLON,
+                                               Token::TOK_REGULAR_IDENTIFIER,
+                                               Token::TOK_AMPERSAND,
+                                               Token::TOK_REGULAR_IDENTIFIER,
+                                               Token::TOK_LEFT_BRACE,
+                                               Token::TOK_REGULAR_IDENTIFIER,
+                                               Token::TOK_COLON,
+                                               Token::TOK_BROKEN_SINGLE_QUOTED_CHARACTER_SEQUENCE,
+                                               Token::TOK_RIGHT_BRACE,
+                                               Token::TOK_RIGHT_PAREN,
+                                               Token::TOK_WHEN,
+                                               Token::TOK_TRUE,
+                                               Token::TOK_YYEOF}));
+  CHECK_SEMANTIC_TYPES("startNode * is not /* a comment\n */ LAbeled $123 / 0o_774",
+                       (std::vector<TokenType>{Token::TOK_startNode,
+                                               Token::TOK_ASTERISK,
+                                               Token::TOK_IS_NOT_LABELED,
+                                               Token::TOK_PARAMETER_NAME_1,
+                                               Token::TOK_SOLIDUS,
+                                               Token::TOK_UNSIGNED_INTEGER,
+                                               Token::TOK_YYEOF}));
 }
 
 }  // namespace nebula

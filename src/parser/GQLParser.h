@@ -17,7 +17,6 @@ class GQLParser {
  public:
   explicit GQLParser(nebula::graph::QueryContext *qctx = nullptr)
       : parser_(scanner_, error_, &sentences_, qctx) {
-    parser_.set_debug_level(true);
     // Callback invoked by GraphScanner
     auto readBuffer = [this](char *buf, int maxSize) -> int {
       // Reach the end
@@ -33,6 +32,8 @@ class GQLParser {
       return n;  // Number of bytes we actually filled in `buf'
     };
     scanner_.setReadBuffer(std::move(readBuffer));
+    scanner_.setDebug(true);
+    parser_.set_debug_level(true);
   }
 
   ~GQLParser() {
@@ -50,7 +51,6 @@ class GQLParser {
     pos_ = &buffer_[0];
     end_ = pos_ + buffer_.size();
 
-    scanner_.setDebug(true);
     scanner_.setQuery(&buffer_);
     if (parser_.parse() != 0) {
       pos_ = nullptr;
