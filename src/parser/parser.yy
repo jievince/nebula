@@ -189,7 +189,7 @@ using namespace nebula;
 %token KW_ORDER KW_ASC KW_LIMIT KW_SAMPLE KW_OFFSET KW_ASCENDING KW_DESCENDING
 %token KW_DISTINCT KW_ALL KW_OF
 %token KW_BALANCE KW_LEADER KW_RESET KW_PLAN
-%token KW_SHORTEST KW_PATH KW_NOLOOP
+%token KW_SHORTEST KW_PATH KW_NOLOOP KW_SHORTESTPATH KW_ALLSHORTESTPATHS
 %token KW_IS KW_NULL KW_DEFAULT
 %token KW_SNAPSHOT KW_SNAPSHOTS KW_LOOKUP
 %token KW_JOBS KW_JOB KW_RECOVER KW_FLUSH KW_COMPACT KW_REBUILD KW_SUBMIT KW_STATS KW_STATUS
@@ -390,7 +390,7 @@ using namespace nebula;
 %type <sentence> update_vertex_sentence update_edge_sentence
 %type <sentence> download_sentence ingest_sentence
 
-%type <sentence> traverse_sentence
+%type <sentence> traverse_sentence unwind_sentence
 %type <sentence> go_sentence match_sentence lookup_sentence find_path_sentence get_subgraph_sentence
 %type <sentence> group_by_sentence order_by_sentence limit_sentence
 %type <sentence> fetch_sentence fetch_vertices_sentence fetch_edges_sentence
@@ -517,6 +517,8 @@ unreserved_keyword
     | KW_NONE               { $$ = new std::string("none"); }
     | KW_REDUCE             { $$ = new std::string("reduce"); }
     | KW_SHORTEST           { $$ = new std::string("shortest"); }
+    | KW_SHORTESTPATH       { $$ = new std::string("shortestpath"); }
+    | KW_ALLSHORTESTPATHS   { $$ = new std::string("allshortestpaths"); }
     | KW_NOLOOP             { $$ = new std::string("noloop"); }
     | KW_CONTAINS           { $$ = new std::string("contains"); }
     | KW_STARTS             { $$ = new std::string("starts"); }
@@ -1671,6 +1673,13 @@ unwind_clause
     }
     ;
 
+unwind_sentence
+    : KW_UNWIND expression KW_AS name_label {
+      $$ = new UnwindSentence($2, *$4);
+      delete $4;
+    }
+    ;
+
 with_clause
     : KW_WITH match_return_items match_order_by match_skip match_limit where_clause {
         $$ = new WithClause($2, $3, $4, $5, $6, false/*distinct*/);
@@ -1761,6 +1770,14 @@ match_path_pattern
     | match_path_pattern match_edge match_node {
         $$ = $1;
         $$->add($2, $3);
+    }
+    | KW_SHORTESTPATH L_PAREN match_path_pattern R_PAREN {
+        $$ = $3;
+        $$->setPathType(MatchPath::PathType::kSingleShortest);
+    }
+    | KW_ALLSHORTESTPATHS L_PAREN match_path_pattern R_PAREN {
+        $$ = $3;
+        $$->setPathType(MatchPath::PathType::kAllShortest);
     }
     ;
 
@@ -2925,6 +2942,7 @@ traverse_sentence
     | show_queries_sentence { $$ = $1; }
     | kill_query_sentence { $$ = $1; }
     | describe_user_sentence { $$ = $1; }
+    | unwind_sentence { $$ = $1; }
     ;
 
 piped_sentence

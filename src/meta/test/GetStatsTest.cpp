@@ -67,7 +67,12 @@ struct JobCallBack {
     item.space_vertices_ref() = 2 * n_;
     item.space_edges_ref() = 2 * n_;
     req.stats_ref() = item;
-    jobMgr_->muJobFinished_[spaceId_].unlock();
+    auto mutexIter = jobMgr_->muJobFinished_.find(spaceId_);
+    if (mutexIter == jobMgr_->muJobFinished_.end()) {
+      mutexIter =
+          jobMgr_->muJobFinished_.emplace(spaceId_, std::make_unique<std::recursive_mutex>()).first;
+    }
+    mutexIter->second->unlock();
     jobMgr_->reportTaskFinish(req);
     return folly::Future<Status>(Status::OK());
   }
@@ -182,7 +187,7 @@ TEST_F(GetStatsTest, StatsJob) {
   // Update stats data to finished or failed status in finish function of
   // runJobInternal.
   auto result = jobMgr->runJobInternal(statsJob, JobManager::JbOp::ADD);
-  ASSERT_TRUE(result);
+  ASSERT_EQ(result, nebula::cpp2::ErrorCode::SUCCEEDED);
   // JobManager does not set the job finished status in RunJobInternal function.
   // But set stats data.
   statsJob.setStatus(cpp2::JobStatus::FINISHED);
@@ -346,7 +351,7 @@ TEST_F(GetStatsTest, StatsJob) {
   copyData(kv_.get(), 0, 0, statsKey2, tempKey2);
   jobMgr->jobFinished(spaceId, statsJob2.getJobId(), cpp2::JobStatus::FINISHED);
 
-  ASSERT_TRUE(result2);
+  ASSERT_EQ(result2, nebula::cpp2::ErrorCode::SUCCEEDED);
   // JobManager does not set the job finished status in RunJobInternal function.
   // But set stats data.
   statsJob2.setStatus(cpp2::JobStatus::FINISHED);

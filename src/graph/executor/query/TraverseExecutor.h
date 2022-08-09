@@ -33,6 +33,17 @@ namespace nebula {
 namespace graph {
 
 using RpcResponse = storage::StorageRpcResponse<storage::cpp2::GetNeighborsResponse>;
+using Dst = Value;
+using Paths = std::vector<Row>;
+
+struct JobResult {
+  // Newly traversed paths size
+  size_t pathCnt{0};
+  // Request dataset for next traverse
+  DataSet reqDs;
+  // Newly traversed paths
+  std::unordered_map<Dst, Paths> newPaths;
+};
 
 class TraverseExecutor final : public StorageAccessExecutor {
  public:
@@ -46,8 +57,6 @@ class TraverseExecutor final : public StorageAccessExecutor {
   Status close() override;
 
  private:
-  using Dst = Value;
-  using Paths = std::vector<Row>;
   Status buildRequestDataSet();
 
   folly::Future<Status> traverse();
@@ -60,6 +69,13 @@ class TraverseExecutor final : public StorageAccessExecutor {
 
   Status buildInterimPath(GetNeighborsIter* iter);
 
+  folly::Future<Status> buildInterimPathMultiJobs(std::unique_ptr<GetNeighborsIter> iter);
+
+  StatusOr<JobResult> handleJob(size_t begin,
+                                size_t end,
+                                Iterator* iter,
+                                const std::unordered_map<Value, Paths>& prev);
+
   Status buildResult();
 
   bool isFinalStep() const {
@@ -68,7 +84,7 @@ class TraverseExecutor final : public StorageAccessExecutor {
   }
 
   bool zeroStep() const {
-    return range_ != nullptr && range_->min() == 0;
+    return node_->asNode<Traverse>()->zeroStep();
   }
 
   bool hasSameEdge(const Row& prevPath, const Edge& currentEdge);
@@ -84,13 +100,17 @@ class TraverseExecutor final : public StorageAccessExecutor {
                         std::unordered_map<Value, Paths>& zeroSteps,
                         size_t& count);
 
+  Expression* selectFilter();
+
  private:
+  ObjectPool objPool_;
   DataSet reqDs_;
   const Traverse* traverse_{nullptr};
   MatchStepRange* range_{nullptr};
   size_t currentStep_{0};
-  std::list<std::unordered_map<Value, Paths>> paths_;
-  size_t cnt_{0};
+  std::list<std::unordered_map<Dst, Paths>> paths_;
+  size_t totalPathCnt_{0};
+  folly::ConcurrentHashMap<Dst, uint8_t> uniqueDsts_;
 };
 
 }  // namespace graph

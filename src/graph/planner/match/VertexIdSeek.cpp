@@ -26,8 +26,8 @@ StatusOr<SubPlan> VertexIdSeek::transformEdge(EdgeContext *edgeCtx) {
 
 bool VertexIdSeek::matchNode(NodeContext *nodeCtx) {
   auto &node = *nodeCtx->info;
-  auto *matchClauseCtx = nodeCtx->matchClauseCtx;
-  if (matchClauseCtx->where == nullptr || matchClauseCtx->where->filter == nullptr) {
+  //  auto *matchClauseCtx = nodeCtx->matchClauseCtx;
+  if (nodeCtx->bindWhereClause == nullptr || nodeCtx->bindWhereClause->filter == nullptr) {
     return false;
   }
 
@@ -36,8 +36,8 @@ bool VertexIdSeek::matchNode(NodeContext *nodeCtx) {
     return false;
   }
 
-  VidExtractVisitor vidExtractVisitor(matchClauseCtx->qctx);
-  matchClauseCtx->where->filter->accept(&vidExtractVisitor);
+  VidExtractVisitor vidExtractVisitor(nodeCtx->qctx);
+  nodeCtx->bindWhereClause->filter->accept(&vidExtractVisitor);
   auto vidResult = vidExtractVisitor.moveVidPattern();
   if (vidResult.spec != VidExtractVisitor::VidPattern::Special::kInUsed) {
     return false;
@@ -47,6 +47,10 @@ bool VertexIdSeek::matchNode(NodeContext *nodeCtx) {
     if (nodeVid.second.kind == VidExtractVisitor::VidPattern::Vids::Kind::kIn) {
       if (nodeVid.first == node.alias) {
         nodeCtx->ids = std::move(nodeVid.second.vids);
+        // Eliminate Filter when it's complete predication about Vertex Id
+        if (ExpressionUtils::isVidPredication(nodeCtx->bindWhereClause->filter)) {
+          nodeCtx->bindWhereClause->filter = nullptr;
+        }
         return true;
       }
     }
@@ -69,8 +73,7 @@ std::string VertexIdSeek::listToAnnoVarVid(QueryContext *qctx, const List &list)
 
 StatusOr<SubPlan> VertexIdSeek::transformNode(NodeContext *nodeCtx) {
   SubPlan plan;
-  auto *matchClauseCtx = nodeCtx->matchClauseCtx;
-  auto *qctx = matchClauseCtx->qctx;
+  auto *qctx = nodeCtx->qctx;
 
   std::string inputVar = listToAnnoVarVid(qctx, nodeCtx->ids);
 

@@ -99,6 +99,12 @@ def init_parser():
         default=0,
         help='how long in seconds to lock the account after too many consecutive login attempts provide an incorrect password',
     )
+    opt_parser.add_option(
+        '--query_concurrently',
+        dest='query_concurrently',
+        default='false',
+        help='Whether enable graph/storage query_concurrently.',
+    )
     return opt_parser
 
 
@@ -132,7 +138,8 @@ def start_nebula(nb, configs):
     with open(SPACE_TMP_PATH, "w") as f:
         spaces = []
         folder = os.path.join(CURR_PATH, "data")
-        for space in os.listdir(folder):
+        data_dirs = sorted(os.listdir(folder))  # sort to make sure schema id is created by fixed order
+        for space in data_dirs:
             if not os.path.exists(os.path.join(folder, space, "config.yaml")):
                 continue
             data_dir = os.path.join(folder, space)
@@ -179,7 +186,8 @@ def start_standalone(nb, configs):
     with open(SPACE_TMP_PATH, "w") as f:
         spaces = []
         folder = os.path.join(CURR_PATH, "data")
-        for space in os.listdir(folder):
+        data_dirs = sorted(os.listdir(folder))  # sort to make sure schema id is created by fixed order
+        for space in data_dirs:
             if not os.path.exists(os.path.join(folder, space, "config.yaml")):
                 continue
             data_dir = os.path.join(folder, space)
@@ -239,7 +247,8 @@ if __name__ == "__main__":
             enable_graph_ssl=configs.enable_graph_ssl,
             enable_meta_ssl=configs.enable_meta_ssl,
             containerized=configs.containerized,
-            use_standalone=is_standalone
+            use_standalone=is_standalone,
+            query_concurrently = opt_is(configs.query_concurrently, "true"),
         )
 
         if opt_is(configs.cmd, "start"):

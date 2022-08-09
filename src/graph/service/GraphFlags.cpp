@@ -18,7 +18,7 @@ DEFINE_int32(num_netio_threads,
              "The number of networking threads, 0 for number of physical CPU cores");
 DEFINE_int32(num_accept_threads, 1, "Number of threads to accept incoming connections");
 DEFINE_int32(num_worker_threads, 0, "Number of threads to execute user queries");
-DEFINE_int32(num_operator_threads, 5, "Number of threads to execute a single operator");
+DEFINE_int32(num_operator_threads, 2, "Number of threads to execute a single operator");
 DEFINE_bool(reuse_port, true, "Whether to turn on the SO_REUSEPORT option");
 DEFINE_int32(listen_backlog, 1024, "Backlog of the listen socket");
 DEFINE_string(listen_netdev, "any", "The network device to listen on");
@@ -89,3 +89,15 @@ static bool ValidateSessIdleTimeout(const char* flagname, int32_t value) {
 }
 DEFINE_validator(session_idle_timeout_secs, &ValidateSessIdleTimeout);
 DEFINE_validator(client_idle_timeout_secs, &ValidateSessIdleTimeout);
+
+DEFINE_int32(min_batch_size,
+             8192,
+             "The min batch size for handling dataset in multi job mode, only enabled when "
+             "max_job_size is greater than 1.");
+DEFINE_int32(max_job_size, 1, "The max job size in multi job mode.");
+
+DEFINE_bool(enable_async_gc, false, "If enable async gc.");
+DEFINE_uint32(
+    gc_worker_size,
+    0,
+    "Background garbage clean workers, default number is 0 which means using hardware core size.");

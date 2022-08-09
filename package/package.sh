@@ -50,7 +50,7 @@ function _extra_release_variables {
         package_one="OFF"
         enable_compressed_debug_info="ON"
         dump_symbols="OFF"
-    fi 
+    fi
 }
 
 _default_release_variables
@@ -227,12 +227,29 @@ function dump_syms {
     tmp=${pack#nebula-graph}
     ver=${tmp%.*}
 
+    hash objcopy &> /dev/null || {
+        echo "'objcopy' is not installed"
+        exit 1
+    }
+
     for bin in nebula-graphd nebula-storaged nebula-metad; do
+        # Create separate debuginfo for GDB
+        objcopy --only-keep-debug ${build_dir}/bin/${bin} ${syms_dir}/${bin}${ver}.debug
+        # Create separate debuginfo for breakpad
         if ! (${dump_syms} ${build_dir}/bin/${bin} > ${syms_dir}/${bin}${ver}.sym); then
             echo ">>> dump ${bin} symbols failed: $?. <<<"
             exit 1
         fi
     done
+}
+
+function add_commit {
+    hash git &> /dev/null 
+    if [ $? -eq 0 ];then
+        if [ -d ".git" ];then
+            git rev-parse --short HEAD > ${build_dir}/cpack_output/commit.txt
+        fi
+    fi 
 }
 
 # The main
@@ -246,3 +263,6 @@ fi
 # tar package
 build $version $enablesanitizer $static_sanitizer $build_type "ON" "/"
 package $strip_enable
+
+# add commit information
+add_commit

@@ -49,6 +49,14 @@ Status GraphService::init(std::shared_ptr<folly::IOThreadPoolExecutor> ioExecuto
     return Status::Error("Failed to wait for meta service ready synchronously.");
   }
 
+  // Wait meta to sync the timezone configuration
+  // Initialize the global timezone, it's only used for datetime type compute
+  // won't affect the process timezone.
+  auto status = nebula::time::Timezone::initializeGlobalTimezone();
+  if (!status.ok()) {
+    return status;
+  }
+
   sessionManager_ = std::make_unique<GraphSessionManager>(metaClient_.get(), hostAddr);
   auto initSessionMgrStatus = sessionManager_->init();
   if (!initSessionMgrStatus.ok()) {
@@ -221,7 +229,12 @@ Status GraphService::auth(const std::string& username, const std::string& passwo
     // There is no way to identify which one is in the graph layer，
     // let's check the native user's password first, then cloud user.
     auto pwdAuth = std::make_unique<PasswordAuthenticator>(metaClient);
-    return pwdAuth->auth(username, proxygen::md5Encode(folly::StringPiece(password)));
+    auto pwdAuthRes = pwdAuth->auth(username, proxygen::md5Encode(folly::StringPiece(password)));
+    if (pwdAuthRes.ok()) {
+      return Status::OK();
+    }
+
+    // Password auth failed, try cloud token
     auto cloudAuth = std::make_unique<CloudAuthenticator>(metaClient);
     return cloudAuth->auth(username, password);
   }

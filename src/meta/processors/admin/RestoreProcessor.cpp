@@ -73,20 +73,59 @@ nebula::cpp2::ErrorCode RestoreProcessor::replaceHostInZone(kvstore::WriteBatch*
   }
   auto iter = nebula::value(iterRet).get();
 
+  // Explicit use of the zone feature is disabled, and a zone can only have one host.
+  std::unordered_map<std::string, std::string> zoneNameMap;
+  std::vector<kvstore::KV> zonekv;
   while (iter->valid()) {
-    bool needUpdate = false;
-    auto zoneName = MetaKeyUtils::parseZoneName(iter->key());
+    auto oldZoneKey = iter->key();
+    auto oldZoneName = MetaKeyUtils::parseZoneName(oldZoneKey);
     auto hosts = MetaKeyUtils::parseZoneHosts(iter->val());
-    for (auto& host : hosts) {
-      if (hostMap.find(host) != hostMap.end()) {
-        host = hostMap[host];
-        needUpdate = true;
-      }
-    }
-    if (needUpdate) {
-      batch->put(iter->key(), MetaKeyUtils::zoneVal(hosts));
+
+    CHECK_EQ(1, hosts.size());
+    if (hostMap.find(hosts[0]) != hostMap.end()) {
+      auto host = hostMap[hosts[0]];
+      auto newZoneName = folly::stringPrintf("default_zone_%s_%d", host.host.c_str(), host.port);
+      batch->remove(oldZoneKey);
+      zonekv.emplace_back(
+          std::make_pair(MetaKeyUtils::zoneKey(newZoneName), MetaKeyUtils::zoneVal({host})));
+      zoneNameMap.emplace(oldZoneName, newZoneName);
     }
     iter->next();
+  }
+
+  for (auto& kv : zonekv) {
+    batch->put(kv.first, kv.second);
+  }
+
+  // Update the zonename of spaceDesc in space system table
+  std::map<GraphSpaceID, meta::cpp2::SpaceDesc> spaceMap;
+  std::string spacePrefix = MetaKeyUtils::spacePrefix();
+  auto spaceIterRet = doPrefix(spacePrefix, true);
+  if (!nebula::ok(spaceIterRet)) {
+    retCode = nebula::error(iterRet);
+    LOG(INFO) << "Space prefix failed, error: " << apache::thrift::util::enumNameSafe(retCode);
+    return retCode;
+  }
+
+  auto spaceIter = nebula::value(spaceIterRet).get();
+  while (spaceIter->valid()) {
+    spaceMap.emplace(MetaKeyUtils::spaceId(spaceIter->key()),
+                     MetaKeyUtils::parseSpace(spaceIter->val()));
+    spaceIter->next();
+  }
+  for (auto& [spaceId, properties] : spaceMap) {
+    std::vector<std::string> curZones = properties.get_zone_names();
+    for (size_t i = 0; i < curZones.size(); i++) {
+      auto zoneName = curZones[i];
+      if (zoneNameMap.find(zoneName) != zoneNameMap.end()) {
+        curZones[i] = zoneNameMap[zoneName];
+      }
+    }
+    properties.zone_names_ref() = std::move(curZones);
+  }
+
+  for (auto& [spaceId, properties] : spaceMap) {
+    batch->put(MetaKeyUtils::spaceKey(spaceId), MetaKeyUtils::spaceVal(properties));
   }
 
   return retCode;
@@ -106,13 +145,18 @@ nebula::cpp2::ErrorCode RestoreProcessor::replaceHostInMachine(
   }
   auto iter = nebula::value(iterRet).get();
 
+  std::vector<std::string> newMachineKeys;
   while (iter->valid()) {
     auto machine = MetaKeyUtils::parseMachineKey(iter->key());
     if (hostMap.find(machine) != hostMap.end()) {
       batch->remove(MetaKeyUtils::machineKey(machine.host, machine.port));
-      batch->put(MetaKeyUtils::machineKey(hostMap[machine].host, hostMap[machine].port), "");
+      auto newMachineKey = MetaKeyUtils::machineKey(hostMap[machine].host, hostMap[machine].port);
+      newMachineKeys.emplace_back(std::move(newMachineKey));
     }
     iter->next();
+  }
+  for (auto& newKey : newMachineKeys) {
+    batch->put(newKey, "");
   }
 
   return retCode;

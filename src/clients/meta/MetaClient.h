@@ -239,6 +239,10 @@ class MetaClient : public BaseMetaClient {
 
   ~MetaClient() override;
 
+#ifdef BUILD_STANDALONE
+  StatusOr<bool> checkLocalMachineRegistered();
+#endif
+
   bool isMetadReady();
 
   bool waitForMetadReady(int count = -1, int retryIntervalSecs = FLAGS_heartbeat_interval_secs);
@@ -733,7 +737,13 @@ class MetaClient : public BaseMetaClient {
 
   ListenersMap doGetListenersMap(const HostAddr& host, const LocalCache& localCache);
 
+  // Checks if the the client version is compatible with the server version by checking the
+  // whilelist in meta.
   Status verifyVersion();
+
+  // Save the version of the graph service into meta so that it could be looked up.
+  // This method should be only called in the internal client.
+  Status saveVersionToMeta();
 
  private:
   std::shared_ptr<folly::IOThreadPoolExecutor> ioThreadPool_;

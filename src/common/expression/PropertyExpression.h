@@ -6,6 +6,8 @@
 #ifndef COMMON_EXPRESSION_PROPERTYEXPRESSION_H_
 #define COMMON_EXPRESSION_PROPERTYEXPRESSION_H_
 
+#include <cstddef>
+
 #include "common/expression/Expression.h"
 
 namespace nebula {
@@ -71,7 +73,7 @@ class EdgePropertyExpression final : public PropertyExpression {
   static EdgePropertyExpression* make(ObjectPool* pool,
                                       const std::string& edge = "",
                                       const std::string& prop = "") {
-    return pool->add(new EdgePropertyExpression(pool, edge, prop));
+    return pool->makeAndAdd<EdgePropertyExpression>(pool, edge, prop);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -83,6 +85,7 @@ class EdgePropertyExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit EdgePropertyExpression(ObjectPool* pool,
                                   const std::string& edge = "",
                                   const std::string& prop = "")
@@ -101,7 +104,7 @@ class TagPropertyExpression final : public PropertyExpression {
   static TagPropertyExpression* make(ObjectPool* pool,
                                      const std::string& tag = "",
                                      const std::string& prop = "") {
-    return pool->add(new TagPropertyExpression(pool, tag, prop));
+    return pool->makeAndAdd<TagPropertyExpression>(pool, tag, prop);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -113,6 +116,7 @@ class TagPropertyExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit TagPropertyExpression(ObjectPool* pool,
                                  const std::string& tag = "",
                                  const std::string& prop = "")
@@ -132,7 +136,7 @@ class LabelTagPropertyExpression final : public PropertyExpression {
                                           Expression* label = nullptr,
                                           const std::string& tag = "",
                                           const std::string& prop = "") {
-    return pool->add(new LabelTagPropertyExpression(pool, label, tag, prop));
+    return pool->makeAndAdd<LabelTagPropertyExpression>(pool, label, tag, prop);
   }
 
   std::string toString() const override;
@@ -160,6 +164,7 @@ class LabelTagPropertyExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit LabelTagPropertyExpression(ObjectPool* pool,
                                       Expression* label = nullptr,
                                       const std::string& tag = "",
@@ -180,7 +185,7 @@ class InputPropertyExpression final : public PropertyExpression {
   InputPropertyExpression& operator=(InputPropertyExpression&&) = delete;
 
   static InputPropertyExpression* make(ObjectPool* pool, const std::string& prop = "") {
-    return pool->add(new InputPropertyExpression(pool, prop));
+    return pool->makeAndAdd<InputPropertyExpression>(pool, prop);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -192,8 +197,12 @@ class InputPropertyExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit InputPropertyExpression(ObjectPool* pool, const std::string& prop = "")
       : PropertyExpression(pool, Kind::kInputProperty, kInputRef, "", prop) {}
+
+  // runtime info
+  std::optional<std::size_t> propIndex_;
 };
 
 // $VarName.any_prop_name
@@ -205,7 +214,7 @@ class VariablePropertyExpression final : public PropertyExpression {
   static VariablePropertyExpression* make(ObjectPool* pool,
                                           const std::string& var = "",
                                           const std::string& prop = "") {
-    return pool->add(new VariablePropertyExpression(pool, var, prop));
+    return pool->makeAndAdd<VariablePropertyExpression>(pool, var, prop);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -219,10 +228,14 @@ class VariablePropertyExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit VariablePropertyExpression(ObjectPool* pool,
                                       const std::string& var = "",
                                       const std::string& prop = "")
       : PropertyExpression(pool, Kind::kVarProperty, kVarRef, var, prop) {}
+
+  // runtime info
+  std::optional<std::size_t> propIndex_;
 };
 
 // $^.TagName.any_prop_name
@@ -234,7 +247,7 @@ class SourcePropertyExpression final : public PropertyExpression {
   static SourcePropertyExpression* make(ObjectPool* pool,
                                         const std::string& tag = "",
                                         const std::string& prop = "") {
-    return pool->add(new SourcePropertyExpression(pool, tag, prop));
+    return pool->makeAndAdd<SourcePropertyExpression>(pool, tag, prop);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -246,6 +259,7 @@ class SourcePropertyExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit SourcePropertyExpression(ObjectPool* pool,
                                     const std::string& tag = "",
                                     const std::string& prop = "")
@@ -264,7 +278,7 @@ class DestPropertyExpression final : public PropertyExpression {
   static DestPropertyExpression* make(ObjectPool* pool,
                                       const std::string& tag = "",
                                       const std::string& prop = "") {
-    return pool->add(new DestPropertyExpression(pool, tag, prop));
+    return pool->makeAndAdd<DestPropertyExpression>(pool, tag, prop);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -276,6 +290,7 @@ class DestPropertyExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit DestPropertyExpression(ObjectPool* pool,
                                   const std::string& tag = "",
                                   const std::string& prop = "")
@@ -289,7 +304,7 @@ class EdgeSrcIdExpression final : public PropertyExpression {
   EdgeSrcIdExpression& operator=(EdgeSrcIdExpression&&) = delete;
 
   static EdgeSrcIdExpression* make(ObjectPool* pool, const std::string& edge = "") {
-    return pool->add(new EdgeSrcIdExpression(pool, edge));
+    return pool->makeAndAdd<EdgeSrcIdExpression>(pool, edge);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -301,6 +316,7 @@ class EdgeSrcIdExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit EdgeSrcIdExpression(ObjectPool* pool, const std::string& edge = "")
       : PropertyExpression(pool, Kind::kEdgeSrc, "", edge, kSrc) {}
 
@@ -315,7 +331,7 @@ class EdgeTypeExpression final : public PropertyExpression {
   EdgeTypeExpression& operator=(EdgeTypeExpression&&) = delete;
 
   static EdgeTypeExpression* make(ObjectPool* pool, const std::string& edge = "") {
-    return pool->add(new EdgeTypeExpression(pool, edge));
+    return pool->makeAndAdd<EdgeTypeExpression>(pool, edge);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -327,6 +343,7 @@ class EdgeTypeExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit EdgeTypeExpression(ObjectPool* pool, const std::string& edge = "")
       : PropertyExpression(pool, Kind::kEdgeType, "", edge, kType) {}
 
@@ -341,7 +358,7 @@ class EdgeRankExpression final : public PropertyExpression {
   EdgeRankExpression& operator=(EdgeRankExpression&&) = delete;
 
   static EdgeRankExpression* make(ObjectPool* pool, const std::string& edge = "") {
-    return pool->add(new EdgeRankExpression(pool, edge));
+    return pool->makeAndAdd<EdgeRankExpression>(pool, edge);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -353,6 +370,7 @@ class EdgeRankExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit EdgeRankExpression(ObjectPool* pool, const std::string& edge = "")
       : PropertyExpression(pool, Kind::kEdgeRank, "", edge, kRank) {}
 
@@ -367,7 +385,7 @@ class EdgeDstIdExpression final : public PropertyExpression {
   EdgeDstIdExpression& operator=(EdgeDstIdExpression&&) = delete;
 
   static EdgeDstIdExpression* make(ObjectPool* pool, const std::string& edge = "") {
-    return pool->add(new EdgeDstIdExpression(pool, edge));
+    return pool->makeAndAdd<EdgeDstIdExpression>(pool, edge);
   }
 
   const Value& eval(ExpressionContext& ctx) override;
@@ -379,6 +397,7 @@ class EdgeDstIdExpression final : public PropertyExpression {
   }
 
  private:
+  friend ObjectPool;
   explicit EdgeDstIdExpression(ObjectPool* pool, const std::string& edge = "")
       : PropertyExpression(pool, Kind::kEdgeDst, "", edge, kDst) {}
 

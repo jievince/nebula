@@ -16,6 +16,7 @@
 #include "common/network/NetworkUtils.h"
 #include "common/ssl/SSLConfig.h"
 #include "common/thread/GenericThreadPool.h"
+#include "common/time/TimezoneInfo.h"
 #include "common/utils/Utils.h"
 #include "kvstore/PartManager.h"
 #include "kvstore/RocksEngine.h"
@@ -173,20 +174,29 @@ bool StorageServer::start() {
 
 #ifdef BUILD_STANDALONE
   if (FLAGS_add_local_host) {
-    std::vector<HostAddr> hosts = {{FLAGS_local_ip, FLAGS_storage_port}};
-    folly::Baton<> baton;
-    bool isAdded = false;
-    metaClient_->addHosts(hosts).thenValue([&isAdded, &baton](StatusOr<bool> resp) {
-      if (!resp.ok() || !resp.value()) {
-        LOG(ERROR) << "Add hosts for standalone failed.";
-      } else {
-        LOG(INFO) << "Add hosts for standalone succeed.";
-        isAdded = true;
+    // meta allready ready when standalone.
+    auto ret = metaClient_->checkLocalMachineRegistered();
+    if (ret.ok()) {
+      if (!ret.value()) {
+        std::vector<HostAddr> hosts = {{FLAGS_local_ip, FLAGS_storage_port}};
+        folly::Baton<> baton;
+        bool isAdded = false;
+        metaClient_->addHosts(hosts).thenValue([&isAdded, &baton](StatusOr<bool> resp) {
+          if (!resp.ok() || !resp.value()) {
+            LOG(ERROR) << "Add hosts for standalone failed.";
+          } else {
+            LOG(INFO) << "Add hosts for standalone succeed.";
+            isAdded = true;
+          }
+          baton.post();
+        });
+
+        baton.wait();
+        if (!isAdded) {
+          return false;
+        }
       }
-      baton.post();
-    });
-    baton.wait();
-    if (!isAdded) {
+    } else {
       return false;
     }
   }
@@ -194,6 +204,15 @@ bool StorageServer::start() {
 
   if (!metaClient_->waitForMetadReady()) {
     LOG(ERROR) << "waitForMetadReady error!";
+    return false;
+  }
+
+  // Wait meta to sync the timezone configuration
+  // Initialize the global timezone, it's only used for datetime type compute
+  // won't affect the process timezone.
+  auto status = nebula::time::Timezone::initializeGlobalTimezone();
+  if (!status.ok()) {
+    LOG(ERROR) << status;
     return false;
   }
 

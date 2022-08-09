@@ -29,6 +29,7 @@ class PlanNode {
     kGetEdges,
     kTraverse,
     kAppendVertices,
+    kShortestPath,
 
     // ------------------
     // TODO(yee): refactor in logical plan
@@ -212,6 +213,10 @@ class PlanNode {
 
   bool isSingleInput() const {
     return numDeps() == 1U;
+  }
+
+  bool isBiInput() const {
+    return numDeps() == 2U;
   }
 
   void setOutputVar(const std::string& var);
@@ -414,7 +419,7 @@ class BinaryInputNode : public PlanNode {
   }
 
   PlanNode* clone() const override {
-    LOG(FATAL) << "Shouldn't call the unimplemented method";
+    LOG(FATAL) << "Shouldn't call the unimplemented method for " << kind_;
     return nullptr;
   }
 
@@ -422,6 +427,7 @@ class BinaryInputNode : public PlanNode {
 
  protected:
   BinaryInputNode(QueryContext* qctx, Kind kind, const PlanNode* left, const PlanNode* right);
+  BinaryInputNode(QueryContext* qctx, Kind kind);
 
   void cloneMembers(const BinaryInputNode& node) {
     PlanNode::cloneMembers(node);

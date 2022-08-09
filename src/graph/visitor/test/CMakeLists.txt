@@ -24,6 +24,7 @@ nebula_add_test(
         RewriteRelExprVisitorTest.cpp
         FilterTransformTest.cpp
         ExtractFilterExprVisitorTest.cpp
+        ExtractGroupSuiteVisitorTest.cpp
     OBJECTS
         $<TARGET_OBJECTS:mock_schema_obj>
         $<TARGET_OBJECTS:util_obj>
@@ -74,6 +75,7 @@ nebula_add_test(
         $<TARGET_OBJECTS:version_obj>
         $<TARGET_OBJECTS:ssl_obj>
         $<TARGET_OBJECTS:memory_obj>
+        $<TARGET_OBJECTS:gc_obj>
     LIBRARIES
         gtest
         ${THRIFT_LIBRARIES}

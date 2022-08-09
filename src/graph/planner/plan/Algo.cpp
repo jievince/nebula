@@ -5,33 +5,73 @@
 
 #include "graph/planner/plan/Algo.h"
 
+#include "PlanNode.h"
 #include "graph/util/ToJson.h"
 namespace nebula {
 namespace graph {
 
 std::unique_ptr<PlanNodeDescription> BFSShortestPath::explain() const {
   auto desc = BinaryInputNode::explain();
-  addDescription("LeftNextVidVar", util::toJson(leftVidVar_), desc.get());
-  addDescription("RightNextVidVar", util::toJson(rightVidVar_), desc.get());
-  addDescription("steps", util::toJson(steps_), desc.get());
+  addDescription("LeftNextVidVar", folly::toJson(util::toJson(leftVidVar_)), desc.get());
+  addDescription("RightNextVidVar", folly::toJson(util::toJson(rightVidVar_)), desc.get());
+  addDescription("steps", folly::toJson(util::toJson(steps_)), desc.get());
   return desc;
 }
 
 std::unique_ptr<PlanNodeDescription> MultiShortestPath::explain() const {
   auto desc = BinaryInputNode::explain();
-  addDescription("LeftNextVidVar", util::toJson(leftVidVar_), desc.get());
-  addDescription("RightNextVidVar", util::toJson(rightVidVar_), desc.get());
-  addDescription("steps", util::toJson(steps_), desc.get());
+  addDescription("LeftNextVidVar", folly::toJson(util::toJson(leftVidVar_)), desc.get());
+  addDescription("RightNextVidVar", folly::toJson(util::toJson(rightVidVar_)), desc.get());
+  addDescription("steps", folly::toJson(util::toJson(steps_)), desc.get());
   return desc;
 }
 
 std::unique_ptr<PlanNodeDescription> ProduceAllPaths::explain() const {
   auto desc = BinaryInputNode::explain();
-  addDescription("LeftNextVidVar", util::toJson(leftVidVar_), desc.get());
-  addDescription("RightNextVidVar", util::toJson(rightVidVar_), desc.get());
-  addDescription("noloop ", util::toJson(noLoop_), desc.get());
-  addDescription("steps", util::toJson(steps_), desc.get());
+  addDescription("LeftNextVidVar", folly::toJson(util::toJson(leftVidVar_)), desc.get());
+  addDescription("RightNextVidVar", folly::toJson(util::toJson(rightVidVar_)), desc.get());
+  addDescription("noloop ", folly::toJson(util::toJson(noLoop_)), desc.get());
+  addDescription("steps", folly::toJson(util::toJson(steps_)), desc.get());
   return desc;
+}
+
+std::unique_ptr<PlanNodeDescription> ShortestPath::explain() const {
+  auto desc = SingleInputNode::explain();
+  addDescription("singleShortest", folly::toJson(util::toJson(singleShortest_)), desc.get());
+  addDescription("steps", range_ != nullptr ? range_->toString() : "", desc.get());
+  addDescription("edgeDirection", apache::thrift::util::enumNameSafe(edgeDirection_), desc.get());
+  addDescription(
+      "vertexProps", vertexProps_ ? folly::toJson(util::toJson(*vertexProps_)) : "", desc.get());
+  addDescription(
+      "edgeProps", edgeProps_ ? folly::toJson(util::toJson(*edgeProps_)) : "", desc.get());
+  return desc;
+}
+
+PlanNode* ShortestPath::clone() const {
+  auto* path = ShortestPath::make(qctx_, nullptr, space_, singleShortest_);
+  path->cloneMembers(*this);
+  return path;
+}
+
+void ShortestPath::cloneMembers(const ShortestPath& path) {
+  SingleInputNode::cloneMembers(path);
+  setStepRange(path.range_);
+  setEdgeDirection(path.edgeDirection_);
+  if (path.vertexProps_) {
+    auto vertexProps = *path.vertexProps_;
+    auto vertexPropsPtr = std::make_unique<decltype(vertexProps)>(vertexProps);
+    setVertexProps(std::move(vertexPropsPtr));
+  }
+  if (path.edgeProps_) {
+    auto edgeProps = *path.edgeProps_;
+    auto edgePropsPtr = std::make_unique<decltype(edgeProps)>(std::move(edgeProps));
+    setEdgeProps(std::move(edgePropsPtr));
+  }
+  if (path.reverseEdgeProps_) {
+    auto edgeProps = *path.reverseEdgeProps_;
+    auto edgePropsPtr = std::make_unique<decltype(edgeProps)>(std::move(edgeProps));
+    setEdgeProps(std::move(edgePropsPtr));
+  }
 }
 
 std::unique_ptr<PlanNodeDescription> CartesianProduct::explain() const {
@@ -67,6 +107,16 @@ std::unique_ptr<PlanNodeDescription> BiCartesianProduct::explain() const {
   return BinaryInputNode::explain();
 }
 
+PlanNode* BiCartesianProduct::clone() const {
+  auto* node = make(qctx_);
+  node->cloneMembers(*this);
+  return node;
+}
+
+void BiCartesianProduct::cloneMembers(const BiCartesianProduct& r) {
+  BinaryInputNode::cloneMembers(r);
+}
+
 BiCartesianProduct::BiCartesianProduct(QueryContext* qctx, PlanNode* left, PlanNode* right)
     : BinaryInputNode(qctx, Kind::kBiCartesianProduct, left, right) {
   auto lColNames = left->colNames();
@@ -74,5 +124,9 @@ BiCartesianProduct::BiCartesianProduct(QueryContext* qctx, PlanNode* left, PlanN
   lColNames.insert(lColNames.end(), rColNames.begin(), rColNames.end());
   setColNames(lColNames);
 }
+
+BiCartesianProduct::BiCartesianProduct(QueryContext* qctx)
+    : BinaryInputNode(qctx, Kind::kBiCartesianProduct) {}
+
 }  // namespace graph
 }  // namespace nebula

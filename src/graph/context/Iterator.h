@@ -73,6 +73,8 @@ class Iterator {
 
   virtual const Row* row() const = 0;
 
+  virtual Row moveRow() = 0;
+
   // erase range, no include last position, if last > size(), erase to the end
   // position
   virtual void eraseRange(size_t first, size_t last) = 0;
@@ -120,6 +122,9 @@ class Iterator {
   virtual const Value& getColumn(const std::string& col) const = 0;
 
   virtual const Value& getColumn(int32_t index) const = 0;
+
+  // Get index of the column in tuple
+  virtual StatusOr<std::size_t> getColumnIndex(const std::string& col) const = 0;
 
   template <typename Iter>
   const Value& getColumnByIndex(int32_t index, Iter iter) const {
@@ -223,9 +228,19 @@ class DefaultIter final : public Iterator {
     return Value::kEmpty;
   }
 
+  StatusOr<std::size_t> getColumnIndex(const std::string&) const override {
+    DLOG(FATAL) << "This method should not be invoked";
+    return Status::Error("Unimplemented method");
+  }
+
   const Row* row() const override {
     DLOG(FATAL) << "This method should not be invoked";
     return nullptr;
+  }
+
+  Row moveRow() override {
+    DLOG(FATAL) << "This method should not be invoked";
+    return Row{};
   }
 
  private:
@@ -298,6 +313,8 @@ class GetNeighborsIter final : public Iterator {
 
   const Value& getColumn(int32_t index) const override;
 
+  StatusOr<std::size_t> getColumnIndex(const std::string& col) const override;
+
   const Value& getTagProp(const std::string& tag, const std::string& prop) const override;
 
   const Value& getEdgeProp(const std::string& edge, const std::string& prop) const override;
@@ -316,6 +333,10 @@ class GetNeighborsIter final : public Iterator {
   // only return currentEdge, not currentRow, for test
   const Row* row() const override {
     return currentEdge_;
+  }
+
+  Row moveRow() override {
+    return std::move(*currentEdge_);
   }
 
  private:
@@ -401,10 +422,10 @@ class GetNeighborsIter final : public Iterator {
 class SequentialIter : public Iterator {
  public:
   explicit SequentialIter(std::shared_ptr<Value> value, bool checkMemory = false);
+  explicit SequentialIter(const SequentialIter& iter);
 
   // Union multiple sequential iterators
   explicit SequentialIter(std::vector<std::unique_ptr<Iterator>> inputList);
-
   // Union two sequential iterators.
   SequentialIter(std::unique_ptr<Iterator> left, std::unique_ptr<Iterator> right);
 
@@ -471,9 +492,15 @@ class SequentialIter : public Iterator {
 
   const Value& getColumn(int32_t index) const override;
 
+  StatusOr<std::size_t> getColumnIndex(const std::string& col) const override;
+
   Value getVertex(const std::string& name = "") const override;
 
   Value getEdge() const override;
+
+  Row moveRow() override {
+    return std::move(*iter_);
+  }
 
  protected:
   const Row* row() const override {
@@ -484,9 +511,7 @@ class SequentialIter : public Iterator {
   friend class DataCollectExecutor;
   friend class AppendVerticesExecutor;
   friend class TraverseExecutor;
-  Row&& moveRow() {
-    return std::move(*iter_);
-  }
+  friend class ShortestPathExecutor;
 
   void doReset(size_t pos) override;
 
@@ -502,6 +527,7 @@ class SequentialIter : public Iterator {
 class PropIter final : public SequentialIter {
  public:
   explicit PropIter(std::shared_ptr<Value> value, bool checkMemory = false);
+  explicit PropIter(const PropIter& iter);
 
   std::unique_ptr<Iterator> copy() const override {
     auto copy = std::make_unique<PropIter>(*this);
@@ -516,6 +542,8 @@ class PropIter final : public SequentialIter {
   const Value& getColumn(const std::string& col) const override;
 
   const Value& getColumn(int32_t index) const override;
+
+  StatusOr<std::size_t> getColumnIndex(const std::string& col) const override;
 
   Value getVertex(const std::string& name = "") const override;
 

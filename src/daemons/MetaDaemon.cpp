@@ -66,12 +66,7 @@ int main(int argc, char* argv[]) {
   // the 2nd will make the 1st failed to output log anymore
   gflags::ParseCommandLineFlags(&argc, &argv, false);
 
-  // Setup logging
-  auto status = setupLogging(argv[0]);
-  if (!status.ok()) {
-    LOG(ERROR) << status;
-    return EXIT_FAILURE;
-  }
+  Status status;
 
 #if defined(ENABLE_BREAKPAD)
   status = setupBreakpad();
@@ -104,6 +99,13 @@ int main(int argc, char* argv[]) {
     google::SetStderrLogging(google::FATAL);
   } else {
     google::SetStderrLogging(google::INFO);
+  }
+
+  // Setup logging
+  status = setupLogging(argv[0]);
+  if (!status.ok()) {
+    LOG(ERROR) << status;
+    return EXIT_FAILURE;
   }
 
   if (FLAGS_daemonize) {
@@ -176,11 +178,16 @@ int main(int argc, char* argv[]) {
     }
     if (nebula::value(ret) == localhost) {
       LOG(INFO) << "Check and init root user";
-      if (!nebula::meta::RootUserMan::isUserExists(gKVStore.get())) {
-        if (!nebula::meta::RootUserMan::initRootUser(gKVStore.get())) {
-          LOG(ERROR) << "Init root user failed";
-          return EXIT_FAILURE;
-        }
+      auto checkRet = nebula::meta::RootUserMan::isGodExists(gKVStore.get());
+      if (!nebula::ok(checkRet)) {
+        auto retCode = nebula::error(checkRet);
+        LOG(ERROR) << "Parser God Role error:" << apache::thrift::util::enumNameSafe(retCode);
+        return EXIT_FAILURE;
+      }
+      auto existGod = nebula::value(checkRet);
+      if (!existGod && !nebula::meta::RootUserMan::initRootUser(gKVStore.get())) {
+        LOG(ERROR) << "Init root user failed";
+        return EXIT_FAILURE;
       }
     }
   }

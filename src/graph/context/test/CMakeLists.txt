@@ -47,6 +47,7 @@ SET(CONTEXT_TEST_LIBS
     $<TARGET_OBJECTS:graph_stats_obj>
     $<TARGET_OBJECTS:meta_client_stats_obj>
     $<TARGET_OBJECTS:storage_client_stats_obj>
+    $<TARGET_OBJECTS:gc_obj>
 )
 
 if(ENABLE_STANDALONE_VERSION)
@@ -76,6 +77,21 @@ nebula_add_executable(
         iterator_bm
     SOURCES
         IteratorBenchmark.cpp
+    OBJECTS
+        ${CONTEXT_TEST_LIBS}
+    LIBRARIES
+        follybenchmark
+        boost_regex
+        ${THRIFT_LIBRARIES}
+        wangle
+        ${PROXYGEN_LIBRARIES}
+)
+
+nebula_add_executable(
+    NAME
+        input_var_prop_bm
+    SOURCES
+        InputVarPropBenchmark.cpp
     OBJECTS
         ${CONTEXT_TEST_LIBS}
     LIBRARIES
