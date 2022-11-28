@@ -90,6 +90,7 @@ Status Optimizer::doExploration(OptContext *octx, OptGroup *rootGroup) {
 OptGroup *Optimizer::convertToGroup(OptContext *ctx,
                                     PlanNode *node,
                                     std::unordered_map<int64_t, OptGroup *> *visited) {
+  DCHECK_NOTNULL(node);
   auto iter = visited->find(node->id());
   if (iter != visited->cend()) {
     return iter->second;
@@ -109,6 +110,11 @@ OptGroup *Optimizer::convertToGroup(OptContext *ctx,
 
   for (size_t i = 0; i < node->numDeps(); ++i) {
     auto dep = const_cast<PlanNode *>(node->dep(i));
+    DLOG(ERROR) << node->toString();
+    if (node->kind() == PlanNode::Kind::kArgument) {
+      DLOG(ERROR) << "argument's dep: " << (dep ? dep->toString() : "nullptr");
+    }
+    DCHECK_NOTNULL(dep);
     groupNode->dependsOn(convertToGroup(ctx, dep, visited));
   }
 

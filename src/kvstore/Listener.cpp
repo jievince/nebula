@@ -155,8 +155,6 @@ void Listener::doApply() {
   });
 }
 
-
-
 void Listener::resetListener() {
   std::lock_guard<std::mutex> g(raftLock_);
   reset();
